@@ -1,0 +1,1832 @@
+{
+ "meta": {
+  "dataVersion": "0.1.0-alpha.1",
+  "_note": "Координаты ориентировочные (approx). Будут заменены данными полевого режима.",
+  "center": [
+   43.2635,
+   76.9746
+  ],
+  "bounds": [
+   [
+    43.259,
+    76.967
+   ],
+   [
+    43.2682,
+    76.9822
+   ]
+  ],
+  "boundary": [
+   [
+    43.2655,
+    76.9712
+   ],
+   [
+    43.2657,
+    76.9779
+   ],
+   [
+    43.2614,
+    76.9782
+   ],
+   [
+    43.2612,
+    76.9709
+   ]
+  ],
+  "boundaryApprox": true,
+  "entrance": {
+   "lat": 43.2655,
+   "lng": 76.9725
+  },
+  "outsidePoint": [
+   43.2668,
+   76.97
+  ]
+ },
+ "settings": {
+  "_note": "Даты сезонов — временные, до уточнения заказчиком (позже — через админпанель).",
+  "seasons": {
+   "summer": {
+    "from": "04-01",
+    "to": "10-31"
+   }
+  },
+  "hours": {
+   "summer": {
+    "zoo": [
+     "09:00",
+     "20:00"
+    ],
+    "cash": [
+     "09:00",
+     "19:00"
+    ]
+   },
+   "winter": {
+    "zoo": [
+     "09:00",
+     "18:00"
+    ],
+    "cash": [
+     "09:00",
+     "17:00"
+    ]
+   }
+  }
+ },
+ "zones": [
+  {
+   "id": "exotarium",
+   "kind": "pavilion",
+   "title": {
+    "kz": "Экзотариум",
+    "ru": "Экзотариум",
+    "en": "Exotarium"
+   }
+  },
+  {
+   "id": "aquarium",
+   "kind": "pavilion",
+   "title": {
+    "kz": "Аквариум",
+    "ru": "Аквариум",
+    "en": "Aquarium"
+   }
+  },
+  {
+   "id": "birdhouse",
+   "kind": "pavilion",
+   "title": {
+    "kz": "Құстар үйі",
+    "ru": "Дом птиц",
+    "en": "Bird House"
+   }
+  },
+  {
+   "id": "primates",
+   "kind": "pavilion",
+   "title": {
+    "kz": "Приматтар",
+    "ru": "Приматы",
+    "en": "Primates"
+   }
+  },
+  {
+   "id": "predators",
+   "kind": "pavilion",
+   "title": {
+    "kz": "Жыртқыштар үйі",
+    "ru": "Дом хищников",
+    "en": "Predator House"
+   }
+  },
+  {
+   "id": "elephant",
+   "kind": "enclosure",
+   "title": {
+    "kz": "Піл",
+    "ru": "Слон",
+    "en": "Elephant"
+   }
+  },
+  {
+   "id": "giraffes",
+   "kind": "enclosure",
+   "title": {
+    "kz": "Керіктер",
+    "ru": "Жирафы",
+    "en": "Giraffes"
+   }
+  },
+  {
+   "id": "hippos",
+   "kind": "enclosure",
+   "title": {
+    "kz": "Бегемоттар",
+    "ru": "Бегемоты",
+    "en": "Hippos"
+   }
+  },
+  {
+   "id": "rhinos",
+   "kind": "enclosure",
+   "title": {
+    "kz": "Мүйізтұмсықтар",
+    "ru": "Носороги",
+    "en": "Rhinos"
+   }
+  },
+  {
+   "id": "polarbear",
+   "kind": "enclosure",
+   "title": {
+    "kz": "Ақ аю",
+    "ru": "Белый медведь",
+    "en": "Polar bear"
+   }
+  },
+  {
+   "id": "bears",
+   "kind": "enclosure",
+   "title": {
+    "kz": "Аюлар",
+    "ru": "Медведи",
+    "en": "Bears"
+   }
+  },
+  {
+   "id": "tigers",
+   "kind": "enclosure",
+   "title": {
+    "kz": "Жолбарыстар",
+    "ru": "Тигры",
+    "en": "Tigers"
+   }
+  },
+  {
+   "id": "lions",
+   "kind": "enclosure",
+   "title": {
+    "kz": "Арыстандар",
+    "ru": "Львы",
+    "en": "Lions"
+   }
+  },
+  {
+   "id": "wolves",
+   "kind": "enclosure",
+   "title": {
+    "kz": "Поляр қасқырлары",
+    "ru": "Полярные волки",
+    "en": "Arctic wolves"
+   }
+  },
+  {
+   "id": "zebras",
+   "kind": "enclosure",
+   "title": {
+    "kz": "Зебралар",
+    "ru": "Зебры",
+    "en": "Zebras"
+   }
+  },
+  {
+   "id": "kangaroo",
+   "kind": "enclosure",
+   "title": {
+    "kz": "Кенгурулар",
+    "ru": "Кенгуру",
+    "en": "Kangaroos"
+   }
+  },
+  {
+   "id": "crocodiles",
+   "kind": "enclosure",
+   "title": {
+    "kz": "Қолтырауындар",
+    "ru": "Крокодилы",
+    "en": "Crocodiles"
+   }
+  },
+  {
+   "id": "raptors",
+   "kind": "zone",
+   "title": {
+    "kz": "Жыртқыш құстар",
+    "ru": "Хищные птицы",
+    "en": "Birds of prey"
+   }
+  },
+  {
+   "id": "waterfowl",
+   "kind": "zone",
+   "title": {
+    "kz": "Суда жүзетін құстар",
+    "ru": "Водоплавающие птицы",
+    "en": "Waterfowl"
+   }
+  },
+  {
+   "id": "pheasants",
+   "kind": "zone",
+   "title": {
+    "kz": "Қырғауылдар қатары",
+    "ru": "Фазаний ряд",
+    "en": "Pheasant Row"
+   }
+  },
+  {
+   "id": "ungulates",
+   "kind": "zone",
+   "title": {
+    "kz": "Тұяқтылар",
+    "ru": "Копытные",
+    "en": "Hoofed animals"
+   }
+  },
+  {
+   "id": "pond",
+   "kind": "zone",
+   "title": {
+    "kz": "Тоған",
+    "ru": "Пруд",
+    "en": "Pond"
+   }
+  }
+ ],
+ "places": [
+  {
+   "id": "exotarium",
+   "zone": "exotarium",
+   "kind": "animal",
+   "cat": "pavilion",
+   "icon": "a-snake",
+   "lat": 43.2648,
+   "lng": 76.9735,
+   "approx": true,
+   "major": true,
+   "title": {
+    "kz": "Экзотариум",
+    "ru": "Экзотариум",
+    "en": "Exotarium"
+   },
+   "desc": {
+    "kz": "Бауырымен жорғалаушылар, қосмекенділер және омыртқасыздар",
+    "ru": "Рептилии, амфибии и беспозвоночные",
+    "en": "Reptiles, amphibians and invertebrates"
+   },
+   "hours": [
+    "10:00",
+    "18:00"
+   ],
+   "sanitaryDay": 2
+  },
+  {
+   "id": "aquarium",
+   "zone": "aquarium",
+   "kind": "animal",
+   "cat": "pavilion",
+   "icon": "a-fish",
+   "lat": 43.2643,
+   "lng": 76.9727,
+   "approx": true,
+   "major": true,
+   "title": {
+    "kz": "Аквариум",
+    "ru": "Аквариум",
+    "en": "Aquarium"
+   },
+   "desc": {
+    "kz": "Тұщы және теңіз суының балықтары",
+    "ru": "Пресноводные и морские рыбы",
+    "en": "Freshwater and marine fish"
+   }
+  },
+  {
+   "id": "birdhouse",
+   "zone": "birdhouse",
+   "kind": "animal",
+   "cat": "pavilion",
+   "icon": "a-birdhouse",
+   "lat": 43.2638,
+   "lng": 76.9761,
+   "approx": true,
+   "major": true,
+   "title": {
+    "kz": "Құстар үйі",
+    "ru": "Дом птиц",
+    "en": "Bird House"
+   },
+   "desc": {
+    "kz": "Тропиктік және экзотикалық құстар",
+    "ru": "Тропические и экзотические птицы",
+    "en": "Tropical and exotic birds"
+   },
+   "sanitaryDay": 4
+  },
+  {
+   "id": "primates",
+   "zone": "primates",
+   "kind": "animal",
+   "cat": "pavilion",
+   "icon": "a-monkey",
+   "lat": 43.263,
+   "lng": 76.9748,
+   "approx": true,
+   "major": true,
+   "title": {
+    "kz": "Приматтар",
+    "ru": "Приматы",
+    "en": "Primates"
+   },
+   "desc": {
+    "kz": "Маймылдар павильоны",
+    "ru": "Павильон обезьян",
+    "en": "Monkey pavilion"
+   }
+  },
+  {
+   "id": "predators",
+   "zone": "predators",
+   "kind": "animal",
+   "cat": "pavilion",
+   "icon": "a-paw",
+   "lat": 43.2622,
+   "lng": 76.9734,
+   "approx": true,
+   "major": true,
+   "title": {
+    "kz": "Жыртқыштар үйі",
+    "ru": "Дом хищников",
+    "en": "Predator House"
+   },
+   "desc": {
+    "kz": "Ірі және кіші жыртқыштар",
+    "ru": "Крупные и мелкие хищники",
+    "en": "Large and small carnivores"
+   }
+  },
+  {
+   "id": "elephant",
+   "zone": "elephant",
+   "kind": "animal",
+   "cat": "enclosure",
+   "icon": "a-elephant",
+   "lat": 43.2641,
+   "lng": 76.9746,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Піл",
+    "ru": "Слон",
+    "en": "Elephant"
+   }
+  },
+  {
+   "id": "giraffes",
+   "zone": "giraffes",
+   "kind": "animal",
+   "cat": "enclosure",
+   "icon": "a-giraffe",
+   "lat": 43.2634,
+   "lng": 76.9766,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Керіктер",
+    "ru": "Жирафы",
+    "en": "Giraffes"
+   }
+  },
+  {
+   "id": "hippos",
+   "zone": "hippos",
+   "kind": "animal",
+   "cat": "enclosure",
+   "icon": "a-hippo",
+   "lat": 43.2626,
+   "lng": 76.9759,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Бегемоттар",
+    "ru": "Бегемоты",
+    "en": "Hippos"
+   }
+  },
+  {
+   "id": "rhinos",
+   "zone": "rhinos",
+   "kind": "animal",
+   "cat": "enclosure",
+   "icon": "a-rhino",
+   "lat": 43.2631,
+   "lng": 76.9774,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Мүйізтұмсықтар",
+    "ru": "Носороги",
+    "en": "Rhinos"
+   }
+  },
+  {
+   "id": "polarbear",
+   "zone": "polarbear",
+   "kind": "animal",
+   "cat": "enclosure",
+   "icon": "a-polar",
+   "lat": 43.262,
+   "lng": 76.975,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Ақ аю",
+    "ru": "Белый медведь",
+    "en": "Polar bear"
+   }
+  },
+  {
+   "id": "bears",
+   "zone": "bears",
+   "kind": "animal",
+   "cat": "enclosure",
+   "icon": "a-bear",
+   "lat": 43.2617,
+   "lng": 76.9726,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Аюлар",
+    "ru": "Медведи",
+    "en": "Bears"
+   }
+  },
+  {
+   "id": "tigers",
+   "zone": "tigers",
+   "kind": "animal",
+   "cat": "enclosure",
+   "icon": "a-tiger",
+   "lat": 43.2625,
+   "lng": 76.9721,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Жолбарыстар",
+    "ru": "Тигры",
+    "en": "Tigers"
+   }
+  },
+  {
+   "id": "lions",
+   "zone": "lions",
+   "kind": "animal",
+   "cat": "enclosure",
+   "icon": "a-lion",
+   "lat": 43.2631,
+   "lng": 76.972,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Арыстандар",
+    "ru": "Львы",
+    "en": "Lions"
+   }
+  },
+  {
+   "id": "wolves",
+   "zone": "wolves",
+   "kind": "animal",
+   "cat": "enclosure",
+   "icon": "a-wolf",
+   "lat": 43.2617,
+   "lng": 76.9766,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Поляр қасқырлары",
+    "ru": "Полярные волки",
+    "en": "Arctic wolves"
+   }
+  },
+  {
+   "id": "zebras",
+   "zone": "zebras",
+   "kind": "animal",
+   "cat": "enclosure",
+   "icon": "a-zebra",
+   "lat": 43.264,
+   "lng": 76.9772,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Зебралар",
+    "ru": "Зебры",
+    "en": "Zebras"
+   }
+  },
+  {
+   "id": "kangaroo",
+   "zone": "kangaroo",
+   "kind": "animal",
+   "cat": "enclosure",
+   "icon": "a-kangaroo",
+   "lat": 43.2647,
+   "lng": 76.9766,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Кенгурулар",
+    "ru": "Кенгуру",
+    "en": "Kangaroos"
+   }
+  },
+  {
+   "id": "crocodiles",
+   "zone": "crocodiles",
+   "kind": "animal",
+   "cat": "enclosure",
+   "icon": "a-croc",
+   "lat": 43.2645,
+   "lng": 76.9754,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Қолтырауындар",
+    "ru": "Крокодилы",
+    "en": "Crocodiles"
+   }
+  },
+  {
+   "id": "raptors",
+   "zone": "raptors",
+   "kind": "animal",
+   "cat": "zone",
+   "icon": "a-eagle",
+   "lat": 43.265,
+   "lng": 76.9748,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Жыртқыш құстар",
+    "ru": "Хищные птицы",
+    "en": "Birds of prey"
+   }
+  },
+  {
+   "id": "waterfowl",
+   "zone": "waterfowl",
+   "kind": "animal",
+   "cat": "zone",
+   "icon": "a-duck",
+   "lat": 43.2634,
+   "lng": 76.9733,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Суда жүзетін құстар",
+    "ru": "Водоплавающие птицы",
+    "en": "Waterfowl"
+   }
+  },
+  {
+   "id": "pheasants",
+   "zone": "pheasants",
+   "kind": "animal",
+   "cat": "zone",
+   "icon": "a-pheasant",
+   "lat": 43.2651,
+   "lng": 76.9759,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Қырғауылдар қатары",
+    "ru": "Фазаний ряд",
+    "en": "Pheasant Row"
+   }
+  },
+  {
+   "id": "ungulates",
+   "zone": "ungulates",
+   "kind": "animal",
+   "cat": "zone",
+   "icon": "a-deer",
+   "lat": 43.2622,
+   "lng": 76.9775,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Тұяқтылар",
+    "ru": "Копытные",
+    "en": "Hoofed animals"
+   }
+  },
+  {
+   "id": "pond",
+   "zone": "pond",
+   "kind": "animal",
+   "cat": "zone",
+   "icon": "a-pond",
+   "lat": 43.2637,
+   "lng": 76.9737,
+   "approx": true,
+   "major": true,
+   "title": {
+    "kz": "Тоған",
+    "ru": "Пруд",
+    "en": "Pond"
+   },
+   "desc": {
+    "kz": "Тоған және оның тұрғындары",
+    "ru": "Пруд и его обитатели",
+    "en": "The pond and its residents"
+   }
+  },
+  {
+   "id": "entrance",
+   "kind": "infra",
+   "cat": "entrance",
+   "icon": "i-ticket",
+   "lat": 43.2655,
+   "lng": 76.9725,
+   "approx": true,
+   "major": true,
+   "title": {
+    "kz": "Орталық кіреберіс және касса",
+    "ru": "Центральный вход и касса",
+    "en": "Main entrance and ticket office"
+   },
+   "desc": {
+    "kz": "Келушілерге арналған жалғыз кіреберіс және шығыс",
+    "ru": "Единственный вход и выход для посетителей",
+    "en": "The only entrance and exit for visitors"
+   }
+  },
+  {
+   "id": "wc-1",
+   "kind": "infra",
+   "cat": "wc",
+   "icon": "i-wc",
+   "lat": 43.265,
+   "lng": 76.9721,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Дәретхана",
+    "ru": "Туалет",
+    "en": "Toilet"
+   }
+  },
+  {
+   "id": "wc-2",
+   "kind": "infra",
+   "cat": "wc",
+   "icon": "i-wc",
+   "lat": 43.2627,
+   "lng": 76.9768,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Дәретхана",
+    "ru": "Туалет",
+    "en": "Toilet"
+   }
+  },
+  {
+   "id": "cafe-1",
+   "kind": "infra",
+   "cat": "food",
+   "icon": "i-cafe",
+   "lat": 43.2646,
+   "lng": 76.9741,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Кафе",
+    "ru": "Кафе",
+    "en": "Café"
+   }
+  },
+  {
+   "id": "cafe-2",
+   "kind": "infra",
+   "cat": "food",
+   "icon": "i-cafe",
+   "lat": 43.2623,
+   "lng": 76.9745,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Кафе",
+    "ru": "Кафе",
+    "en": "Café"
+   }
+  },
+  {
+   "id": "kiosk-1",
+   "kind": "infra",
+   "cat": "food",
+   "icon": "i-kiosk",
+   "lat": 43.2652,
+   "lng": 76.9734,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Дүңгіршек",
+    "ru": "Ларёк",
+    "en": "Kiosk"
+   }
+  },
+  {
+   "id": "kiosk-2",
+   "kind": "infra",
+   "cat": "food",
+   "icon": "i-kiosk",
+   "lat": 43.2633,
+   "lng": 76.9755,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Дүңгіршек",
+    "ru": "Ларёк",
+    "en": "Kiosk"
+   }
+  },
+  {
+   "id": "med",
+   "kind": "infra",
+   "cat": "med",
+   "icon": "i-med",
+   "lat": 43.2651,
+   "lng": 76.9728,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Медпункт",
+    "ru": "Медпункт",
+    "en": "First aid"
+   }
+  },
+  {
+   "id": "gazebo-1",
+   "kind": "infra",
+   "cat": "gazebo",
+   "icon": "i-gazebo",
+   "lat": 43.2641,
+   "lng": 76.9757,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Шатыр",
+    "ru": "Беседка",
+    "en": "Gazebo"
+   }
+  },
+  {
+   "id": "gazebo-2",
+   "kind": "infra",
+   "cat": "gazebo",
+   "icon": "i-gazebo",
+   "lat": 43.2619,
+   "lng": 76.9757,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Шатыр",
+    "ru": "Беседка",
+    "en": "Gazebo"
+   }
+  },
+  {
+   "id": "playground",
+   "kind": "infra",
+   "cat": "play",
+   "icon": "i-play",
+   "lat": 43.2645,
+   "lng": 76.9719,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Балалар алаңы",
+    "ru": "Детская площадка",
+    "en": "Playground"
+   }
+  },
+  {
+   "id": "info",
+   "kind": "infra",
+   "cat": "info",
+   "icon": "i-info",
+   "lat": 43.2653,
+   "lng": 76.973,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Ақпарат",
+    "ru": "Информация",
+    "en": "Information"
+   }
+  },
+  {
+   "id": "guard",
+   "kind": "infra",
+   "cat": "guard",
+   "icon": "i-guard",
+   "lat": 43.2652,
+   "lng": 76.9719,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Күзет",
+    "ru": "Охрана",
+    "en": "Security"
+   },
+   "desc": {
+    "kz": "Бала адасып кетсе — осында хабарласыңыз",
+    "ru": "Если потерялся ребёнок — обращайтесь сюда",
+    "en": "If a child is lost, come here"
+   }
+  },
+  {
+   "id": "parking",
+   "kind": "outside",
+   "cat": "parking",
+   "icon": "i-parking",
+   "lat": 43.2662,
+   "lng": 76.9736,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Келушілер автотұрағы",
+    "ru": "Парковка для посетителей",
+    "en": "Visitor parking"
+   },
+   "note": {
+    "kz": "Маусымда жиі бос орын болмайды — қоғамдық көлікті пайдаланыңыз",
+    "ru": "В сезон часто нет мест — удобнее приехать на общественном транспорте",
+    "en": "Often full in season — public transport is easier"
+   }
+  },
+  {
+   "id": "bus",
+   "kind": "outside",
+   "cat": "bus",
+   "icon": "i-bus",
+   "lat": 43.2664,
+   "lng": 76.9719,
+   "approx": true,
+   "major": false,
+   "title": {
+    "kz": "Аялдама",
+    "ru": "Остановка",
+    "en": "Bus stop"
+   },
+   "desc": {
+    "kz": "№ 60 автобус",
+    "ru": "Автобус № 60",
+    "en": "Bus No. 60"
+   }
+  }
+ ],
+ "animals": [],
+ "_animalsNote": "Обитатели (виды) — по полной коллекции от заказчика.",
+ "icons": {
+  "i-parking": {
+   "placeholder": false
+  },
+  "a-giraffe": {
+   "placeholder": true
+  },
+  "a-snake": {
+   "placeholder": true
+  },
+  "a-fish": {
+   "placeholder": true
+  },
+  "i-kiosk": {
+   "placeholder": false
+  },
+  "a-bear": {
+   "placeholder": true
+  },
+  "a-lion": {
+   "placeholder": true
+  },
+  "a-croc": {
+   "placeholder": true
+  },
+  "i-wc": {
+   "placeholder": false
+  },
+  "a-birdhouse": {
+   "placeholder": true
+  },
+  "a-kangaroo": {
+   "placeholder": true
+  },
+  "a-paw": {
+   "placeholder": true
+  },
+  "a-deer": {
+   "placeholder": true
+  },
+  "i-gazebo": {
+   "placeholder": false
+  },
+  "a-hippo": {
+   "placeholder": true
+  },
+  "a-zebra": {
+   "placeholder": true
+  },
+  "a-monkey": {
+   "placeholder": true
+  },
+  "a-tiger": {
+   "placeholder": true
+  },
+  "i-cafe": {
+   "placeholder": false
+  },
+  "i-info": {
+   "placeholder": false
+  },
+  "a-polar": {
+   "placeholder": true
+  },
+  "a-pond": {
+   "placeholder": true
+  },
+  "i-ticket": {
+   "placeholder": false
+  },
+  "a-rhino": {
+   "placeholder": true
+  },
+  "i-bus": {
+   "placeholder": false
+  },
+  "a-pheasant": {
+   "placeholder": true
+  },
+  "a-elephant": {
+   "placeholder": true
+  },
+  "a-wolf": {
+   "placeholder": true
+  },
+  "i-med": {
+   "placeholder": false
+  },
+  "a-duck": {
+   "placeholder": true
+  },
+  "i-guard": {
+   "placeholder": false
+  },
+  "i-play": {
+   "placeholder": false
+  },
+  "a-eagle": {
+   "placeholder": true
+  },
+  "r-feed": {
+   "placeholder": true
+  },
+  "r-knock": {
+   "placeholder": true
+  },
+  "r-climb": {
+   "placeholder": true
+  },
+  "r-smoke": {
+   "placeholder": true
+  },
+  "r-alco": {
+   "placeholder": true
+  },
+  "r-pets": {
+   "placeholder": true
+  },
+  "r-flash": {
+   "placeholder": true
+  },
+  "r-litter": {
+   "placeholder": true
+  },
+  "r-grass": {
+   "placeholder": true
+  },
+  "r-scooter": {
+   "placeholder": true
+  },
+  "r-noise": {
+   "placeholder": true
+  },
+  "r-pyro": {
+   "placeholder": true
+  },
+  "r-kids": {
+   "placeholder": true
+  }
+ },
+ "rules": {
+  "warning": {
+   "kz": "Ережені бұзғаны үшін келуші билет құны қайтарылмай хайуанаттар бағынан шығарылуы мүмкін.",
+   "ru": "За нарушение правил посетитель может быть выведен из зоопарка без возврата стоимости билета.",
+   "en": "Visitors who break the rules may be removed from the zoo without a ticket refund."
+  },
+  "short": [
+   {
+    "icon": "r-feed",
+    "text": {
+     "kz": "Жануарларды тамақтандыруға болмайды",
+     "ru": "Не кормить животных",
+     "en": "Do not feed the animals"
+    }
+   },
+   {
+    "icon": "r-knock",
+    "text": {
+     "kz": "Торды қақпаңыз, жануарларды мазаламаңыз",
+     "ru": "Не стучать и не дразнить животных",
+     "en": "Do not knock or tease the animals"
+    }
+   },
+   {
+    "icon": "r-climb",
+    "text": {
+     "kz": "Қоршаулардан асуға болмайды",
+     "ru": "Не перелезать ограждения",
+     "en": "Do not climb the barriers"
+    }
+   },
+   {
+    "icon": "r-smoke",
+    "text": {
+     "kz": "Темекі шегуге болмайды",
+     "ru": "Не курить",
+     "en": "No smoking"
+    }
+   },
+   {
+    "icon": "r-alco",
+    "text": {
+     "kz": "Алкогольсіз",
+     "ru": "Без алкоголя",
+     "en": "No alcohol"
+    }
+   },
+   {
+    "icon": "r-pets",
+    "text": {
+     "kz": "Үй жануарларымен кіруге болмайды",
+     "ru": "Без домашних животных",
+     "en": "No pets"
+    }
+   },
+   {
+    "icon": "r-flash",
+    "text": {
+     "kz": "Жарқылмен суретке түсіруге болмайды",
+     "ru": "Не фотографировать со вспышкой",
+     "en": "No flash photography"
+    }
+   },
+   {
+    "icon": "r-litter",
+    "text": {
+     "kz": "Қоқыс тастамаңыз",
+     "ru": "Не мусорить",
+     "en": "Do not litter"
+    }
+   },
+   {
+    "icon": "r-grass",
+    "text": {
+     "kz": "Көгалмен жүрмеңіз",
+     "ru": "Не ходить по газонам",
+     "en": "Keep off the grass"
+    }
+   },
+   {
+    "icon": "r-scooter",
+    "text": {
+     "kz": "Самокат, ролик, велосипедпен жүруге болмайды",
+     "ru": "Без самокатов, роликов и велосипедов",
+     "en": "No scooters, skates or bicycles"
+    }
+   },
+   {
+    "icon": "r-noise",
+    "text": {
+     "kz": "Шуламаңыз",
+     "ru": "Не шуметь",
+     "en": "Keep noise down"
+    }
+   },
+   {
+    "icon": "r-pyro",
+    "text": {
+     "kz": "Пиротехникасыз",
+     "ru": "Без пиротехники",
+     "en": "No fireworks"
+    }
+   },
+   {
+    "icon": "r-kids",
+    "ok": true,
+    "text": {
+     "kz": "Балалар ересектердің қарауында болсын",
+     "ru": "Дети — под присмотром взрослых",
+     "en": "Keep children supervised"
+    }
+   }
+  ],
+  "full": [
+   {
+    "kz": "Жануарларды тамақтандыруға, оларға тамақ пен заттар лақтыруға тыйым салынады.",
+    "ru": "Запрещается кормить животных, бросать в вольеры еду и предметы.",
+    "en": "Do not feed the animals or throw food or objects into enclosures."
+   },
+   {
+    "kz": "Жануарларды мазалауға, қорқытуға, торлар мен әйнекті қағуға тыйым салынады.",
+    "ru": "Запрещается дразнить и пугать животных, стучать по вольерам и стёклам.",
+    "en": "Do not tease or frighten the animals or knock on enclosures and glass."
+   },
+   {
+    "kz": "Қоршаулардан асуға, тор арқылы қол-аяқ созуға, балаларды қоршауларға отырғызуға тыйым салынады.",
+    "ru": "Запрещается перелезать через ограждения, просовывать руки сквозь сетки, сажать детей на барьеры.",
+    "en": "Do not climb barriers, reach through fences or sit children on barriers."
+   },
+   {
+    "kz": "Балаларды қараусыз қалдыруға болмайды. Балалар үшін ата-аналары немесе оларды алмастыратын адамдар жауап береді.",
+    "ru": "Нельзя оставлять детей без присмотра. За детей отвечают родители или сопровождающие.",
+    "en": "Do not leave children unattended. Parents or accompanying adults are responsible for them."
+   },
+   {
+    "kz": "Үй жануарларымен кіруге тыйым салынады.",
+    "ru": "Вход с домашними животными запрещён.",
+    "en": "Pets are not allowed."
+   },
+   {
+    "kz": "Темекі шегуге, алкоголь ішуге және мас күйде келуге тыйым салынады.",
+    "ru": "Запрещается курить, распивать алкоголь и находиться в нетрезвом виде.",
+    "en": "Smoking, drinking alcohol and being intoxicated are not allowed."
+   },
+   {
+    "kz": "Жануарларды жарқылмен суретке түсіруге тыйым салынады.",
+    "ru": "Запрещается фотографировать животных со вспышкой.",
+    "en": "Flash photography of animals is not allowed."
+   },
+   {
+    "kz": "Көгалмен жүруге, өсімдіктерді жұлуға, бұтақтарды сындыруға тыйым салынады.",
+    "ru": "Запрещается ходить по газонам, рвать растения и ломать ветки.",
+    "en": "Do not walk on lawns, pick plants or break branches."
+   },
+   {
+    "kz": "Аумақта скейтборд, ролик, велосипед, самокат пен электрокөлікпен жүруге тыйым салынады. Кішкентай балаларға арналған арбалар мен көлік құралдарына рұқсат етіледі.",
+    "ru": "Запрещается передвигаться на скейтбордах, роликах, велосипедах, самокатах и электротранспорте. Коляски и детские средства передвижения для малышей разрешены.",
+    "en": "Skateboards, roller skates, bicycles, scooters and e-vehicles are not allowed. Strollers and small children's ride-ons are allowed."
+   },
+   {
+    "kz": "Шуламаңыз, жүгірмеңіз, қатты музыка қоспаңыз, пиротехника қолданбаңыз.",
+    "ru": "Не шумите, не бегайте, не включайте громкую музыку, не используйте пиротехнику.",
+    "en": "Do not shout, run, play loud music or use fireworks."
+   },
+   {
+    "kz": "Қоқысты тек қоқыс жәшіктеріне тастаңыз.",
+    "ru": "Выбрасывайте мусор только в урны.",
+    "en": "Put litter in bins only."
+   },
+   {
+    "kz": "Көмек қажет болса, хайуанаттар бағының қызметкерлеріне немесе күзетке хабарласыңыз.",
+    "ru": "Если нужна помощь — обращайтесь к сотрудникам зоопарка или охране.",
+    "en": "If you need help, ask zoo staff or security."
+   }
+  ],
+  "note": {
+   "kz": "Ережелердің уақытша мәтіні. Бекітілген нұсқасы кейінірек жарияланады.",
+   "ru": "Временный текст правил. Утверждённая редакция будет опубликована позже.",
+   "en": "Temporary text of the rules. The approved version will be published later."
+  }
+ },
+ "info": {
+  "site": "https://almatyzoo.kz/ru/",
+  "address": {
+   "kz": "Алматы қ., Есенберлин к-сі, 166",
+   "ru": "г. Алматы, ул. Есенберлина, 166",
+   "en": "166 Yesenberlin St, Almaty"
+  },
+  "facts": [
+   {
+    "n": "1937",
+    "t": {
+     "kz": "құрылған жылы",
+     "ru": "год основания",
+     "en": "founded"
+    }
+   },
+   {
+    "n": "21",
+    "t": {
+     "kz": "гектар аумақ",
+     "ru": "гектаров площадь",
+     "en": "hectares"
+    }
+   },
+   {
+    "n": "380+",
+    "t": {
+     "kz": "жануар түрі",
+     "ru": "видов животных",
+     "en": "animal species"
+    }
+   },
+   {
+    "n": "~80",
+    "t": {
+     "kz": "түр Қызыл кітапқа енген",
+     "ru": "видов из Красной книги",
+     "en": "Red Book species"
+    }
+   }
+  ],
+  "programs": [
+   {
+    "title": {
+     "kz": "Волонтерлік",
+     "ru": "Волонтёрство",
+     "en": "Volunteering"
+    },
+    "text": {
+     "kz": "Хайуанаттар бағына көмектесіп, жануарлар туралы көбірек біліңіз.",
+     "ru": "Помогайте зоопарку и узнавайте больше о животных.",
+     "en": "Help the zoo and learn more about animals."
+    },
+    "url": "https://almatyzoo.kz/ru/volunteering/"
+   },
+   {
+    "title": {
+     "kz": "Зоомектеп",
+     "ru": "Зоошкола",
+     "en": "Zoo School"
+    },
+    "text": {
+     "kz": "Балаларға арналған жануарлар әлемі туралы сабақтар.",
+     "ru": "Занятия для детей о мире животных.",
+     "en": "Classes for children about the animal world."
+    },
+    "url": "https://almatyzoo.kz/ru/zoo-school/"
+   },
+   {
+    "title": {
+     "kz": "Экскурсиялар",
+     "ru": "Экскурсии",
+     "en": "Guided tours"
+    },
+    "text": {
+     "kz": "Хайуанаттар бағы бойынша экскурсовод бастайтын серуендер.",
+     "ru": "Прогулки по зоопарку с экскурсоводом.",
+     "en": "Walks around the zoo with a guide."
+    },
+    "url": "https://almatyzoo.kz/ru/excursions/"
+   }
+  ],
+  "lostChild": {
+   "kz": "Бірден ең жақын күзетшіге немесе хайуанаттар бағының қызметкеріне хабарласыңыз — олар рация арқылы барлық бекеттерге хабар береді. Бала табылғанша орныңыздан кетпеңіз.",
+   "ru": "Сразу обратитесь к ближайшему охраннику или сотруднику зоопарка — они передадут сообщение по рации на все посты. Оставайтесь на месте, пока ребёнка не найдут.",
+   "en": "Tell the nearest security guard or zoo staff member right away; they will radio all posts. Stay where you are until the child is found."
+  },
+  "bus": {
+   "kz": "№ 60 автобус. Көпшілік мәдениет саябағына дейін барып, саябақ арқылы хайуанаттар бағына жаяу жетеді — бұл ыңғайлы жол.",
+   "ru": "Автобус № 60. Удобнее всего доехать до парка культуры и пройти к зоопарку пешком через парк.",
+   "en": "Bus No. 60. The easiest way is to ride to the culture park and walk to the zoo through the park."
+  },
+  "parking": {
+   "kz": "Келушілер автотұрағы бар, бірақ маусымда ол жиі толы болады. Қоғамдық көлікпен келген ыңғайлы.",
+   "ru": "Парковка для посетителей есть, но в сезон она часто заполнена. Удобнее приехать на общественном транспорте.",
+   "en": "There is visitor parking, but it is often full in season. Public transport is more convenient."
+  }
+ },
+ "contacts": {
+  "_note": "Телефон, WhatsApp и соцсети заказчик передаст позже; пустые поля не показываются.",
+  "phone": "",
+  "whatsapp": "",
+  "social": [],
+  "email": "info@almatyzoo.kz"
+ },
+ "ui": {
+  "docTitle": {
+   "kz": "Almaty Zoo — жолсілтеме",
+   "ru": "Almaty Zoo — путеводитель",
+   "en": "Almaty Zoo — guide"
+  },
+  "tabMap": {
+   "kz": "Карта",
+   "ru": "Карта",
+   "en": "Map"
+  },
+  "tabColl": {
+   "kz": "Коллекция",
+   "ru": "Коллекция",
+   "en": "Collection"
+  },
+  "tabRules": {
+   "kz": "Ережелер",
+   "ru": "Правила",
+   "en": "Rules"
+  },
+  "tabMore": {
+   "kz": "Тағы",
+   "ru": "Ещё",
+   "en": "More"
+  },
+  "search": {
+   "kz": "Іздеу",
+   "ru": "Поиск",
+   "en": "Search"
+  },
+  "searchPh": {
+   "kz": "Жануар немесе орын",
+   "ru": "Животное или место",
+   "en": "Animal or place"
+  },
+  "searchHint": {
+   "kz": "Кемінде 2 әріп енгізіңіз",
+   "ru": "Введите хотя бы 2 буквы",
+   "en": "Type at least 2 letters"
+  },
+  "searchEmpty": {
+   "kz": "Ештеңе табылмады",
+   "ru": "Ничего не найдено",
+   "en": "Nothing found"
+  },
+  "searchAnimals": {
+   "kz": "Жануарлар",
+   "ru": "Животные",
+   "en": "Animals"
+  },
+  "searchPlaces": {
+   "kz": "Орындар",
+   "ru": "Объекты",
+   "en": "Places"
+  },
+  "back": {
+   "kz": "Артқа",
+   "ru": "Назад",
+   "en": "Back"
+  },
+  "close": {
+   "kz": "Жабу",
+   "ru": "Закрыть",
+   "en": "Close"
+  },
+  "whereAmI": {
+   "kz": "Мен қайдамын?",
+   "ru": "Где я?",
+   "en": "Where am I?"
+  },
+  "near": {
+   "kz": "Жақын маңда",
+   "ru": "Найти рядом",
+   "en": "Nearby"
+  },
+  "nearToilet": {
+   "kz": "Дәретхана",
+   "ru": "Туалет",
+   "en": "Toilet"
+  },
+  "nearCafe": {
+   "kz": "Кафе",
+   "ru": "Кафе",
+   "en": "Café"
+  },
+  "nearMed": {
+   "kz": "Медпункт",
+   "ru": "Медпункт",
+   "en": "First aid"
+  },
+  "nearExit": {
+   "kz": "Шығысқа",
+   "ru": "К выходу",
+   "en": "To the exit"
+  },
+  "backToZoo": {
+   "kz": "Хайуанаттар бағына",
+   "ru": "К зоопарку",
+   "en": "Back to the zoo"
+  },
+  "filter_all": {
+   "kz": "Барлығы",
+   "ru": "Все",
+   "en": "All"
+  },
+  "filter_animal": {
+   "kz": "Жануарлар",
+   "ru": "Животные",
+   "en": "Animals"
+  },
+  "filter_infra": {
+   "kz": "Инфрақұрылым",
+   "ru": "Инфраструктура",
+   "en": "Facilities"
+  },
+  "locating": {
+   "kz": "Орныңызды анықтаймыз…",
+   "ru": "Определяем местоположение…",
+   "en": "Finding your location…"
+  },
+  "youAreHere": {
+   "kz": "Сіз осындасыз",
+   "ru": "Вы здесь",
+   "en": "You are here"
+  },
+  "accuracy": {
+   "kz": "Дәлдігі шамамен {n} м",
+   "ru": "Точность около {n} м",
+   "en": "Accuracy about {n} m"
+  },
+  "outside": {
+   "kz": "Сіз хайуанаттар бағының аумағынан тыссыз",
+   "ru": "Вы вне территории зоопарка",
+   "en": "You are outside the zoo"
+  },
+  "toEntrance": {
+   "kz": "Орталық кіреберіске дейін {d}",
+   "ru": "До центрального входа {d}",
+   "en": "{d} to the main entrance"
+  },
+  "routeTitle": {
+   "kz": "Кіреберіске бағыт",
+   "ru": "Направление ко входу",
+   "en": "Direction to the entrance"
+  },
+  "geoDenied": {
+   "kz": "Геолокацияға рұқсат жоқ. Оны телефон баптауларынан қосыңыз.",
+   "ru": "Нет доступа к геолокации. Разрешите его в настройках телефона.",
+   "en": "Location access is off. Allow it in your phone settings."
+  },
+  "geoUnavailable": {
+   "kz": "Орынды анықтау мүмкін болмады. Кейінірек қайталаңыз.",
+   "ru": "Не удалось определить местоположение. Попробуйте ещё раз.",
+   "en": "Could not get your location. Please try again."
+  },
+  "noGpsNear": {
+   "kz": "Орныңыз белгісіз — картада барлық нысандар көрсетілді",
+   "ru": "Местоположение неизвестно — на карте показаны все такие объекты",
+   "en": "Location unknown — all such places are shown on the map"
+  },
+  "nothingNear": {
+   "kz": "Жақын маңда ештеңе жоқ",
+   "ru": "Рядом ничего не найдено",
+   "en": "Nothing found nearby"
+  },
+  "nearestIs": {
+   "kz": "Ең жақыны: {name}",
+   "ru": "Ближайший: {name}",
+   "en": "Nearest: {name}"
+  },
+  "noGpsExit": {
+   "kz": "Орныңыз белгісіз — картада орталық кіреберіс көрсетілді",
+   "ru": "Местоположение неизвестно — на карте показан центральный вход",
+   "en": "Location unknown — the main entrance is shown on the map"
+  },
+  "exitTitle": {
+   "kz": "Орталық кіреберіс — шығыс",
+   "ru": "Выход — через центральный вход",
+   "en": "Exit — through the main entrance"
+  },
+  "exitDir": {
+   "kz": "Бағыты: {dir}",
+   "ru": "Направление: {dir}",
+   "en": "Direction: {dir}"
+  },
+  "dir0": {
+   "kz": "солтүстік",
+   "ru": "север",
+   "en": "north"
+  },
+  "dir1": {
+   "kz": "солтүстік-шығыс",
+   "ru": "северо-восток",
+   "en": "north-east"
+  },
+  "dir2": {
+   "kz": "шығыс",
+   "ru": "восток",
+   "en": "east"
+  },
+  "dir3": {
+   "kz": "оңтүстік-шығыс",
+   "ru": "юго-восток",
+   "en": "south-east"
+  },
+  "dir4": {
+   "kz": "оңтүстік",
+   "ru": "юг",
+   "en": "south"
+  },
+  "dir5": {
+   "kz": "оңтүстік-батыс",
+   "ru": "юго-запад",
+   "en": "south-west"
+  },
+  "dir6": {
+   "kz": "батыс",
+   "ru": "запад",
+   "en": "west"
+  },
+  "dir7": {
+   "kz": "солтүстік-батыс",
+   "ru": "северо-запад",
+   "en": "north-west"
+  },
+  "meters": {
+   "kz": "{n} м",
+   "ru": "{n} м",
+   "en": "{n} m"
+  },
+  "km": {
+   "kz": "{n} км",
+   "ru": "{n} км",
+   "en": "{n} km"
+  },
+  "minWalk": {
+   "kz": "жаяу {n} мин",
+   "ru": "{n} мин пешком",
+   "en": "{n} min walk"
+  },
+  "openNow": {
+   "kz": "Қазір ашық",
+   "ru": "Сейчас открыто",
+   "en": "Open now"
+  },
+  "closedNow": {
+   "kz": "Қазір жабық",
+   "ru": "Сейчас закрыто",
+   "en": "Closed now"
+  },
+  "todayClosed": {
+   "kz": "Бүгін жабық",
+   "ru": "Сегодня закрыт",
+   "en": "Closed today"
+  },
+  "sanitaryDay": {
+   "kz": "санитарлық күн",
+   "ru": "санитарный день",
+   "en": "cleaning day"
+  },
+  "sanitaryEvery": {
+   "kz": "Санитарлық күн — {day}",
+   "ru": "Санитарный день — {day}",
+   "en": "Cleaning day: {day}"
+  },
+  "sanitaryToday": {
+   "kz": "Бүгін «{name}» жабық: санитарлық күн",
+   "ru": "Сегодня «{name}» закрыт: санитарный день",
+   "en": "{name} is closed today for cleaning"
+  },
+  "zooClosedNow": {
+   "kz": "Хайуанаттар бағы қазір жабық. Жұмыс уақыты {from}–{to}",
+   "ru": "Зоопарк сейчас закрыт. Время работы {from}–{to}",
+   "en": "The zoo is closed now. Open {from}–{to}"
+  },
+  "ownHours": {
+   "kz": "Жұмыс уақыты {h}",
+   "ru": "Часы работы {h}",
+   "en": "Open {h}"
+  },
+  "toCollection": {
+   "kz": "Коллекцияға",
+   "ru": "В коллекцию",
+   "en": "In the collection"
+  },
+  "onMap": {
+   "kz": "Картада",
+   "ru": "На карте",
+   "en": "On map"
+  },
+  "collTitle": {
+   "kz": "Коллекция",
+   "ru": "Коллекция",
+   "en": "Collection"
+  },
+  "collSearchPh": {
+   "kz": "Коллекциядан іздеу",
+   "ru": "Поиск по коллекции",
+   "en": "Search the collection"
+  },
+  "collEmpty": {
+   "kz": "Ештеңе табылмады",
+   "ru": "Ничего не найдено",
+   "en": "Nothing found"
+  },
+  "collSoon": {
+   "kz": "Түрлер тізімі жақында қосылады",
+   "ru": "Список видов появится позже",
+   "en": "Species list coming soon"
+  },
+  "kind_pavilion": {
+   "kz": "Павильондар",
+   "ru": "Павильоны",
+   "en": "Pavilions"
+  },
+  "kind_enclosure": {
+   "kz": "Үлкен вольерлер",
+   "ru": "Большие вольеры",
+   "en": "Large enclosures"
+  },
+  "kind_zone": {
+   "kz": "Аймақтар",
+   "ru": "Зоны",
+   "en": "Areas"
+  },
+  "rulesTitle": {
+   "kz": "Келу ережелері",
+   "ru": "Правила посещения",
+   "en": "Visitor rules"
+  },
+  "rulesFull": {
+   "kz": "Ережелердің толық мәтіні",
+   "ru": "Полный текст правил",
+   "en": "Full rules"
+  },
+  "hoursTitle": {
+   "kz": "Жұмыс уақыты",
+   "ru": "Часы работы",
+   "en": "Opening hours"
+  },
+  "summer": {
+   "kz": "Жазғы кесте",
+   "ru": "Летний режим",
+   "en": "Summer hours"
+  },
+  "winter": {
+   "kz": "Қысқы кесте",
+   "ru": "Зимний режим",
+   "en": "Winter hours"
+  },
+  "daily": {
+   "kz": "демалыссыз",
+   "ru": "без выходных",
+   "en": "open daily"
+  },
+  "hoursZoo": {
+   "kz": "Хайуанаттар бағы",
+   "ru": "Зоопарк",
+   "en": "Zoo"
+  },
+  "hoursCash": {
+   "kz": "Кассалар",
+   "ru": "Кассы",
+   "en": "Ticket office"
+  },
+  "pricesOnSite": {
+   "kz": "Билет бағасы сайтта:",
+   "ru": "Цены на билеты — на сайте",
+   "en": "Ticket prices:"
+  },
+  "moreAbout": {
+   "kz": "Хайуанаттар бағы туралы",
+   "ru": "О зоопарке",
+   "en": "About the zoo"
+  },
+  "more": {
+   "kz": "Толығырақ",
+   "ru": "Подробнее",
+   "en": "More"
+  },
+  "moreHelp": {
+   "kz": "Көмек және байланыс",
+   "ru": "Помощь и контакты",
+   "en": "Help and contacts"
+  },
+  "contactsSoon": {
+   "kz": "Телефон мен мессенджерлер жақында қосылады",
+   "ru": "Телефон и мессенджеры появятся позже",
+   "en": "Phone and messengers coming soon"
+  },
+  "lostChild": {
+   "kz": "Бала адасып кетсе",
+   "ru": "Если потерялся ребёнок",
+   "en": "If a child is lost"
+  },
+  "guardOnMap": {
+   "kz": "Күзет картада",
+   "ru": "Охрана на карте",
+   "en": "Security on the map"
+  },
+  "medOnMap": {
+   "kz": "Медпункт картада",
+   "ru": "Медпункт на карте",
+   "en": "First aid on the map"
+  },
+  "moreRoute": {
+   "kz": "Қалай жетуге болады",
+   "ru": "Как добраться",
+   "en": "Getting here"
+  },
+  "routeToEntrance": {
+   "kz": "Бағыт орталық кіреберіске салынады",
+   "ru": "Маршрут строится к центральному входу",
+   "en": "The route leads to the main entrance"
+  },
+  "yandexName": {
+   "kz": "Яндекс Карталар",
+   "ru": "Яндекс Карты",
+   "en": "Yandex Maps"
+  },
+  "busTitle": {
+   "kz": "Қоғамдық көлік",
+   "ru": "Общественный транспорт",
+   "en": "Public transport"
+  },
+  "parkingTitle": {
+   "kz": "Автотұрақ",
+   "ru": "Парковка",
+   "en": "Parking"
+  },
+  "installTitle": {
+   "kz": "Қосымшаны орнату",
+   "ru": "Установить приложение",
+   "en": "Install the app"
+  },
+  "installBtn": {
+   "kz": "Орнату",
+   "ru": "Установить",
+   "en": "Install"
+  },
+  "installDone": {
+   "kz": "Қосымша орнатылған",
+   "ru": "Приложение уже установлено",
+   "en": "The app is installed"
+  },
+  "installIos": {
+   "kz": "Safari-де «Бөлісу» батырмасын басып, «Басты экранға» таңдаңыз.",
+   "ru": "В Safari нажмите «Поделиться» и выберите «На экран „Домой“».",
+   "en": "In Safari, tap Share and choose Add to Home Screen."
+  },
+  "installMenu": {
+   "kz": "Немесе браузер мәзірінен «Қосымшаны орнату» таңдаңыз.",
+   "ru": "Или выберите «Установить приложение» в меню браузера.",
+   "en": "Or choose Install app in the browser menu."
+  },
+  "version": {
+   "kz": "Нұсқа",
+   "ru": "Версия",
+   "en": "Version"
+  },
+  "weekdays": {
+   "kz": [
+    "дүйсенбі",
+    "сейсенбі",
+    "сәрсенбі",
+    "бейсенбі",
+    "жұма",
+    "сенбі",
+    "жексенбі"
+   ],
+   "ru": [
+    "понедельник",
+    "вторник",
+    "среда",
+    "четверг",
+    "пятница",
+    "суббота",
+    "воскресенье"
+   ],
+   "en": [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday"
+   ]
+  }
+ }
+}

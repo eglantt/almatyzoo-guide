@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Almaty Zoo — путеводитель</title>
+  <meta name="description" content="Путеводитель по Алматинскому зоопарку: карта, коллекция, правила посещения.">
+  <meta name="theme-color" content="#2E5A0A">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Almaty Zoo">
+  <link rel="stylesheet" href="lib/leaflet.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Спрайт пиктограмм подгружается из icons/sprite.svg (см. app.js → loadSprite) -->
+  <div id="sprite" aria-hidden="true"></div>
+
+  <!-- ========== Шапка ========== -->
+  <header class="topbar">
+    <img class="topbar__logo" src="logo.svg" alt="Almaty Zoo" width="112" height="38">
+    <div class="langsw" role="group" aria-label="Язык / Тіл / Language">
+      <button type="button" data-lang="kz">KZ</button>
+      <button type="button" data-lang="ru">RU</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
+    <button type="button" class="iconbtn" id="btnSearch" data-i18n-aria="search">
+      <svg><use href="#u-search"/></svg>
+    </button>
+  </header>
+
+  <!-- ========== Экраны ========== -->
+  <main id="main">
+    <section class="screen" id="screen-map" data-screen="map">
+      <div id="banner" class="banner" hidden></div>
+      <div class="mapwrap">
+        <div id="map" aria-label="Карта"></div>
+        <div class="mapfilters" id="mapFilters" role="group"></div>
+        <div class="mapside">
+          <button type="button" class="fab" id="btnLocate" data-i18n-aria="whereAmI"><svg><use href="#u-locate"/></svg></button>
+        </div>
+        <div class="near" id="near">
+          <div class="near__list" id="nearList" hidden></div>
+          <button type="button" class="near__btn" id="btnNear" aria-expanded="false">
+            <svg><use href="#u-near"/></svg><span data-i18n="near"></span><svg class="chev"><use href="#u-down"/></svg>
+          </button>
+        </div>
+        <button type="button" class="tozoo" id="btnToZoo" hidden><svg><use href="#u-back"/></svg><span data-i18n="backToZoo"></span></button>
+        <div class="sheet" id="sheet" hidden>
+          <div class="sheet__body" id="sheetBody"></div>
+          <button type="button" class="iconbtn sheet__close" id="sheetClose" data-i18n-aria="close"><svg><use href="#u-close"/></svg></button>
+        </div>
+        <!-- ZOO:SYS-TOOLS:START полевой режим — панель инструментов на карте -->
+        <div class="fieldbar" id="fieldbar" hidden></div>
+        <!-- ZOO:SYS-TOOLS:END -->
+      </div>
+    </section>
+
+    <section class="screen" id="screen-coll" data-screen="coll" hidden>
+      <div class="pad">
+        <h1 data-i18n="collTitle"></h1>
+        <label class="searchfield">
+          <svg><use href="#u-search"/></svg>
+          <input type="search" id="collSearch" autocomplete="off" data-i18n-ph="collSearchPh">
+        </label>
+        <div id="collList"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-rules" data-screen="rules" hidden>
+      <div class="pad" id="rulesBody"></div>
+    </section>
+
+    <section class="screen" id="screen-more" data-screen="more" hidden>
+      <div class="pad" id="moreBody"></div>
+    </section>
+  </main>
+
+  <!-- ========== Нижнее меню ========== -->
+  <nav class="tabbar" id="tabbar">
+    <button type="button" data-tab="map"><svg><use href="#u-map"/></svg><span data-i18n="tabMap"></span></button>
+    <button type="button" data-tab="coll"><svg><use href="#u-coll"/></svg><span data-i18n="tabColl"></span></button>
+    <button type="button" data-tab="rules"><svg><use href="#u-rules"/></svg><span data-i18n="tabRules"></span></button>
+    <button type="button" data-tab="more"><svg><use href="#u-more"/></svg><span data-i18n="tabMore"></span></button>
+  </nav>
+
+  <!-- ========== Поиск ========== -->
+  <div class="overlay" id="searchOverlay" hidden>
+    <div class="overlay__head">
+      <button type="button" class="iconbtn" id="searchBack" data-i18n-aria="back"><svg><use href="#u-back"/></svg></button>
+      <label class="searchfield searchfield--grow">
+        <svg><use href="#u-search"/></svg>
+        <input type="search" id="searchInput" autocomplete="off" data-i18n-ph="searchPh">
+      </label>
+    </div>
+    <div class="overlay__body" id="searchResults"></div>
+  </div>
+
+  <!-- ========== Выбор языка при первом запуске ========== -->
+  <div class="langscreen" id="langScreen" hidden>
+    <img src="logo.svg" alt="Almaty Zoo" class="langscreen__logo">
+    <p class="langscreen__title">Тілді таңдаңыз · Выберите язык · Choose language</p>
+    <div class="langscreen__btns">
+      <button type="button" data-pick="kz">Қазақша</button>
+      <button type="button" data-pick="ru">Русский</button>
+      <button type="button" data-pick="en">English</button>
+    </div>
+  </div>
+
+  <!-- ZOO:SYS-TOOLS:START окно ключа и сервисная панель -->
+  <div class="overlay overlay--center" id="authOverlay" hidden>
+    <div class="dialog">
+      <div class="dialog__head">Авторизация</div>
+      <input type="password" id="authInput" placeholder="Ключ" autocomplete="off">
+      <p class="dialog__err" id="authErr" hidden>Ключ не принят.</p>
+      <div class="dialog__btns">
+        <button type="button" class="btn btn--ghost" id="authCancel">Отмена</button>
+        <button type="button" class="btn" id="authOk">Подтвердить</button>
+      </div>
+    </div>
+  </div>
+  <div class="overlay" id="panelOverlay" hidden>
+    <div class="overlay__head">
+      <button type="button" class="iconbtn" id="panelClose" aria-label="Закрыть"><svg><use href="#u-close"/></svg></button>
+      <strong>Сервисная панель</strong>
+    </div>
+    <div class="overlay__body pad" id="panelBody"></div>
+  </div>
+  <div class="overlay overlay--center" id="fieldForm" hidden>
+    <div class="dialog" id="fieldFormBody"></div>
+  </div>
+  <!-- ZOO:SYS-TOOLS:END -->
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="lib/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

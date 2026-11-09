@@ -1,0 +1,7 @@
+{
+  "name": "almatyzoo-guide-tests",
+  "private": true,
+  "description": "Автотесты путеводителя (Node + jsdom). Запуск: npm install && npm test",
+  "scripts": { "test": "node run.js" },
+  "dependencies": { "jsdom": "24.1.3" }
+}
