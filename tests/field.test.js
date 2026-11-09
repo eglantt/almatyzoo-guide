@@ -1,4 +1,4 @@
-/* Набор field (0.1.2): плашка в полевом режиме и крестик, правка контура, перетаскивание пиктограмм. */
+/* Набор field (0.1.2, уточнён в 0.1.3): плашка в полевом режиме и крестик, правка контура, перетаскивание пиктограмм. */
 'use strict';
 const { suite, launch, read } = require('./harness');
 
@@ -82,10 +82,11 @@ module.exports = async function () {
     A.close(); }
 
   // Ф5. Перетаскивание пиктограмм мест
+  // Маркеры пересоздаются при входе в полевой режим и выходе (0.1.3: скрытые места появляются/прячутся) — берём заново
   { const A = await launch({ lang: 'ru', now: '2026-07-08T12:00:00' });
-    const m = A.app.markers.elephant, p0 = D.places.find(p => p.id === 'elephant');
+    let m = A.app.markers.elephant; const p0 = D.places.find(p => p.id === 'elephant');
     check('Ф5a. Вне полевого режима пиктограммы не перетаскиваются', !(m.dragging && m.dragging.enabled()));
-    await enterField(A);
+    await enterField(A); m = A.app.markers.elephant;
     check('Ф5b. В полевом режиме пиктограммы перетаскиваются', !!(m.dragging && m.dragging.enabled()));
     m.setLatLng([43.26401, 76.97461]); m.fire('dragend');
     let rec = items(A).filter(i => i.place === 'elephant');
@@ -93,11 +94,11 @@ module.exports = async function () {
     m.setLatLng([43.26402, 76.97462]); m.fire('dragend');
     rec = items(A).filter(i => i.place === 'elephant');
     check('Ф5d. Повторное перетаскивание заменяет запись, а не добавляет вторую', rec.length === 1 && rec[0].coords[0][0] === 43.26402, rec);
-    A.click('[data-f="exit"]');
+    A.click('[data-f="exit"]'); m = A.app.markers.elephant;
     const ll = m.getLatLng();
     check('Ф5e. После выхода из полевого режима пиктограмма на месте из data.json, перетаскивание выключено', ll.lat === p0.lat && ll.lng === p0.lng && !m.dragging.enabled(), ll);
     A.click('[data-tab="more"]'); for (let i = 0; i < 7; i++) A.click('#versionTag'); await A.wait(5); A.click('[data-p="field"]');
-    const ll2 = m.getLatLng();
+    const ll2 = A.app.markers.elephant.getLatLng();
     check('Ф5f. Снова в полевом режиме — пиктограмма там, куда её перетащили', ll2.lat === 43.26402 && ll2.lng === 76.97462, ll2);
     A.close(); }
   return done();

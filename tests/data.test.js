@@ -97,6 +97,20 @@ module.exports = async function () {
 
   // D8. Контакты: неактуальный телефон с сайта не используется
   check('D8. Старый телефон +7 (727) 310-19-37 нигде не указан', !/310.?19.?37/.test(read('data.json')));
+  // D10 (0.1.3). Зимники, закрытия, дорожки, служебные объекты
+  const wz = D.zones.filter(z => z.winter);
+  const badW = wz.filter(z => !['moves', 'off'].includes(z.winter.mode) || !md.test(z.winter.from) || !md.test(z.winter.to) ||
+    (z.winter.mode === 'moves' && !(D.places.find(p => p.id === z.winter.place) || {}).winterOf)).map(z => z.id);
+  check('D10a. Зимники: режим moves/off, даты ММ-ДД, у moves — место-зимник с winterOf', badW.length === 0, badW);
+  const badWo = D.places.filter(p => p.winterOf && !zoneIds.has(p.winterOf)).map(p => p.id);
+  check('D10b. Каждый зимник ссылается на существующую зону', badWo.length === 0, badWo);
+  const ymd = /^\d{4}-\d\d-\d\d$/;
+  const badC = D.places.filter(p => (p.closures || []).some(c => !ymd.test(c.from) || !ymd.test(c.to) || c.from > c.to)).map(p => p.id);
+  check('D10c. Закрытия: даты ГГГГ-ММ-ДД, «с» не позже «по»', badC.length === 0, badC);
+  const outPath = (D.paths || []).filter(p => p.coords.some(([la, ln]) => !(la > s && la < n && ln > w && ln < e))).map(p => p.id);
+  check('D10d. Все дорожки внутри границ карты', outPath.length === 0, outPath.slice(0, 5));
+  const svcClash = (D.service || []).filter(x => placeIds.has(x.id)).map(x => x.id);
+  check('D10e. Служебные объекты не пересекаются по id с местами', svcClash.length === 0, svcClash);
   check('D9. Правил — 13, из них «Дети под присмотром» без черты', D.rules.short.length === 13 && D.rules.short.filter(r => r.ok).length === 1);
   return done();
 };

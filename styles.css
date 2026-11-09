@@ -157,6 +157,17 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; padding-bottom: ca
 /* На сенсорных экранах масштаб — жестом, кнопки «+/−» только на ПК */
 @media (pointer: coarse) { .leaflet-control-zoom { display: none; } }
 @media (pointer: fine) { .mapfilters { max-width: calc(100% - 4.5rem); } }
+/* Переключатель подложки «Схема / Спутник» — над кнопкой «Где я?»; в полевом режиме остаётся */
+.basesw {
+  position: absolute; right: .6rem; bottom: 5.1rem; z-index: 600; display: flex; gap: 3px;
+  background: #fff; padding: 3px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.2);
+}
+.basesw button {
+  min-height: 2.3rem; padding: 0 .6rem; border: 0; border-radius: 9px; background: transparent;
+  font-weight: 700; font-size: .8rem; color: var(--dark); cursor: pointer;
+}
+.basesw button[aria-pressed="true"] { background: var(--dark); color: #fff; }
+body.field-on .basesw { bottom: 1rem; }
 .mapside { position: absolute; right: .6rem; bottom: 1rem; z-index: 600; display: flex; flex-direction: column; gap: .5rem; }
 .fab {
   width: 3.4rem; height: 3.4rem; border-radius: 50%; border: 0; cursor: pointer;

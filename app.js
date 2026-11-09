@@ -21,7 +21,7 @@
   'use strict';
 
   /* ===================== 1. Константы и хранилище ===================== */
-  const APP_VERSION = '0.1.2-alpha';
+  const APP_VERSION = '0.1.3-alpha';
   const KEY = {
     lang: 'zoo_lang',
     devNow: 'zoo_dev_now',       // подмена даты (сервисная панель)
@@ -29,7 +29,9 @@
     approx: 'zoo_dev_approx',    // подсветка ориентировочных координат
     field: 'zoo_field',          // данные полевого режима
     errors: 'zoo_errors',        // журнал ошибок
-    bannerClosed: 'zoo_banner_closed'   // плашка закрыта посетителем — до конца этого дня
+    bannerClosed: 'zoo_banner_closed',  // плашка закрыта посетителем — до конца этого дня
+    base: 'zoo_base',                   // подложка у посетителя: osm | sat
+    baseField: 'zoo_base_field'         // подложка в полевом режиме — запоминается отдельно
   };
   const WALK_M_PER_MIN = 75;     // ~4,5 км/ч
   const TAP_COUNT = 7, TAP_WINDOW_MS = 3000;
@@ -106,6 +108,30 @@
     return isOpen(placeHours(place, d), d) ? 'open' : 'closed';
   }
 
+  /* Сезонные объекты, временные закрытия, зимники (0.1.3).
+     Даты перевода в зимники — свои у каждой зоны (ММ-ДД, период может переходить через Новый год). */
+  const inPeriod = (x, from, to) => from <= to ? (x >= from && x <= to) : (x >= from || x <= to);
+  /** Зона сейчас в зимнем положении: 'moves' (в экспонируемом зимнике), 'off' (не экспонируется) или null (на месте). */
+  function zoneWinter(zone, d) {
+    const w = zone && zone.winter;
+    return w && (w.mode === 'moves' || w.mode === 'off') && inPeriod(mmdd(d), w.from, w.to) ? w.mode : null;
+  }
+  /** Действующее временное закрытие места (даты «с — по» включительно) или null. */
+  function activeClosure(p, d) { const x = dayKey(d); return (p.closures || []).find(c => x >= c.from && x <= c.to) || null; }
+  const zoneOf = p => p.zone ? D.zones.find(z => z.id === p.zone) : null;
+  /** Показывается ли место посетителю в этот день. */
+  function isShown(p, d) {
+    if (p.summerOnly && season(d) === 'winter') return false;           // «работает только летом»
+    if (p.kind !== 'animal' && activeClosure(p, d)) return false;        // ларёк, туалет на ремонте — иконка скрыта
+    if (p.winterOf) {                                                    // зимник — только пока зона в нём
+      const z = D.zones.find(x => x.id === p.winterOf);
+      return zoneWinter(z, d) === 'moves' && z.winter.place === p.id;
+    }
+    return !zoneWinter(zoneOf(p), d);                                    // летний вольер зимой пуст
+  }
+  const ddmm = ymd => ymd.slice(8, 10) + '.' + ymd.slice(5, 7);
+  function closureText(c) { return t('tempClosed') + ' · ' + t('closedUntil', { reason: L(c.reason), date: ddmm(c.to) }); }
+
   /* ===================== 4. География ===================== */
   const R_EARTH = 6371000;
   const rad = x => x * Math.PI / 180;
@@ -171,15 +197,18 @@
     });
     osm = L_.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19, crossOrigin: 'anonymous',
-      attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
-    }).addTo(map);
+      attribution: OSM_ATTR
+    });
     sat = L_.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19, crossOrigin: 'anonymous', attribution: 'Tiles © Esri — Esri, Maxar, Earthstar Geographics'
     });
     L_.control.zoom({ position: 'topright' }).addTo(map);
     map.attributionControl.setPrefix(false);
 
-    L_.polygon(D.meta.boundary, { color: '#4E8C12', weight: 3, dashArray: '8 6', fillColor: '#95C12B', fillOpacity: 0.08, interactive: false }).addTo(map);
+    applyBase();
+    // Контур и дорожки — из OpenStreetMap (data.json): видны и без сети. Пунктир — только у ориентировочного контура.
+    L_.polygon(D.meta.boundary, { color: '#4E8C12', weight: 3, dashArray: D.meta.boundaryApprox ? '8 6' : null, fillColor: '#95C12B', fillOpacity: 0.08, interactive: false, attribution: OSM_ATTR }).addTo(map);
+    layers.paths = L_.layerGroup((D.paths || []).map(p => L_.polyline(p.coords, { color: '#B89B62', weight: 3.5, opacity: 0.85, lineCap: 'round', lineJoin: 'round', interactive: false }))).addTo(map);
     layers.areas = L_.layerGroup().addTo(map);
     layers.animal = L_.layerGroup().addTo(map);
     layers.infra = L_.layerGroup().addTo(map);
@@ -193,6 +222,23 @@
     buildMarkers();
     updateZoomClass();
     applyApproxView();
+  }
+  const OSM_ATTR = '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
+  /** Подложка «Схема / Спутник»: у посетителя и в полевом режиме — свой выбор (по умолчанию схема / спутник). */
+  const baseKey = () => Field.isActive() ? KEY.baseField : KEY.base;
+  function currentBase() { const v = store.get(baseKey()); return v === 'osm' || v === 'sat' ? v : (Field.isActive() ? 'sat' : 'osm'); }
+  function applyBase() {
+    renderBaseSwitch();
+    if (!map) return;
+    const on = currentBase() === 'sat' ? sat : osm, off = on === sat ? osm : sat;
+    if (map.hasLayer(off)) map.removeLayer(off);
+    if (!map.hasLayer(on)) on.addTo(map);
+    on.bringToBack();
+  }
+  function renderBaseSwitch() {
+    const b = currentBase(), el = $('#baseSwitch'); if (!el) return;
+    el.innerHTML = `<button type="button" data-base="osm" aria-pressed="${b === 'osm'}">${esc(t('baseScheme'))}</button>` +
+      `<button type="button" data-base="sat" aria-pressed="${b === 'sat'}">${esc(t('baseSat'))}</button>`;
   }
   function fitZoo() {
     const el = map.getContainer();
@@ -212,7 +258,9 @@
   function buildMarkers() {
     if (!map) return;
     layers.areas.clearLayers(); layers.animal.clearLayers(); layers.infra.clearLayers(); markers = {};
+    const d = now(), all = Field.isActive();          // в полевом режиме видны все места, чтобы их можно было поставить
     D.places.forEach(p => {
+      if (!all && !isShown(p, d)) return;
       if (p.area) L_.polygon(p.area, { color: iconColor(p), weight: 1.5, fillOpacity: 0.12, interactive: false }).addTo(layers.areas);
       const cls = ['zmk', 'k-' + p.kind, p.major ? 'major' : 'minor', p.approx ? 'approx' : ''].join(' ');
       const m = L_.marker([p.lat, p.lng], {
@@ -235,15 +283,18 @@
     $$('#mapFilters button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.filter === S.filter)));
   }
   function popupHtml(p) {
-    const d = now(), st = placeStatus(p, d), h = placeHours(p, d);
+    const d = now(), st = placeStatus(p, d), h = placeHours(p, d), cl = activeClosure(p, d);
     let status = '';
-    if (st === 'sanitary') status = `<div class="pp__st pp__st--closed">${esc(t('todayClosed'))} · ${esc(t('sanitaryDay'))}</div>`;
+    if (cl) status = `<div class="pp__st pp__st--closed">${esc(closureText(cl))}</div>`;
+    else if (st === 'sanitary') status = `<div class="pp__st pp__st--closed">${esc(t('todayClosed'))} · ${esc(t('sanitaryDay'))}</div>`;
     else if (p.kind !== 'outside') status = `<div class="pp__st ${st === 'open' ? 'pp__st--open' : 'pp__st--closed'}">${esc(t(st === 'open' ? 'openNow' : 'closedNow'))} · ${h[0]}–${h[1]}</div>`;
     const san = p.sanitaryDay && st !== 'sanitary' ? `<div class="pp__note">${esc(t('sanitaryEvery', { day: weekday(p.sanitaryDay) }))}</div>` : '';
-    const note = p.note ? `<div class="pp__note pp__note--warn">${esc(L(p.note))}</div>` : '';
+    const note = (p.winterOf ? `<div class="pp__note"><b>${esc(t('winterHouse'))}</b></div>` : '') +
+      (p.note ? `<div class="pp__note pp__note--warn">${esc(L(p.note))}</div>` : '');
     let distLine = '';
     if (S.user) { const m = dist(S.user, placeLatLng(p)); distLine = `<div class="pp__dist">${esc(fmtDist(m))} · ${esc(t('minWalk', { n: walkMin(m) }))}</div>`; }
-    const coll = (p.kind === 'animal') ? `<button type="button" class="btn btn--sm" data-act="toColl" data-id="${p.id}">${esc(t('toCollection'))}</button>` : '';
+    const collId = p.winterOf ? (D.places.find(x => x.zone === p.winterOf) || {}).id : p.id;
+    const coll = (p.kind === 'animal' && collId) ? `<button type="button" class="btn btn--sm" data-act="toColl" data-id="${collId}">${esc(t('toCollection'))}</button>` : '';
     return `<div class="pp"><div class="pp__t">${esc(L(p.title))}</div>` +
       (p.desc ? `<div class="pp__d">${esc(L(p.desc))}</div>` : '') + status + san + note + distLine +
       (coll ? `<div class="pp__act">${coll}</div>` : '') + '</div>';
@@ -305,7 +356,8 @@
   }
   function nearestOf(pred, from) {
     let best = null;
-    D.places.filter(pred).forEach(p => { const m = dist(from, placeLatLng(p)); if (!best || m < best.m) best = { p, m }; });
+    const d = now();
+    D.places.filter(p => pred(p) && isShown(p, d)).forEach(p => { const m = dist(from, placeLatLng(p)); if (!best || m < best.m) best = { p, m }; });
     return best;
   }
   const NEAR = [
@@ -332,7 +384,7 @@
     try { from = await locate(); setUser(from); } catch (e) { from = null; }
     if (!from) {
       sheet(esc(t('noGpsNear')));
-      const list = D.places.filter(n.pred);
+      const d = now(), list = D.places.filter(p => n.pred(p) && isShown(p, d));
       if (list.length) map.fitBounds(list.map(p => [p.lat, p.lng]), { padding: [60, 60], maxZoom: 18 });
       return;
     }
@@ -367,10 +419,11 @@
 
   /* ===================== 8. Поиск ===================== */
   function searchIndex() {
-    const items = [];
-    D.places.forEach(p => items.push({ type: p.kind === 'animal' ? 'animal' : 'place', id: p.id, placeId: p.id, icon: p.icon, color: iconColor(p), title: p.title, extra: p.keywords || [] }));
+    const items = [], d = now();
+    const shown = D.places.filter(p => isShown(p, d));
+    shown.forEach(p => items.push({ type: p.kind === 'animal' ? 'animal' : 'place', id: p.id, placeId: p.id, icon: p.icon, color: iconColor(p), title: p.title, extra: p.keywords || [] }));
     D.animals.forEach(a => {
-      const p = D.places.find(x => x.id === a.place);
+      const p = shown.find(x => x.id === a.place);
       if (p && !(a.title.ru === p.title.ru)) items.push({ type: 'animal', id: a.id, placeId: p.id, icon: p.icon, color: iconColor(p), title: a.title, sub: p.title, extra: [] });
     });
     return items;
@@ -413,10 +466,14 @@
       zones.forEach(z => {
         const p = D.places.find(x => x.zone === z.id);
         if (!p) return;
-        const d = now(), st = placeStatus(p, d);
+        const d = now(), st = placeStatus(p, d), wm = zoneWinter(z, d), cl = activeClosure(p, d);
+        const target = wm === 'moves' ? D.places.find(x => x.id === z.winter.place) : (wm === 'off' ? null : p);
         const animals = D.animals.filter(a => a.place === p.id && a.title.ru !== z.title.ru);
         const notes = [];
-        if (st === 'sanitary') notes.push(`<span class="tag tag--warn">${esc(t('todayClosed'))}</span>`);
+        if (wm === 'moves') notes.push(`<span class="tag">${esc(t('winterHouse'))}</span>`);
+        if (wm === 'off') notes.push(`<span class="tag tag--warn">${esc(t('winterOff'))}</span>`);
+        if (cl) notes.push(`<span class="tag tag--warn">${esc(closureText(cl))}</span>`);
+        else if (st === 'sanitary') notes.push(`<span class="tag tag--warn">${esc(t('todayClosed'))}</span>`);
         if (p.hours) notes.push(`<span class="tag">${esc(t('ownHours', { h: p.hours[0] + '–' + p.hours[1] }))}</span>`);
         if (p.sanitaryDay && st !== 'sanitary') notes.push(`<span class="tag">${esc(t('sanitaryEvery', { day: weekday(p.sanitaryDay) }))}</span>`);
         html += `<article class="coll__item" id="coll-${p.id}">` +
@@ -424,7 +481,7 @@
           `<div class="coll__txt"><b>${esc(L(z.title))}</b>` +
           (animals.length ? `<small>${animals.map(a => esc(L(a.title))).join(', ')}</small>` : (kind === 'pavilion' ? `<small class="muted">${esc(t('collSoon'))}</small>` : '')) +
           (notes.length ? `<div class="tags">${notes.join('')}</div>` : '') + `</div>` +
-          `<button type="button" class="btn btn--sm btn--ghost" data-act="focus" data-id="${p.id}" aria-label="${esc(t('onMap'))}">${uiIcon('u-map')}<span>${esc(t('onMap'))}</span></button></article>`;
+          (target ? `<button type="button" class="btn btn--sm btn--ghost" data-act="focus" data-id="${target.id}" aria-label="${esc(t('onMap'))}">${uiIcon('u-map')}<span>${esc(t('onMap'))}</span></button>` : '') + `</article>`;
       });
       html += '</div>';
     });
@@ -517,7 +574,7 @@
     $$('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
     document.title = t('docTitle');
     $('#mapFilters').innerHTML = ['all', 'animal', 'infra'].map(f => `<button type="button" data-filter="${f}">${esc(t('filter_' + f))}</button>`).join('');
-    renderNearList(); renderBanner(); renderRules(); renderMore();
+    renderNearList(); renderBanner(); renderRules(); renderMore(); renderBaseSwitch();
     if (S.tab === 'coll') renderCollection();
     if (!$('#searchOverlay').hidden) renderSearch();
     if (map) { map.closePopup(); buildMarkers(); }
@@ -529,7 +586,7 @@
     const d = now(), msgs = [];
     const h = zooHours(d);
     if (!isOpen(h.zoo, d)) msgs.push(t('zooClosedNow', { from: h.zoo[0], to: h.zoo[1] }));
-    D.places.filter(p => isSanitary(p, d)).forEach(p => msgs.push(t('sanitaryToday', { name: L(p.title) })));
+    D.places.filter(p => isSanitary(p, d) && isShown(p, d)).forEach(p => msgs.push(t('sanitaryToday', { name: L(p.title) })));
     const b = $('#banner');
     b.hidden = !msgs.length || store.get(KEY.bannerClosed) === dayKey(d);
     b.innerHTML = msgs.length ? `<p class="banner__text">${msgs.map(esc).join(' · ')}</p>` +
@@ -555,6 +612,7 @@
     if (el.dataset.pick) { setLang(el.dataset.pick); $('#langScreen').hidden = true; return; }
     if (el.dataset.filter) { S.filter = el.dataset.filter; return applyFilter(); }
     if (el.dataset.near) return findNear(+el.dataset.near);
+    if (el.dataset.base) { store.set(baseKey(), el.dataset.base); return applyBase(); }
     switch (el.dataset.act || el.id) {
       case 'btnSearch': return openSearch();
       case 'searchBack': return closeSearch();
@@ -742,16 +800,14 @@
       if (!authorized) return;
       active = true; mode = null;
       document.body.classList.add('field-on');                   // плашка и кнопки посетителя спрятаны
-      if (map) { map.closePopup(); map.removeLayer(osm); sat.addTo(map); sat.bringToBack(); }
-      applyMarkers(); draw(); mainBar();
+      if (map) map.closePopup();
+      applyBase(); buildMarkers(); draw(); mainBar();          // все места, включая скрытые сейчас у посетителя
     }
     function stop() {
       active = false; mode = null; cancelDraft();
       document.body.classList.remove('field-on');
-      if (map) {
-        map.removeLayer(sat); osm.addTo(map); osm.bringToBack(); layers.field.clearLayers();
-        D.places.forEach(p => { const m = markers[p.id]; if (m) { if (m.dragging) m.dragging.disable(); m.setLatLng([p.lat, p.lng]); } });
-      }
+      applyBase();
+      if (map) { layers.field.clearLayers(); buildMarkers(); }   // пиктограммы — на свои места, скрытые — снова скрыты
       bar('');
     }
     /** Пиктограммы мест: перетаскиваются; стоят там, куда их перетащили (только в полевом режиме). */
@@ -872,7 +928,8 @@
       const byTitle = (a, b) => a.title.ru.localeCompare(b.title.ru, 'ru');
       const group = (label, list) => list.length ? `<optgroup label="${label}">${list.sort(byTitle).map(p => `<option value="${p.id}">${esc(p.title.ru)} · ${p.id}${mark(p.id)}</option>`).join('')}</optgroup>` : '';
       const opts = type === 'point'
-        ? group('Животные', D.places.filter(p => p.kind === 'animal')) + group('Инфраструктура', D.places.filter(p => p.kind === 'infra')) + group('Снаружи', D.places.filter(p => p.kind === 'outside'))
+        ? group('Животные', D.places.filter(p => p.kind === 'animal')) + group('Инфраструктура', D.places.filter(p => p.kind === 'infra')) + group('Снаружи', D.places.filter(p => p.kind === 'outside')) +
+          group('Служебное (посетителям не видно)', (D.service || []).slice())
         : type === 'polygon'
           ? `<option value="boundary">Граница зоопарка${mark('boundary')}</option>` + group('Контур места', D.places.filter(p => p.kind === 'animal'))
           : '';
@@ -881,7 +938,7 @@
     function formSave() {
       const f = $('#fieldFormBody'), pend = JSON.parse(f.dataset.pending || '{}');
       const place = $('#fPlace') ? $('#fPlace').value : '';
-      const pl = place && place !== 'boundary' ? D.places.find(x => x.id === place) : null;
+      const pl = place && place !== 'boundary' ? (D.places.find(x => x.id === place) || (D.service || []).find(x => x.id === place)) : null;
       const label = place === 'boundary' ? 'Граница зоопарка' : (pl ? pl.title.ru : '');
       const note = $('#fName').value.trim();
       const name = [label, note].filter(Boolean).join(' — ') || ('Без названия ' + new Date().toLocaleTimeString('ru-RU'));
@@ -990,7 +1047,11 @@
     setLang(saved || deviceLang());
     showTab('map');
     if (!saved) showLangScreen();
-    setInterval(renderBanner, 60000);
+    let lastDay = dayKey(now());
+    setInterval(() => {                       // в полночь — новые сезонные объекты, закрытия, зимники
+      renderBanner();
+      const k = dayKey(now()); if (k !== lastDay) { lastDay = k; if (map) buildMarkers(); }
+    }, 60000);
     registerSW();
   }
 
