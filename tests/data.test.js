@@ -97,13 +97,15 @@ module.exports = async function () {
 
   // D8. Контакты: неактуальный телефон с сайта не используется
   check('D8. Старый телефон +7 (727) 310-19-37 нигде не указан', !/310.?19.?37/.test(read('data.json')));
-  // D10 (0.1.3). Зимники, закрытия, дорожки, служебные объекты
-  const wz = D.zones.filter(z => z.winter);
-  const badW = wz.filter(z => !['moves', 'off'].includes(z.winter.mode) || !md.test(z.winter.from) || !md.test(z.winter.to) ||
-    (z.winter.mode === 'moves' && !(D.places.find(p => p.id === z.winter.place) || {}).winterOf)).map(z => z.id);
-  check('D10a. Зимники: режим moves/off, даты ММ-ДД, у moves — место-зимник с winterOf', badW.length === 0, badW);
-  const badWo = D.places.filter(p => p.winterOf && !zoneIds.has(p.winterOf)).map(p => p.id);
-  check('D10b. Каждый зимник ссылается на существующую зону', badWo.length === 0, badWo);
+  // D10 (0.1.3, 0.1.5). Зимние вольеры, закрытия, дорожки, служебные объекты
+  // 0.1.5: зимняя настройка — у летнего места (place.winter); зимний вольер — место с winterFor
+  const PI = Object.fromEntries(D.places.map(p => [p.id, p]));
+  const badW = D.places.filter(p => p.winter && (!['moves', 'off'].includes(p.winter.mode) || !md.test(p.winter.from) || !md.test(p.winter.to) ||
+    (p.winter.mode === 'moves' && !((PI[p.winter.place] || {}).winterFor || []).includes(p.id)))).map(p => p.id);
+  check('D10a. Зимняя настройка мест: режим moves/off, даты ММ-ДД; у moves — зимний вольер, в чьём winterFor есть это место', badW.length === 0, badW);
+  const badWo = D.places.filter(p => p.winterFor && (!p.winterFor.length || p.winterFor.some(id => !PI[id] || !PI[id].winter || PI[id].winter.place !== p.id))).map(p => p.id);
+  check('D10b. Зимний вольер: каждое место в winterFor существует и ссылается на него', badWo.length === 0, badWo);
+  check('D10f. Старая схема (zone.winter, winterOf) не используется', !D.zones.some(z => z.winter) && !D.places.some(p => p.winterOf));
   const ymd = /^\d{4}-\d\d-\d\d$/;
   const badC = D.places.filter(p => (p.closures || []).some(c => !ymd.test(c.from) || !ymd.test(c.to) || c.from > c.to)).map(p => p.id);
   check('D10c. Закрытия: даты ГГГГ-ММ-ДД, «с» не позже «по»', badC.length === 0, badC);

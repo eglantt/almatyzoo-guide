@@ -21,7 +21,7 @@
   'use strict';
 
   /* ===================== 1. Константы и хранилище ===================== */
-  const APP_VERSION = '0.1.4-alpha';
+  const APP_VERSION = '0.1.5-alpha';
   const KEY = {
     lang: 'zoo_lang',
     devNow: 'zoo_dev_now',       // подмена даты (сервисная панель)
@@ -108,26 +108,46 @@
     return isOpen(placeHours(place, d), d) ? 'open' : 'closed';
   }
 
-  /* Сезонные объекты, временные закрытия, зимники (0.1.3).
-     Даты перевода в зимники — свои у каждой зоны (ММ-ДД, период может переходить через Новый год). */
+  /* Сезонные объекты, временные закрытия, зимние вольеры (0.1.3; с 0.1.5 — настройка у каждого летнего места).
+     У летнего места: winter = { from, to (ММ-ДД, через Новый год можно), mode: 'moves' | 'off', place: id зимнего вольера }.
+     Зимний вольер — место с winterFor: [id летних мест]; один зимний вольер может принимать несколько мест.
+     Неэкспозиционный зимний вольер в данные не вносится: у летнего места mode 'off'. */
   const inPeriod = (x, from, to) => from <= to ? (x >= from && x <= to) : (x >= from || x <= to);
-  /** Зона сейчас в зимнем положении: 'moves' (в экспонируемом зимнике), 'off' (не экспонируется) или null (на месте). */
-  function zoneWinter(zone, d) {
-    const w = zone && zone.winter;
+  const placeById = id => D.places.find(x => x.id === id);
+  /** Летнее место сейчас в зимнем положении: 'moves' (в экспонируемом зимнем вольере), 'off' (не экспонируется) или null (на месте). */
+  function placeWinter(p, d) {
+    const w = p && p.winter;
     return w && (w.mode === 'moves' || w.mode === 'off') && inPeriod(mmdd(d), w.from, w.to) ? w.mode : null;
+  }
+  /** Кто сейчас в зимнем вольере: летние места, переехавшие в него на эту дату (по порядку winterFor). */
+  function hostedNow(w, d) {
+    return (w.winterFor || []).map(placeById).filter(s => s && placeWinter(s, d) === 'moves' && s.winter.place === w.id);
   }
   /** Действующее временное закрытие места (даты «с — по» включительно) или null. */
   function activeClosure(p, d) { const x = dayKey(d); return (p.closures || []).find(c => x >= c.from && x <= c.to) || null; }
-  const zoneOf = p => p.zone ? D.zones.find(z => z.id === p.zone) : null;
   /** Показывается ли место посетителю в этот день. */
   function isShown(p, d) {
     if (p.summerOnly && season(d) === 'winter') return false;           // «работает только летом»
     if (p.kind !== 'animal' && activeClosure(p, d)) return false;        // ларёк, туалет на ремонте — иконка скрыта
-    if (p.winterOf) {                                                    // зимник — только пока зона в нём
-      const z = D.zones.find(x => x.id === p.winterOf);
-      return zoneWinter(z, d) === 'moves' && z.winter.place === p.id;
-    }
-    return !zoneWinter(zoneOf(p), d);                                    // летний вольер зимой пуст
+    if (p.winterFor) return hostedNow(p, d).length > 0;                  // зимний вольер — пока в нём кто-то есть
+    return !placeWinter(p, d);                                           // летнее место зимой пусто
+  }
+  const zoneTitle = id => { const z = D.zones.find(x => x.id === id); return z ? z.title : null; };
+  /** Название места; у зимнего вольера без своего названия — «Зимний вольер». */
+  const titleOf = p => p.title || D.ui.winterHouse;
+  /** Пиктограмма места; у зимнего вольера — того, кто в нём сейчас первым (в полевом режиме — первого в списке). */
+  function iconOf(p, d) {
+    if (!p.winterFor) return p.icon;
+    const h = hostedNow(p, d)[0] || placeById(p.winterFor[0]);
+    return (h && h.icon) || p.icon;
+  }
+  /** Все места зоны (летние). Несколько мест — одинаковые пиктограммы на карте, одна строка в разделе «Животные». */
+  const zonePlaces = zid => D.places.filter(x => x.zone === zid);
+  /** Строка раздела «Животные» для места: у зимнего вольера — зона первого, кто в нём сейчас. */
+  function collRowOf(p, d) {
+    const src = p.winterFor ? (hostedNow(p, d)[0] || placeById(p.winterFor[0])) : p;
+    const first = src && src.zone ? zonePlaces(src.zone)[0] : null;
+    return first ? first.id : null;
   }
   const ddmm = ymd => ymd.slice(8, 10) + '.' + ymd.slice(5, 7);
   function closureText(c) { return t('tempClosed') + ' · ' + t('closedUntil', { reason: L(c.reason), date: ddmm(c.to) }); }
@@ -296,11 +316,12 @@
       if (p.area) L_.polygon(p.area, { color: iconColor(p), weight: 1.5, fillOpacity: 0.12, interactive: false }).addTo(layers.areas);
       const cls = ['zmk', 'k-' + p.kind, p.major ? 'major' : 'minor', p.approx ? 'approx' : ''].join(' ');
       const m = L_.marker([p.lat, p.lng], {
-        icon: L_.divIcon({ className: cls, html: markerSvg(p.icon, iconColor(p)), iconSize: [44, 44], iconAnchor: [22, 22], popupAnchor: [0, -18] }),
-        title: L(p.title), keyboard: true, riseOnHover: true
+        icon: L_.divIcon({ className: cls, html: markerSvg(iconOf(p, d), iconColor(p)), iconSize: [44, 44], iconAnchor: [22, 22], popupAnchor: [0, -18] }),
+        title: L(titleOf(p)), keyboard: true, riseOnHover: true
       });
-      m.bindPopup(() => popupHtml(p), { maxWidth: 280, minWidth: 220, className: 'zpop' });
-      if (p.major) m.bindTooltip(esc(L(p.title)), { permanent: true, direction: 'bottom', offset: [0, 16], className: 'zlbl' });
+      // Карточка не уходит под фильтры сверху и под «Найти рядом» / «Где я?» снизу: карта сдвигается с запасом
+      m.bindPopup(() => popupHtml(p), { maxWidth: 280, minWidth: 220, className: 'zpop', autoPanPaddingTopLeft: [12, 120], autoPanPaddingBottomRight: [12, 90] });
+      if (p.major) m.bindTooltip(esc(L(titleOf(p))), { permanent: true, direction: 'bottom', offset: [0, 16], className: 'zlbl' });
       m.on('dragend', () => Field.onMarkerDrag(p.id, m.getLatLng()));
       m.addTo(p.kind === 'animal' ? layers.animal : layers.infra);
       markers[p.id] = m;
@@ -321,13 +342,15 @@
     else if (st === 'sanitary') status = `<div class="pp__st pp__st--closed">${esc(t('todayClosed'))} · ${esc(t('sanitaryDay'))}</div>`;
     else if (p.kind !== 'outside') status = `<div class="pp__st ${st === 'open' ? 'pp__st--open' : 'pp__st--closed'}">${esc(t(st === 'open' ? 'openNow' : 'closedNow'))} · ${h[0]}–${h[1]}</div>`;
     const san = p.sanitaryDay && st !== 'sanitary' ? `<div class="pp__note">${esc(t('sanitaryEvery', { day: weekday(p.sanitaryDay) }))}</div>` : '';
-    const note = (p.winterOf ? `<div class="pp__note"><b>${esc(t('winterHouse'))}</b></div>` : '') +
+    // Зимний вольер: пометка и кто в нём сейчас («Зимний вольер: Медведи, Жирафы»)
+    const hosted = p.winterFor ? [...new Set(hostedNow(p, d).map(s => s.zone))].map(zoneTitle).filter(Boolean).map(L) : [];
+    const note = (p.winterFor ? `<div class="pp__note"><b>${esc(t('winterHouse'))}</b>${hosted.length ? ': ' + esc(hosted.join(', ')) : ''}</div>` : '') +
       (p.note ? `<div class="pp__note pp__note--warn">${esc(L(p.note))}</div>` : '');
     let distLine = '';
     if (S.user) { const m = dist(S.user, placeLatLng(p)); distLine = `<div class="pp__dist">${esc(fmtDist(m))} · ${esc(t('minWalk', { n: walkMin(m) }))}</div>`; }
-    const collId = p.winterOf ? (D.places.find(x => x.zone === p.winterOf) || {}).id : p.id;
+    const collId = collRowOf(p, d);
     const coll = (p.kind === 'animal' && collId) ? `<button type="button" class="btn btn--sm" data-act="toColl" data-id="${collId}">${esc(t('toCollection'))}</button>` : '';
-    return `<div class="pp"><div class="pp__t">${esc(L(p.title))}</div>` +
+    return `<div class="pp"><div class="pp__t">${esc(L(titleOf(p)))}</div>` +
       (p.desc ? `<div class="pp__d">${esc(L(p.desc))}</div>` : '') + status + san + note + distLine +
       (coll ? `<div class="pp__act">${coll}</div>` : '') + '</div>';
   }
@@ -342,6 +365,17 @@
     m.openPopup();
     const el = m.getElement();
     if (el) { el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse'); setTimeout(() => el.classList.remove('pulse'), 3200); }
+  }
+  /** Показать сразу несколько мест (зона в нескольких вольерах): карта охватывает все, все пиктограммы пульсируют. */
+  function focusMany(ids) {
+    showTab('map');
+    const list = ids.map(placeById).filter(p => p && markers[p.id]);
+    if (!list.length) return;
+    if (list.length === 1) return focusPlace(list[0].id);
+    if (S.filter === 'infra') { S.filter = 'all'; applyFilter(); }
+    map.closePopup();
+    map.fitBounds(list.map(p => [p.lat, p.lng]), { padding: [70, 70], maxZoom: 18 });
+    list.forEach(p => { const el = markers[p.id].getElement(); if (el) { el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse'); setTimeout(() => el.classList.remove('pulse'), 3200); } });
   }
   function onMapClick(e) { if (Field.onMapClick(e)) return; }
 
@@ -456,7 +490,11 @@
   function searchIndex() {
     const items = [], d = now();
     const shown = D.places.filter(p => isShown(p, d));
-    shown.forEach(p => items.push({ type: p.kind === 'animal' ? 'animal' : 'place', id: p.id, placeId: p.id, icon: p.icon, color: iconColor(p), title: p.title, extra: p.keywords || [] }));
+    shown.forEach(p => {
+      const extra = (p.keywords || []).slice();
+      if (p.winterFor) hostedNow(p, d).forEach(s => { const zt = zoneTitle(s.zone); if (zt) LANGS.forEach(l => extra.push(zt[l])); });
+      items.push({ type: p.kind === 'animal' ? 'animal' : 'place', id: p.id, placeId: p.id, icon: iconOf(p, d), color: iconColor(p), title: titleOf(p), extra });
+    });
     D.animals.forEach(a => {
       const p = shown.find(x => x.id === a.place);
       if (p && !(a.title.ru === p.title.ru)) items.push({ type: 'animal', id: a.id, placeId: p.id, icon: p.icon, color: iconColor(p), title: a.title, sub: p.title, extra: [] });
@@ -492,21 +530,24 @@
     kinds.forEach(kind => {
       const zones = D.zones.filter(z => z.kind === kind).filter(z => {
         if (!q) return true;
-        const p = D.places.find(x => x.zone === z.id);
-        const names = [z.title].concat(D.animals.filter(a => p && a.place === p.id).map(a => a.title));
+        const ids = zonePlaces(z.id).map(x => x.id);
+        const names = [z.title].concat(D.animals.filter(a => ids.includes(a.place)).map(a => a.title));
         return names.some(n => LANGS.some(l => norm(n[l]).includes(q)));
       });
       if (!zones.length) return;
       html += `<h2 class="coll__h">${esc(t('kind_' + kind))}</h2><div class="coll__list">`;
       zones.forEach(z => {
-        const p = D.places.find(x => x.zone === z.id);
+        const zp = zonePlaces(z.id), p = zp[0];
         if (!p) return;
-        const d = now(), st = placeStatus(p, d), wm = zoneWinter(z, d), cl = activeClosure(p, d);
-        const target = wm === 'moves' ? D.places.find(x => x.id === z.winter.place) : (wm === 'off' ? null : p);
-        const animals = D.animals.filter(a => a.place === p.id && a.title.ru !== z.title.ru);
+        const d = now(), st = placeStatus(p, d), cl = activeClosure(p, d);
+        // Куда ведёт «На карте»: каждое летнее место — на месте, в зимнем вольере или нигде (не экспонируется)
+        const modes = zp.map(x => placeWinter(x, d));
+        const targets = [...new Set(zp.map((x, i) => modes[i] === 'moves' ? x.winter.place : modes[i] === 'off' ? null : x.id).filter(id => id && placeById(id)))];
+        const zids = zp.map(x => x.id);
+        const animals = D.animals.filter(a => zids.includes(a.place) && a.title.ru !== z.title.ru);
         const notes = [];
-        if (wm === 'moves') notes.push(`<span class="tag">${esc(t('winterHouse'))}</span>`);
-        if (wm === 'off') notes.push(`<span class="tag tag--warn">${esc(t('winterOff'))}</span>`);
+        if (modes.includes('moves')) notes.push(`<span class="tag">${esc(t('winterHouse'))}</span>`);
+        if (!targets.length && modes.includes('off')) notes.push(`<span class="tag tag--warn">${esc(t('winterOff'))}</span>`);
         if (cl) notes.push(`<span class="tag tag--warn">${esc(closureText(cl))}</span>`);
         else if (st === 'sanitary') notes.push(`<span class="tag tag--warn">${esc(t('todayClosed'))}</span>`);
         if (p.hours) notes.push(`<span class="tag">${esc(t('ownHours', { h: p.hours[0] + '–' + p.hours[1] }))}</span>`);
@@ -516,7 +557,8 @@
           `<div class="coll__txt"><b>${esc(L(z.title))}</b>` +
           (animals.length ? `<small>${animals.map(a => esc(L(a.title))).join(', ')}</small>` : (kind === 'pavilion' ? `<small class="muted">${esc(t('collSoon'))}</small>` : '')) +
           (notes.length ? `<div class="tags">${notes.join('')}</div>` : '') + `</div>` +
-          (target ? `<button type="button" class="btn btn--sm btn--ghost" data-act="focus" data-id="${target.id}" aria-label="${esc(t('onMap'))}">${uiIcon('u-map')}<span>${esc(t('onMap'))}</span></button>` : '') + `</article>`;
+          (targets.length === 1 ? `<button type="button" class="btn btn--sm btn--ghost" data-act="focus" data-id="${targets[0]}" aria-label="${esc(t('onMap'))}">${uiIcon('u-map')}<span>${esc(t('onMap'))}</span></button>`
+            : targets.length > 1 ? `<button type="button" class="btn btn--sm btn--ghost" data-act="focusMany" data-ids="${targets.join(',')}" aria-label="${esc(t('onMap'))}">${uiIcon('u-map')}<span>${esc(t('onMap'))}</span></button>` : '') + `</article>`;
       });
       html += '</div>';
     });
@@ -622,7 +664,7 @@
     const d = now(), msgs = [];
     const h = zooHours(d);
     if (!isOpen(h.zoo, d)) msgs.push(t('zooClosedNow', { from: h.zoo[0], to: h.zoo[1] }));
-    D.places.filter(p => isSanitary(p, d) && isShown(p, d)).forEach(p => msgs.push(t('sanitaryToday', { name: L(p.title) })));
+    D.places.filter(p => isSanitary(p, d) && isShown(p, d)).forEach(p => msgs.push(t('sanitaryToday', { name: L(titleOf(p)) })));
     const b = $('#banner');
     b.hidden = !msgs.length || store.get(KEY.bannerClosed) === dayKey(d);
     b.innerHTML = msgs.length ? `<p class="banner__text">${msgs.map(esc).join(' · ')}</p>` +
@@ -658,6 +700,7 @@
       case 'sheetClose': clearRoute(); sheet(null); return updateToZoo();
       case 'bannerClose': store.set(KEY.bannerClosed, dayKey(now())); return renderBanner();
       case 'focus': closeSearch(); return focusPlace(el.dataset.id);
+      case 'focusMany': return focusMany(el.dataset.ids.split(','));
       case 'toColl': return focusColl(el.dataset.id);
       case 'toZoo': sheet(null); return fitZoo();
       case 'toEntranceRoute': return toExit();
@@ -864,9 +907,9 @@
       if (!active) return;
       const p = D.places.find(x => x.id === id); if (!p) return;
       const list = items().filter(x => !(x.type === 'point' && x.place === id));
-      list.push({ id: 'f' + Date.now(), type: 'point', name: p.title.ru + ' — перетащено', place: id, cat: p.kind === 'animal' ? 'animal' : 'infra',
+      list.push({ id: 'f' + Date.now(), type: 'point', name: titleOf(p).ru + ' — перетащено', place: id, cat: p.kind === 'animal' ? 'animal' : 'infra',
         coords: [[+ll.lat.toFixed(7), +ll.lng.toFixed(7)]], acc: null, ts: new Date().toISOString() });
-      save(list); draw(); mainBar(); toast('Сохранено: ' + p.title.ru);
+      save(list); draw(); mainBar(); toast('Сохранено: ' + titleOf(p).ru);
     }
     /** Служебные дорожки: отметка — запись pathflag (одна на дорожку), в экспорт — с геометрией дорожки. */
     function pathFlag(id, def) { const r = items().filter(x => x.type === 'pathflag' && x.path === id).pop(); return r ? !!r.service : def; }
@@ -987,10 +1030,14 @@
     function placeSelect(type) {
       const done = new Set(items().map(x => x.place).filter(Boolean));
       const mark = id => done.has(id) ? ' (уже есть запись)' : '';
-      const byTitle = (a, b) => a.title.ru.localeCompare(b.title.ru, 'ru');
-      const group = (label, list) => list.length ? `<optgroup label="${label}">${list.sort(byTitle).map(p => `<option value="${p.id}">${esc(p.title.ru)} · ${p.id}${mark(p.id)}</option>`).join('')}</optgroup>` : '';
+      const byTitle = (a, b) => titleOf(a).ru.localeCompare(titleOf(b).ru, 'ru');
+      const group = (label, list) => list.length ? `<optgroup label="${label}">${list.sort(byTitle).map(p => `<option value="${p.id}">${esc(titleOf(p).ru)} · ${p.id}${mark(p.id)}</option>`).join('')}</optgroup>` : '';
+      // 0.1.5: новые места — ещё одно место для зоны (одинаковая пиктограмма) и новый зимний вольер; переносятся в data.json по экспорту
+      const zonesSorted = D.zones.slice().sort((a, b) => a.title.ru.localeCompare(b.title.ru, 'ru'));
+      const newPlaces = `<optgroup label="Новое место (нет в списке)"><option value="new-winter">Новый зимний вольер</option>` +
+        zonesSorted.map(z => `<option value="new-zone:${z.id}">Ещё одно место для зоны: ${esc(z.title.ru)}</option>`).join('') + `</optgroup>`;
       const opts = type === 'point'
-        ? group('Животные', D.places.filter(p => p.kind === 'animal')) + group('Инфраструктура', D.places.filter(p => p.kind === 'infra')) + group('Снаружи', D.places.filter(p => p.kind === 'outside')) +
+        ? newPlaces + group('Животные', D.places.filter(p => p.kind === 'animal')) + group('Инфраструктура', D.places.filter(p => p.kind === 'infra')) + group('Снаружи', D.places.filter(p => p.kind === 'outside')) +
           group('Служебное (посетителям не видно)', (D.service || []).slice())
         : type === 'track'
           ? `<option value="park-route">Путь через парк (заменит линию)${mark('park-route')}</option>`
@@ -1002,12 +1049,17 @@
     function formSave() {
       const f = $('#fieldFormBody'), pend = JSON.parse(f.dataset.pending || '{}');
       const place = $('#fPlace') ? $('#fPlace').value : '';
-      const pl = place && place !== 'boundary' && place !== 'park-route' ? (D.places.find(x => x.id === place) || (D.service || []).find(x => x.id === place)) : null;
-      const label = place === 'boundary' ? 'Граница зоопарка' : place === 'park-route' ? 'Путь через парк' : (pl ? pl.title.ru : '');
+      const newZone = place.startsWith('new-zone:') ? place.slice(9) : null, newWinter = place === 'new-winter';
+      const pl = place && !newZone && !newWinter && place !== 'boundary' && place !== 'park-route' ? (D.places.find(x => x.id === place) || (D.service || []).find(x => x.id === place)) : null;
+      const label = place === 'boundary' ? 'Граница зоопарка' : place === 'park-route' ? 'Путь через парк'
+        : newZone ? (zoneTitle(newZone) || { ru: newZone }).ru + ' — ещё одно место' : newWinter ? 'Зимний вольер' : (pl ? titleOf(pl).ru : '');
       const note = $('#fName').value.trim();
       const name = [label, note].filter(Boolean).join(' — ') || ('Без названия ' + new Date().toLocaleTimeString('ru-RU'));
       const list = items();
-      list.push({ id: 'f' + Date.now(), type: pend.type, name, place: place || null, cat: $('#fCat').value, coords: pend.coords, acc: pend.acc, ts: new Date().toISOString() });
+      const rec = { id: 'f' + Date.now(), type: pend.type, name, place: (newZone || newWinter) ? null : (place || null), cat: $('#fCat').value, coords: pend.coords, acc: pend.acc, ts: new Date().toISOString() };
+      if (newZone) rec.newZone = newZone;
+      if (newWinter) rec.newWinter = true;
+      list.push(rec);
       save(list); $('#fieldForm').hidden = true; draw(); mainBar(); toast('Сохранено');
     }
     function showList() {
@@ -1030,7 +1082,8 @@
         features: items().map(it => ({
           type: 'Feature',
           properties: Object.assign({ id: it.id, name: it.name, place: it.place || null, cat: it.cat, kind: it.type, accuracy: it.acc, time: it.ts },
-            it.type === 'pathflag' ? { path: it.path, service: it.service } : {}),
+            it.type === 'pathflag' ? { path: it.path, service: it.service } : {},
+            it.newZone ? { newZone: it.newZone } : {}, it.newWinter ? { newWinter: true } : {}),
           geometry: it.type === 'point' ? { type: 'Point', coordinates: [it.coords[0][1], it.coords[0][0]] }
             : it.type === 'polygon' ? { type: 'Polygon', coordinates: [it.coords.concat([it.coords[0]]).map(c => [c[1], c[0]])] }
               : { type: 'LineString', coordinates: it.coords.map(c => [c[1], c[0]]) }
@@ -1114,7 +1167,7 @@
     showTab('map');
     if (!saved) showLangScreen();
     let lastDay = dayKey(now());
-    setInterval(() => {                       // в полночь — новые сезонные объекты, закрытия, зимники
+    setInterval(() => {                       // в полночь — новые сезонные объекты, закрытия, зимние вольеры
       renderBanner();
       const k = dayKey(now()); if (k !== lastDay) { lastDay = k; if (map) buildMarkers(); }
     }, 60000);

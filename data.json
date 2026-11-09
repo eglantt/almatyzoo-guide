@@ -1,6 +1,6 @@
 {
  "meta": {
-  "dataVersion": "0.1.4-alpha.1",
+  "dataVersion": "0.1.5-alpha.1",
   "_note": "Координаты мест ориентировочные (approx), будут заменены данными полевого режима. Контур и дорожки — из OpenStreetMap.",
   "center": [
    43.26391,
@@ -12,7 +12,7 @@
     76.962
    ],
    [
-    43.2682,
+    43.2705,
     76.9822
    ]
   ],
@@ -1185,7 +1185,7 @@
    }
   }
  ],
- "_winterNote": "Зимники: у зоны поле winter {from, to (ММ-ДД), mode: moves | off, place}. Пока все зоны остаются на месте.",
+ "_winterNote": "Зимние вольеры (0.1.5): у летнего места поле winter {from, to (ММ-ДД), mode: moves | off, place: id зимнего вольера}; зимний вольер — место kind animal, cat winter, winterFor: [id летних мест], название необязательно. У одной зоны может быть несколько мест (одинаковая пиктограмма). Неэкспозиционный зимний вольер в данные не вносится (mode off). Пока все места остаются на месте — список от заказчика.",
  "paths": [
   {
    "id": "w1423865962",
@@ -3044,80 +3044,29 @@
  "animals": [],
  "_animalsNote": "Обитатели (виды) — по полной коллекции от заказчика.",
  "icons": {
-  "a-snake": {
-   "placeholder": true
-  },
-  "a-rhino": {
-   "placeholder": true
-  },
-  "a-wolf": {
-   "placeholder": true
-  },
-  "a-paw": {
-   "placeholder": true
-  },
-  "i-gazebo": {
-   "placeholder": false
-  },
-  "a-croc": {
-   "placeholder": true
-  },
   "a-elephant": {
-   "placeholder": true
-  },
-  "a-fish": {
-   "placeholder": true
-  },
-  "i-cafe": {
-   "placeholder": false
-  },
-  "a-lion": {
-   "placeholder": true
-  },
-  "i-info": {
-   "placeholder": false
-  },
-  "i-guard": {
-   "placeholder": false
-  },
-  "a-monkey": {
-   "placeholder": true
-  },
-  "a-bear": {
-   "placeholder": true
-  },
-  "a-pond": {
    "placeholder": true
   },
   "a-hippo": {
    "placeholder": true
   },
-  "a-duck": {
+  "a-croc": {
    "placeholder": true
   },
-  "a-birdhouse": {
+  "a-fish": {
    "placeholder": true
   },
-  "a-pheasant": {
-   "placeholder": true
+  "i-info": {
+   "placeholder": false
   },
   "a-tiger": {
    "placeholder": true
   },
-  "i-ticket": {
-   "placeholder": false
+  "a-pond": {
+   "placeholder": true
   },
   "i-wc": {
    "placeholder": false
-  },
-  "a-kangaroo": {
-   "placeholder": true
-  },
-  "a-giraffe": {
-   "placeholder": true
-  },
-  "a-polar": {
-   "placeholder": true
   },
   "a-zebra": {
    "placeholder": true
@@ -3125,10 +3074,52 @@
   "i-bus": {
    "placeholder": false
   },
-  "i-kiosk": {
+  "a-pheasant": {
+   "placeholder": true
+  },
+  "a-birdhouse": {
+   "placeholder": true
+  },
+  "a-paw": {
+   "placeholder": true
+  },
+  "a-rhino": {
+   "placeholder": true
+  },
+  "i-cafe": {
+   "placeholder": false
+  },
+  "a-polar": {
+   "placeholder": true
+  },
+  "a-wolf": {
+   "placeholder": true
+  },
+  "a-deer": {
+   "placeholder": true
+  },
+  "i-gazebo": {
+   "placeholder": false
+  },
+  "i-guard": {
    "placeholder": false
   },
   "a-eagle": {
+   "placeholder": true
+  },
+  "a-bear": {
+   "placeholder": true
+  },
+  "a-kangaroo": {
+   "placeholder": true
+  },
+  "a-snake": {
+   "placeholder": true
+  },
+  "i-ticket": {
+   "placeholder": false
+  },
+  "a-duck": {
    "placeholder": true
   },
   "i-parking": {
@@ -3137,11 +3128,20 @@
   "i-med": {
    "placeholder": false
   },
-  "a-deer": {
-   "placeholder": true
-  },
   "i-play": {
    "placeholder": false
+  },
+  "i-kiosk": {
+   "placeholder": false
+  },
+  "a-monkey": {
+   "placeholder": true
+  },
+  "a-lion": {
+   "placeholder": true
+  },
+  "a-giraffe": {
+   "placeholder": true
   },
   "r-feed": {
    "placeholder": true

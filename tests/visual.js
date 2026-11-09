@@ -61,6 +61,13 @@ const SCREENS = ['map', 'coll', 'rules', 'more'];
         await page.evaluate(() => window.scrollTo(0, 0));
       }
     }
+    // 0.1.5: карточка самого северного места не уходит под фильтры (карта сдвигается с запасом)
+    await page.click('[data-tab="map"]'); await page.waitForTimeout(200);
+    await page.evaluate(() => { const ms = Object.values(ZooApp.markers); ms.sort((a, b) => b.getLatLng().lat - a.getLatLng().lat); ms[0].openPopup(); });
+    await page.waitForTimeout(500);
+    const pp = await page.evaluate(() => { const a = document.querySelector('.leaflet-popup').getBoundingClientRect(), f = document.querySelector('#mapFilters').getBoundingClientRect(); return { popTop: Math.round(a.top), filtersBottom: Math.round(f.bottom) }; });
+    check(`[${w} ${lang}] карточка места не под фильтрами`, pp.popTop >= pp.filtersBottom, pp);
+    await page.evaluate(() => ZooApp.map.closePopup());
     // 0.1.4: «Путь через парк» — оба входа видны на карте над карточкой
     await page.click('[data-tab="more"]');
     await page.evaluate(() => { const b = document.querySelector('[data-act="parkRoute"]'); if (b) b.closest('details').open = true; });

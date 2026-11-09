@@ -65,7 +65,7 @@ async function launch(opts = {}) {
   };
   Object.defineProperty(w.navigator, 'geolocation', { value: opts.gps == null ? undefined : geo, configurable: true });
   // fetch — настоящие файлы проекта
-  // opts.patch(D) — правка data.json только для этого запуска (сценарии, которых ещё нет в настоящих данных: зимники и т. п.)
+  // opts.patch(D) — правка data.json только для этого запуска (сценарии, которых ещё нет в настоящих данных: зимние вольеры и т. п.)
   w.fetch = async (url) => {
     const f = String(url).replace(/^https:\/\/zoo\.test\//, '');
     try { let body = read(f); if (f === 'data.json' && opts.patch) { const D = JSON.parse(body); opts.patch(D); body = JSON.stringify(D); } return { ok: true, status: 200, text: async () => body, json: async () => JSON.parse(body) }; }

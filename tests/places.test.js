@@ -1,5 +1,5 @@
 /* Набор places (0.1.3): контур и дорожки из OSM, сезонные объекты, временные закрытия,
-   зимники, «Найти рядом» мимо закрытого, переключатель «Схема / Спутник», служебные объекты для полевого режима. */
+   зимние вольеры, «Найти рядом» мимо закрытого, переключатель «Схема / Спутник», служебные объекты для полевого режима. */
 'use strict';
 const { suite, launch, read } = require('./harness');
 
@@ -82,40 +82,40 @@ module.exports = async function () {
     check('М5c. В коллекции — пометка о закрытии', !!item && item.textContent.includes('Временно закрыт'), item && item.textContent);
     A.close(); }
 
-  // М6. Зимники: свои даты перевода у каждой зоны; переезд в экспонируемый зимник / не экспонируется
+  // М6. Зимние вольеры: свои даты перевода у каждого летнего места; переезд в экспонируемый зимний вольер / не экспонируется
+  // 0.1.5: настройка — у места (place.winter), зимний вольер — место с winterFor (список летних мест)
   const winterPatch = X => {
     const g = X.places.find(p => p.id === 'giraffes');
-    X.zones.find(z => z.id === 'giraffes').winter = { from: '11-15', to: '03-15', mode: 'moves', place: 'winter-giraffes' };
-    X.zones.find(z => z.id === 'zebras').winter = { from: '11-01', to: '03-31', mode: 'off' };
-    X.places.push({ id: 'winter-giraffes', kind: 'animal', cat: 'winter', winterOf: 'giraffes', icon: g.icon, lat: g.lat + 0.0003, lng: g.lng - 0.0004, approx: true, major: false,
-      title: { kz: 'Керіктер', ru: 'Жирафы', en: 'Giraffes' } });
+    g.winter = { from: '11-15', to: '03-15', mode: 'moves', place: 'winter-giraffes' };
+    X.places.find(p => p.id === 'zebras').winter = { from: '11-01', to: '03-31', mode: 'off' };
+    X.places.push({ id: 'winter-giraffes', kind: 'animal', cat: 'winter', winterFor: ['giraffes'], icon: g.icon, lat: g.lat + 0.0003, lng: g.lng - 0.0004, approx: true, major: false });
   };
   { const A = await launch({ lang: 'ru', now: SUMMER, patch: winterPatch });
-    check('М6a. Летом жирафы в летнем вольере, зимника на карте нет', !!A.app.markers.giraffes && !A.app.markers['winter-giraffes']);
+    check('М6a. Летом жирафы в летнем вольере, зимнего вольера на карте нет', !!A.app.markers.giraffes && !A.app.markers['winter-giraffes']);
     check('М6b. Летом зебры на карте', !!A.app.markers.zebras);
     A.close(); }
   { const A = await launch({ lang: 'ru', now: '2026-11-10T12:00:00', patch: winterPatch });
-    check('М6c. Свои даты зоны: 10 ноября у зоопарка зима, а жирафы ещё в летнем вольере', A.app.fn.season(A.app.fn.now()) === 'winter' && !!A.app.markers.giraffes && !A.app.markers['winter-giraffes']);
+    check('М6c. Свои даты места: 10 ноября у зоопарка зима, а жирафы ещё в летнем вольере', A.app.fn.season(A.app.fn.now()) === 'winter' && !!A.app.markers.giraffes && !A.app.markers['winter-giraffes']);
     check('М6d. 10 ноября зебры уже не на карте (их перевод с 1 ноября)', !A.app.markers.zebras);
     A.close(); }
   { const A = await launch({ lang: 'ru', now: '2027-01-15T12:00:00', patch: winterPatch });
-    check('М6e. Зимой (через Новый год) маркер у зимника, у летнего вольера — нет', !A.app.markers.giraffes && !!A.app.markers['winter-giraffes']);
+    check('М6e. Зимой (через Новый год) маркер у зимнего вольера, у летнего вольера — нет', !A.app.markers.giraffes && !!A.app.markers['winter-giraffes']);
     const txt = A.app.markers['winter-giraffes'] ? popupText(A, 'winter-giraffes') : '';
-    check('М6f. В попапе зимника — «Зимний вольер»', txt.includes('Зимний вольер'), txt);
+    check('М6f. В попапе зимнего вольера — «Зимний вольер»', txt.includes('Зимний вольер'), txt);
     A.click('[data-tab="coll"]');
     const g = A.$('#coll-giraffes'), z = A.$('#coll-zebras');
-    check('М6g. Коллекция: жирафы — «Зимний вольер», «На карте» ведёт к зимнику', !!g && g.textContent.includes('Зимний вольер') && !!g.querySelector('[data-act="focus"][data-id="winter-giraffes"]'), g && g.innerHTML.slice(0, 300));
+    check('М6g. Коллекция: жирафы — «Зимний вольер», «На карте» ведёт к зимнему вольеру', !!g && g.textContent.includes('Зимний вольер') && !!g.querySelector('[data-act="focus"][data-id="winter-giraffes"]'), g && g.innerHTML.slice(0, 300));
     check('М6h. Коллекция: зебры — «Зимой не экспонируется, вернётся весной», без кнопки «На карте»', !!z && z.textContent.includes('Зимой не экспонируется, вернётся весной') && !z.querySelector('[data-act="focus"]'), z && z.textContent);
     const res = A.app.fn.doSearch('жираф'), zeb = A.app.fn.doSearch('зебр');
-    check('М6i. Поиск зимой ведёт к зимнику, к зебрам — не ведёт на карту', res.some(r => r.placeId === 'winter-giraffes') && !res.some(r => r.placeId === 'giraffes') && !zeb.some(r => r.placeId === 'zebras'), { res: res.map(r => r.placeId), zeb: zeb.map(r => r.placeId) });
+    check('М6i. Поиск зимой ведёт к зимнему вольеру, к зебрам — не ведёт на карту', res.some(r => r.placeId === 'winter-giraffes') && !res.some(r => r.placeId === 'giraffes') && !zeb.some(r => r.placeId === 'zebras'), { res: res.map(r => r.placeId), zeb: zeb.map(r => r.placeId) });
     A.close(); }
   { const A = await launch({ lang: 'ru', now: '2027-03-16T12:00:00', patch: winterPatch });
     check('М6j. Весной жирафы вернулись в летний вольер сами', !!A.app.markers.giraffes && !A.app.markers['winter-giraffes']);
     A.close(); }
 
-  // М7. Подмена даты из сервисной панели действует на сезонные объекты и зимники
+  // М7. Подмена даты из сервисной панели действует на сезонные объекты и зимние вольеры
   { const A = await launch({ lang: 'ru', now: SUMMER, storage: { zoo_dev_now: '2026-12-09T12:00' }, patch: winterPatch });
-    check('М7. Подменённая зимняя дата: ларька нет, жирафы у зимника', !A.app.markers['kiosk-1'] && !!A.app.markers['winter-giraffes']);
+    check('М7. Подменённая зимняя дата: ларька нет, жирафы в зимнем вольере', !A.app.markers['kiosk-1'] && !!A.app.markers['winter-giraffes']);
     A.close(); }
 
   // М8. Переключатель «Схема / Спутник»: обычный и полевой режим, выбор помнится отдельно

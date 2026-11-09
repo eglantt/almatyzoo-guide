@@ -2,7 +2,7 @@
    node run.js            — все наборы
    node run.js sw app     — только указанные */
 'use strict';
-const ORDER = ['data', 'version', 'fonts', 'app', 'schedule', 'geo', 'panel', 'field', 'places', 'route', 'sw'];
+const ORDER = ['data', 'version', 'fonts', 'app', 'schedule', 'geo', 'panel', 'field', 'places', 'route', 'winter', 'sw'];
 
 (async () => {
   const pick = process.argv.slice(2);
