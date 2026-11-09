@@ -61,6 +61,18 @@ const SCREENS = ['map', 'coll', 'rules', 'more'];
         await page.evaluate(() => window.scrollTo(0, 0));
       }
     }
+    // 0.1.4: «Путь через парк» — оба входа видны на карте над карточкой
+    await page.click('[data-tab="more"]');
+    await page.evaluate(() => { const b = document.querySelector('[data-act="parkRoute"]'); if (b) b.closest('details').open = true; });
+    await page.click('[data-act="parkRoute"]'); await page.waitForTimeout(400);
+    await page.screenshot({ path: path.join(OUT, `${w}-${lang}-park.png`) });
+    const pr = await page.evaluate(() => {
+      const m = ZooApp.map, mr = m.getContainer().getBoundingClientRect(), sh = document.querySelector('#sheet').getBoundingClientRect();
+      const pts = [ZooApp.data.parkRoute.from, ZooApp.data.meta.entrance].map(q => m.latLngToContainerPoint(q));
+      return { ok: pts.every(p => p.y + mr.top < sh.top && p.y > 0 && p.x > 0 && p.x < mr.width), ys: pts.map(p => Math.round(p.y + mr.top)), sheetTop: Math.round(sh.top) };
+    });
+    check(`[${w} ${lang}] путь через парк: вход в парк и вход в зоопарк видны над карточкой`, pr.ok, pr);
+    await page.click('#sheetClose');
     // Шрифт Nunito реально применён (не системный)
     // Проверяется текст текущего языка: файлы алфавитов грузятся только по необходимости (unicode-range)
     const sample = { kz: 'Ережелер Құстар үйі', ru: 'Правила Карта', en: 'Rules Map' }[lang];

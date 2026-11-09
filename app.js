@@ -21,7 +21,7 @@
   'use strict';
 
   /* ===================== 1. Константы и хранилище ===================== */
-  const APP_VERSION = '0.1.3-alpha';
+  const APP_VERSION = '0.1.4-alpha';
   const KEY = {
     lang: 'zoo_lang',
     devNow: 'zoo_dev_now',       // подмена даты (сервисная панель)
@@ -208,7 +208,8 @@
     applyBase();
     // Контур и дорожки — из OpenStreetMap (data.json): видны и без сети. Пунктир — только у ориентировочного контура.
     L_.polygon(D.meta.boundary, { color: '#4E8C12', weight: 3, dashArray: D.meta.boundaryApprox ? '8 6' : null, fillColor: '#95C12B', fillOpacity: 0.08, interactive: false, attribution: OSM_ATTR }).addTo(map);
-    layers.paths = L_.layerGroup((D.paths || []).map(p => L_.polyline(p.coords, { color: '#B89B62', weight: 3.5, opacity: 0.85, lineCap: 'round', lineJoin: 'round', interactive: false }))).addTo(map);
+    layers.paths = L_.layerGroup().addTo(map);
+    buildPaths();
     layers.areas = L_.layerGroup().addTo(map);
     layers.animal = L_.layerGroup().addTo(map);
     layers.infra = L_.layerGroup().addTo(map);
@@ -240,6 +241,36 @@
     el.innerHTML = `<button type="button" data-base="osm" aria-pressed="${b === 'osm'}">${esc(t('baseScheme'))}</button>` +
       `<button type="button" data-base="sat" aria-pressed="${b === 'sat'}">${esc(t('baseSat'))}</button>`;
   }
+  /** Дорожки: обычные — песочные; служебные — серый пунктир, у посетителя по нажатию «Проход запрещён».
+      В полевом режиме — с учётом отметок, сделанных на этом устройстве. */
+  function pathIsService(p) { return Field.isActive() ? Field.pathFlag(p.id, !!p.service) : !!p.service; }
+  function buildPaths() {
+    if (!map) return;
+    layers.paths.clearLayers();
+    const field = Field.isActive();
+    (D.paths || []).forEach(p => {
+      const svc = pathIsService(p);
+      const l = L_.polyline(p.coords, svc
+        ? { color: '#8A8A8A', weight: 3.5, opacity: 0.95, dashArray: '5 7', lineCap: 'round', interactive: !field }
+        : { color: '#B89B62', weight: 3.5, opacity: 0.85, lineCap: 'round', lineJoin: 'round', interactive: false });
+      if (svc && !field) l.bindPopup(`<div class="pp"><div class="pp__t">${esc(t('servicePath'))}</div><div class="pp__st pp__st--closed">${esc(t('noPassage'))}</div></div>`, { className: 'zpop', maxWidth: 240 });
+      l.addTo(layers.paths);
+    });
+  }
+  /** Путь через Парк культуры — только по кнопке; при открытии карта остаётся на зоопарке. */
+  function showParkRoute() {
+    const R = D.parkRoute; if (!R) return;
+    showTab('map'); if (!map) return;
+    clearRoute(); map.closePopup();
+    L_.polyline(R.coords, { color: '#1E88E5', weight: 5, opacity: 0.9, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(layers.route);
+    L_.circleMarker([R.from.lat, R.from.lng], { radius: 8, color: '#fff', weight: 3, fillColor: '#C4920A', fillOpacity: 1 })
+      .bindTooltip(esc(L(R.title)), { direction: 'top', offset: [0, -8] }).addTo(layers.route);
+    // Путь ~800 м шире экрана телефона на масштабе 16 — на время показа разрешён 15; низ — под карточку
+    map.setMinZoom(15);
+    const fit = () => { map.invalidateSize(); map.fitBounds(R.coords, { paddingTopLeft: [30, 70], paddingBottomRight: [30, 290], maxZoom: 18 }); };
+    fit(); setTimeout(fit, 0);
+    sheet(`<b>${esc(t('parkRoute'))}</b><br>${esc(t('parkRouteText'))}<br>${esc(fmtDist(R.m))} · ${esc(t('minWalk', { n: walkMin(R.m) }))}`);
+  }
   function fitZoo() {
     const el = map.getContainer();
     if (el.clientWidth > 0 && el.clientHeight > 0) map.fitBounds(D.meta.boundary, { padding: [16, 16] });
@@ -252,7 +283,8 @@
   }
   function updateToZoo() {
     const c = map.getCenter();
-    $('#btnToZoo').hidden = insideZoo({ lat: c.lat, lng: c.lng });
+    // Пока открыта карточка (путь через парк, «Где я?») — у неё свои кнопки, «К зоопарку» не мешает фильтрам
+    $('#btnToZoo').hidden = insideZoo({ lat: c.lat, lng: c.lng }) || !$('#sheet').hidden;
   }
   /** Маркеры и контуры всех мест. Перестраиваются при смене языка. */
   function buildMarkers() {
@@ -395,7 +427,10 @@
     map.fitBounds([[from.lat, from.lng], [best.p.lat, best.p.lng]], { padding: [70, 70], maxZoom: 18 });
     sheet(`<b>${esc(t('nearestIs', { name: L(best.p.title) }))}</b><br>${esc(fmtDist(best.m))} · ${esc(t('minWalk', { n: walkMin(best.m) }))} · ${esc(dirName(bearing(from, placeLatLng(best.p))))}`);
   }
-  function clearRoute() { if (layers.route) layers.route.clearLayers(); }
+  function clearRoute() {
+    if (layers.route) layers.route.clearLayers();
+    if (map && map.getMinZoom() !== 16) map.setMinZoom(16);          // после пути через парк — обычный предел
+  }
   /** «К выходу», этап 1: линия до центрального входа, расстояние, направление. */
   async function toExit() {
     sheet(esc(t('locating')));
@@ -544,6 +579,7 @@
       `<details class="card"><summary><h2>${esc(t('moreRoute'))}</h2></summary>` +
       `<p>${esc(L(I.address))}</p><p class="muted">${esc(t('routeToEntrance'))}</p>` +
       `<div class="btnrow">${routeLinks.map(([n, u]) => `<a class="btn btn--sm" href="${esc(u)}" target="_blank" rel="noopener">${uiIcon('u-route')}<span>${esc(n)}</span></a>`).join('')}</div>` +
+      (D.parkRoute ? `<div class="btnrow"><button type="button" class="btn btn--sm btn--ghost" data-act="parkRoute">${uiIcon('u-map')}<span>${esc(t('parkRoute'))}</span></button></div>` : '') +
       `<h3>${esc(t('busTitle'))}</h3><p>${esc(L(I.bus))}</p>` +
       `<h3>${esc(t('parkingTitle'))}</h3><p>${esc(L(I.parking))}</p></details>` +
       // Установка
@@ -619,12 +655,13 @@
       case 'btnLocate': return whereAmI();
       case 'btnNear': return toggleNear();
       case 'btnToZoo': return fitZoo();
-      case 'sheetClose': clearRoute(); return sheet(null);
+      case 'sheetClose': clearRoute(); sheet(null); return updateToZoo();
       case 'bannerClose': store.set(KEY.bannerClosed, dayKey(now())); return renderBanner();
       case 'focus': closeSearch(); return focusPlace(el.dataset.id);
       case 'toColl': return focusColl(el.dataset.id);
       case 'toZoo': sheet(null); return fitZoo();
       case 'toEntranceRoute': return toExit();
+      case 'parkRoute': return showParkRoute();
       case 'focusCat': { const p = D.places.find(x => x.cat === el.dataset.cat); if (p) focusPlace(p.id); return; }
       case 'install':
         if (S.deferredInstall) { S.deferredInstall.prompt(); S.deferredInstall.userChoice.finally(() => { S.deferredInstall = null; renderMore(); }); }
@@ -781,6 +818,7 @@
         `<button type="button" class="btn btn--sm" data-f="tapPoint">Точка тапом</button>` +
         `<button type="button" class="btn btn--sm" data-f="polygon">Контур</button>` +
         `<button type="button" class="btn btn--sm" data-f="track">Трек</button>` +
+        `<button type="button" class="btn btn--sm" data-f="paths">Дорожки</button>` +
         `<button type="button" class="btn btn--sm btn--ghost" data-f="list">Список</button>` +
         `<button type="button" class="btn btn--sm btn--ghost" data-f="exit">Выйти</button>`);
     }
@@ -790,7 +828,8 @@
       items().forEach(it => {
         const style = { color: '#FF00FF', weight: 3 };
         if (it.id === editId) return;                              // правится — рисуется черновиком
-        if (it.type === 'point' && it.place && markers[it.place]) return;   // место показано самой пиктограммой
+        if (it.type === 'point' && it.place && markers[it.place]) return;
+        if (it.type === 'pathflag') return;                          // отметка показана стилем самой дорожки   // место показано самой пиктограммой
         if (it.type === 'point') L_.circleMarker(it.coords[0], { radius: 7, color: '#fff', weight: 2, fillColor: '#FF00FF', fillOpacity: 1 }).bindTooltip(esc(it.name)).addTo(layers.field);
         if (it.type === 'polygon') L_.polygon(it.coords, Object.assign({ fillOpacity: 0.1 }, style)).bindTooltip(esc(it.name)).addTo(layers.field);
         if (it.type === 'track') L_.polyline(it.coords, style).bindTooltip(esc(it.name)).addTo(layers.field);
@@ -801,13 +840,13 @@
       active = true; mode = null;
       document.body.classList.add('field-on');                   // плашка и кнопки посетителя спрятаны
       if (map) map.closePopup();
-      applyBase(); buildMarkers(); draw(); mainBar();          // все места, включая скрытые сейчас у посетителя
+      applyBase(); buildMarkers(); buildPaths(); draw(); mainBar();          // все места, включая скрытые сейчас у посетителя
     }
     function stop() {
       active = false; mode = null; cancelDraft();
       document.body.classList.remove('field-on');
       applyBase();
-      if (map) { layers.field.clearLayers(); buildMarkers(); }   // пиктограммы — на свои места, скрытые — снова скрыты
+      if (map) { layers.field.clearLayers(); buildMarkers(); buildPaths(); }   // пиктограммы — на свои места, скрытые — снова скрыты
       bar('');
     }
     /** Пиктограммы мест: перетаскиваются; стоят там, куда их перетащили (только в полевом режиме). */
@@ -828,6 +867,28 @@
       list.push({ id: 'f' + Date.now(), type: 'point', name: p.title.ru + ' — перетащено', place: id, cat: p.kind === 'animal' ? 'animal' : 'infra',
         coords: [[+ll.lat.toFixed(7), +ll.lng.toFixed(7)]], acc: null, ts: new Date().toISOString() });
       save(list); draw(); mainBar(); toast('Сохранено: ' + p.title.ru);
+    }
+    /** Служебные дорожки: отметка — запись pathflag (одна на дорожку), в экспорт — с геометрией дорожки. */
+    function pathFlag(id, def) { const r = items().filter(x => x.type === 'pathflag' && x.path === id).pop(); return r ? !!r.service : def; }
+    function nearestPath(ll, maxM) {
+      const k = 111320 * Math.cos(rad(ll.lat)), xy = c => [c[1] * k, c[0] * 110540], P = xy([ll.lat, ll.lng]);
+      let best = null, bd = Infinity;
+      (D.paths || []).forEach(p => {
+        for (let i = 1; i < p.coords.length; i++) {
+          const [ax, ay] = xy(p.coords[i - 1]), [bx, by] = xy(p.coords[i]), dx = bx - ax, dy = by - ay;
+          const u = Math.max(0, Math.min(1, ((P[0] - ax) * dx + (P[1] - ay) * dy) / ((dx * dx + dy * dy) || 1)));
+          const d = Math.hypot(P[0] - ax - u * dx, P[1] - ay - u * dy);
+          if (d < bd) { bd = d; best = p; }
+        }
+      });
+      return bd <= maxM ? best : null;
+    }
+    function togglePath(p) {
+      const svc = !pathFlag(p.id, !!p.service);
+      const list = items().filter(x => !(x.type === 'pathflag' && x.path === p.id));
+      list.push({ id: 'f' + Date.now(), type: 'pathflag', name: `Дорожка ${p.id} — ${svc ? 'служебная' : 'обычная'}`, path: p.id, service: svc,
+        cat: 'path', coords: p.coords.map(c => c.slice()), acc: null, ts: new Date().toISOString() });
+      save(list); buildPaths(); toast(svc ? 'Служебная дорожка' : 'Обычная дорожка');
     }
     function cancelDraft() {
       draft = []; editId = null;
@@ -863,6 +924,7 @@
       const ll = [+e.latlng.lat.toFixed(7), +e.latlng.lng.toFixed(7)];
       if (mode === 'tapPoint') { mode = null; askName('point', [ll], null); return true; }
       if (mode === 'polygon') { draft.push(ll); redrawDraft(); return true; }
+      if (mode === 'paths') { const p = nearestPath(e.latlng, 15); if (p) togglePath(p); else toast('Дорожка не найдена — нажмите ближе к линии'); return true; }
       return false;
     }
     function gpsPoint() {
@@ -930,6 +992,8 @@
       const opts = type === 'point'
         ? group('Животные', D.places.filter(p => p.kind === 'animal')) + group('Инфраструктура', D.places.filter(p => p.kind === 'infra')) + group('Снаружи', D.places.filter(p => p.kind === 'outside')) +
           group('Служебное (посетителям не видно)', (D.service || []).slice())
+        : type === 'track'
+          ? `<option value="park-route">Путь через парк (заменит линию)${mark('park-route')}</option>`
         : type === 'polygon'
           ? `<option value="boundary">Граница зоопарка${mark('boundary')}</option>` + group('Контур места', D.places.filter(p => p.kind === 'animal'))
           : '';
@@ -938,8 +1002,8 @@
     function formSave() {
       const f = $('#fieldFormBody'), pend = JSON.parse(f.dataset.pending || '{}');
       const place = $('#fPlace') ? $('#fPlace').value : '';
-      const pl = place && place !== 'boundary' ? (D.places.find(x => x.id === place) || (D.service || []).find(x => x.id === place)) : null;
-      const label = place === 'boundary' ? 'Граница зоопарка' : (pl ? pl.title.ru : '');
+      const pl = place && place !== 'boundary' && place !== 'park-route' ? (D.places.find(x => x.id === place) || (D.service || []).find(x => x.id === place)) : null;
+      const label = place === 'boundary' ? 'Граница зоопарка' : place === 'park-route' ? 'Путь через парк' : (pl ? pl.title.ru : '');
       const note = $('#fName').value.trim();
       const name = [label, note].filter(Boolean).join(' — ') || ('Без названия ' + new Date().toLocaleTimeString('ru-RU'));
       const list = items();
@@ -965,7 +1029,8 @@
         properties: { app: 'almatyzoo-guide', version: APP_VERSION, exported: new Date().toISOString() },
         features: items().map(it => ({
           type: 'Feature',
-          properties: { id: it.id, name: it.name, place: it.place || null, cat: it.cat, kind: it.type, accuracy: it.acc, time: it.ts },
+          properties: Object.assign({ id: it.id, name: it.name, place: it.place || null, cat: it.cat, kind: it.type, accuracy: it.acc, time: it.ts },
+            it.type === 'pathflag' ? { path: it.path, service: it.service } : {}),
           geometry: it.type === 'point' ? { type: 'Point', coordinates: [it.coords[0][1], it.coords[0][0]] }
             : it.type === 'polygon' ? { type: 'Polygon', coordinates: [it.coords.concat([it.coords[0]]).map(c => [c[1], c[0]])] }
               : { type: 'LineString', coordinates: it.coords.map(c => [c[1], c[0]]) }
@@ -1004,6 +1069,7 @@
           return askName('polygon', pts, null);
         }
         case 'track': return startTrack();
+        case 'paths': mode = 'paths'; return bar(`<b>Дорожки</b><span class="muted">Нажмите на дорожку: служебная / обычная</span><button type="button" class="btn btn--sm" data-f="back">Готово</button>`);
         case 'trackStop': return stopTrack();
         case 'list': return showList();
         case 'back': case 'cancel':
@@ -1016,7 +1082,7 @@
         case 'exit': return stop();
       }
     }
-    return { start, stop, onMapClick, onClick, items, exportFile, fileName, toGeoJSON, applyMarkers, onMarkerDrag,
+    return { start, stop, onMapClick, pathFlag, onClick, items, exportFile, fileName, toGeoJSON, applyMarkers, onMarkerDrag,
       isRecording: () => recording, isActive: () => active, debug: () => ({ handles: handles.slice() }) };
   })();
   /* ZOO:SYS-TOOLS:END */
