@@ -47,6 +47,19 @@ const SCREENS = ['map', 'coll', 'rules', 'more'];
       });
       check(`[${w} ${lang} ${s}] нет горизонтальной прокрутки`, r.overflow <= 0, r.overflow);
       check(`[${w} ${lang} ${s}] подписи не обрезаны`, r.cut.length === 0, r.cut);
+      // Низ экрана виден над нижним меню после прокрутки до конца (ошибка 0.1.0: номер версии под меню)
+      if (s !== 'map') {
+        const b = await page.evaluate(scr => {
+          window.scrollTo(0, 1e7);
+          const pad = document.querySelector(`[data-screen="${scr}"] .pad`);
+          const last = pad && pad.lastElementChild;
+          const lr = last.getBoundingClientRect(), tb = document.querySelector('.tabbar').getBoundingClientRect();
+          return { lastBottom: Math.round(lr.bottom), tabTop: Math.round(tb.top), what: last.id || last.className };
+        }, s);
+        await page.screenshot({ path: path.join(OUT, `${w}-${lang}-${s}-end.png`) });
+        check(`[${w} ${lang} ${s}] последний элемент (${b.what}) виден над нижним меню`, b.lastBottom <= b.tabTop, b);
+        await page.evaluate(() => window.scrollTo(0, 0));
+      }
     }
     // Шрифт Nunito реально применён (не системный)
     // Проверяется текст текущего языка: файлы алфавитов грузятся только по необходимости (unicode-range)

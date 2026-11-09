@@ -105,7 +105,9 @@ svg { display: block; }
 .langsw button[aria-pressed="true"] { background: #fff; color: var(--dark); box-shadow: 0 1px 2px rgba(0,0,0,.15); }
 
 /* ---------- Экраны ---------- */
-main { flex: 1; display: flex; flex-direction: column; min-height: 0; padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px)); }
+/* main растёт вместе с содержимым (flex: 1 0 auto): тогда отступ под нижнее меню учитывается при прокрутке.
+   В 0.1.0 было flex: 1 + min-height: 0 — длинные экраны вылезали за main, и низ уходил под меню. */
+main { flex: 1 0 auto; display: flex; flex-direction: column; padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px)); }
 .screen { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .pad {
   padding: 1rem max(1rem, env(safe-area-inset-right, 0px)) 1.5rem max(1rem, env(safe-area-inset-left, 0px));

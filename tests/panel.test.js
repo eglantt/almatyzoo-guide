@@ -74,10 +74,23 @@ module.exports = async function () {
     A.$('#fName').value = 'Жирафы — центр вольера'; A.click('[data-f="formSave"]');
     let items = JSON.parse(A.w.localStorage.getItem('zoo_field') || '[]');
     check('П5d. Точка сохранена в localStorage с координатами', items.length === 1 && items[0].type === 'point' && items[0].name === 'Жирафы — центр вольера' && items[0].coords[0][0] === 43.2640123, items);
+    // П5j. Привязка к существующему месту (0.1.1): точка → «Жирафы», контур → граница зоопарка
+    A.click('[data-f="tapPoint"]');
+    A.app.map.fire('click', { latlng: { lat: 43.2633, lng: 76.9767 } });
+    check('П5j. В форме точки есть выбор места из data.json', !!A.$('#fPlace') && !!A.$('#fPlace option[value="giraffes"]') && !!A.$('#fPlace option[value="wc-1"]'));
+    if (A.$('#fPlace')) { A.$('#fPlace').value = 'giraffes'; }
+    A.$('#fName').value = 'центр вольера'; A.click('[data-f="formSave"]');
+    let bound = JSON.parse(A.w.localStorage.getItem('zoo_field') || '[]').pop() || {};
+    check('П5k. Запись привязана к месту, название собрано из места и примечания', bound.place === 'giraffes' && bound.name === 'Жирафы — центр вольера', bound);
+    { const it = JSON.parse(A.w.localStorage.getItem('zoo_field')); A.w.localStorage.setItem('zoo_field', JSON.stringify(it.slice(0, 1))); }
     A.click('[data-f="polygon"]');
     [[43.2650, 76.9740], [43.2650, 76.9750], [43.2645, 76.9750]].forEach(([lat, lng]) => A.app.map.fire('click', { latlng: { lat, lng } }));
-    A.click('[data-f="polyDone"]'); A.$('#fName').value = 'Контур пруда'; A.click('[data-f="formSave"]');
+    A.click('[data-f="polyDone"]');
+    check('П5l. В форме контура есть «Граница зоопарка»', !!A.$('#fPlace option[value="boundary"]'));
+    if (A.$('#fPlace')) A.$('#fPlace').value = 'boundary';
+    A.$('#fName').value = ''; A.click('[data-f="formSave"]');
     items = JSON.parse(A.w.localStorage.getItem('zoo_field'));
+    check('П5m. Контур сохранён как граница зоопарка', items[1] && items[1].place === 'boundary' && items[1].name === 'Граница зоопарка', items[1]);
     check('П5e. Контур из трёх точек сохранён', items.length === 2 && items[1].type === 'polygon' && items[1].coords.length === 3);
     A.click('[data-f="list"]');
     check('П5f. Список записей показывает обе', A.$$('#fieldbar .flist > div').length === 2);

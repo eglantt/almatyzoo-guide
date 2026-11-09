@@ -21,7 +21,7 @@
   'use strict';
 
   /* ===================== 1. Константы и хранилище ===================== */
-  const APP_VERSION = '0.1.0-alpha';
+  const APP_VERSION = '0.1.1-alpha';
   const KEY = {
     lang: 'zoo_lang',
     devNow: 'zoo_dev_now',       // подмена даты (сервисная панель)
@@ -803,17 +803,35 @@
       const f = $('#fieldFormBody');
       f.innerHTML = `<div class="dialog__head">Новая запись: ${{ point: 'точка', polygon: 'контур', track: 'трек' }[type]}</div>` +
         (acc != null ? `<p class="muted">Точность: ${acc} м</p>` : '') +
-        `<input type="text" id="fName" placeholder="Название, например «Жирафы — центр вольера»" autocomplete="off">` +
+        placeSelect(type) +
+        `<input type="text" id="fName" placeholder="Название или примечание, например «центр вольера»" autocomplete="off">` +
         `<select id="fCat">${CATS.map(c => `<option value="${c}">${CAT_NAMES[c]}</option>`).join('')}</select>` +
         `<div class="dialog__btns"><button type="button" class="btn btn--ghost" data-f="formCancel">Отмена</button><button type="button" class="btn" data-f="formSave">Сохранить</button></div>`;
       f.dataset.pending = JSON.stringify({ type, coords, acc });
       $('#fieldForm').hidden = false; setTimeout(() => $('#fName').focus(), 30);
     }
+    /** Привязка записи к существующему месту из data.json: перенос координат без угадывания. */
+    function placeSelect(type) {
+      const done = new Set(items().map(x => x.place).filter(Boolean));
+      const mark = id => done.has(id) ? ' (уже есть запись)' : '';
+      const byTitle = (a, b) => a.title.ru.localeCompare(b.title.ru, 'ru');
+      const group = (label, list) => list.length ? `<optgroup label="${label}">${list.sort(byTitle).map(p => `<option value="${p.id}">${esc(p.title.ru)} · ${p.id}${mark(p.id)}</option>`).join('')}</optgroup>` : '';
+      const opts = type === 'point'
+        ? group('Животные', D.places.filter(p => p.kind === 'animal')) + group('Инфраструктура', D.places.filter(p => p.kind === 'infra')) + group('Снаружи', D.places.filter(p => p.kind === 'outside'))
+        : type === 'polygon'
+          ? `<option value="boundary">Граница зоопарка${mark('boundary')}</option>` + group('Контур места', D.places.filter(p => p.kind === 'animal'))
+          : '';
+      return `<label class="muted small" for="fPlace">Какое это место</label><select id="fPlace"><option value="">— новое, нет в списке —</option>${opts}</select>`;
+    }
     function formSave() {
       const f = $('#fieldFormBody'), pend = JSON.parse(f.dataset.pending || '{}');
-      const name = $('#fName').value.trim() || ('Без названия ' + new Date().toLocaleTimeString('ru-RU'));
+      const place = $('#fPlace') ? $('#fPlace').value : '';
+      const pl = place && place !== 'boundary' ? D.places.find(x => x.id === place) : null;
+      const label = place === 'boundary' ? 'Граница зоопарка' : (pl ? pl.title.ru : '');
+      const note = $('#fName').value.trim();
+      const name = [label, note].filter(Boolean).join(' — ') || ('Без названия ' + new Date().toLocaleTimeString('ru-RU'));
       const list = items();
-      list.push({ id: 'f' + Date.now(), type: pend.type, name, cat: $('#fCat').value, coords: pend.coords, acc: pend.acc, ts: new Date().toISOString() });
+      list.push({ id: 'f' + Date.now(), type: pend.type, name, place: place || null, cat: $('#fCat').value, coords: pend.coords, acc: pend.acc, ts: new Date().toISOString() });
       save(list); $('#fieldForm').hidden = true; draw(); mainBar(); toast('Сохранено');
     }
     function showList() {
@@ -834,7 +852,7 @@
         properties: { app: 'almatyzoo-guide', version: APP_VERSION, exported: new Date().toISOString() },
         features: items().map(it => ({
           type: 'Feature',
-          properties: { id: it.id, name: it.name, cat: it.cat, kind: it.type, accuracy: it.acc, time: it.ts },
+          properties: { id: it.id, name: it.name, place: it.place || null, cat: it.cat, kind: it.type, accuracy: it.acc, time: it.ts },
           geometry: it.type === 'point' ? { type: 'Point', coordinates: [it.coords[0][1], it.coords[0][0]] }
             : it.type === 'polygon' ? { type: 'Polygon', coordinates: [it.coords.concat([it.coords[0]]).map(c => [c[1], c[0]])] }
               : { type: 'LineString', coordinates: it.coords.map(c => [c[1], c[0]]) }
