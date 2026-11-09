@@ -1,6 +1,6 @@
 {
  "meta": {
-  "dataVersion": "0.1.1-alpha.1",
+  "dataVersion": "0.1.2-alpha.1",
   "_note": "Координаты ориентировочные (approx). Будут заменены данными полевого режима.",
   "center": [
    43.2635,
@@ -913,13 +913,70 @@
  "animals": [],
  "_animalsNote": "Обитатели (виды) — по полной коллекции от заказчика.",
  "icons": {
-  "i-gazebo": {
+  "i-guard": {
    "placeholder": false
+  },
+  "a-zebra": {
+   "placeholder": true
+  },
+  "i-kiosk": {
+   "placeholder": false
+  },
+  "a-polar": {
+   "placeholder": true
+  },
+  "a-bear": {
+   "placeholder": true
+  },
+  "a-duck": {
+   "placeholder": true
+  },
+  "a-snake": {
+   "placeholder": true
+  },
+  "a-rhino": {
+   "placeholder": true
+  },
+  "a-wolf": {
+   "placeholder": true
+  },
+  "a-birdhouse": {
+   "placeholder": true
+  },
+  "a-giraffe": {
+   "placeholder": true
+  },
+  "i-bus": {
+   "placeholder": false
+  },
+  "i-info": {
+   "placeholder": false
+  },
+  "a-kangaroo": {
+   "placeholder": true
   },
   "a-eagle": {
    "placeholder": true
   },
+  "i-gazebo": {
+   "placeholder": false
+  },
+  "i-cafe": {
+   "placeholder": false
+  },
   "a-croc": {
+   "placeholder": true
+  },
+  "a-pheasant": {
+   "placeholder": true
+  },
+  "i-ticket": {
+   "placeholder": false
+  },
+  "a-hippo": {
+   "placeholder": true
+  },
+  "a-lion": {
    "placeholder": true
   },
   "i-med": {
@@ -928,88 +985,31 @@
   "i-wc": {
    "placeholder": false
   },
-  "i-guard": {
-   "placeholder": false
-  },
-  "a-wolf": {
-   "placeholder": true
-  },
-  "a-birdhouse": {
-   "placeholder": true
-  },
-  "i-cafe": {
-   "placeholder": false
-  },
-  "a-polar": {
-   "placeholder": true
-  },
-  "a-tiger": {
-   "placeholder": true
-  },
-  "a-monkey": {
-   "placeholder": true
-  },
-  "a-zebra": {
-   "placeholder": true
-  },
-  "a-rhino": {
-   "placeholder": true
-  },
-  "a-lion": {
-   "placeholder": true
-  },
-  "i-info": {
-   "placeholder": false
-  },
-  "a-deer": {
+  "a-paw": {
    "placeholder": true
   },
   "i-parking": {
    "placeholder": false
   },
-  "a-kangaroo": {
+  "a-tiger": {
    "placeholder": true
-  },
-  "a-snake": {
-   "placeholder": true
-  },
-  "a-paw": {
-   "placeholder": true
-  },
-  "a-giraffe": {
-   "placeholder": true
-  },
-  "a-hippo": {
-   "placeholder": true
-  },
-  "i-ticket": {
-   "placeholder": false
   },
   "i-play": {
    "placeholder": false
   },
-  "a-fish": {
-   "placeholder": true
-  },
-  "i-kiosk": {
-   "placeholder": false
-  },
-  "a-duck": {
-   "placeholder": true
-  },
-  "i-bus": {
-   "placeholder": false
-  },
-  "a-bear": {
-   "placeholder": true
-  },
-  "a-pond": {
+  "a-deer": {
    "placeholder": true
   },
   "a-elephant": {
    "placeholder": true
   },
-  "a-pheasant": {
+  "a-fish": {
+   "placeholder": true
+  },
+  "a-monkey": {
+   "placeholder": true
+  },
+  "a-pond": {
    "placeholder": true
   },
   "r-feed": {

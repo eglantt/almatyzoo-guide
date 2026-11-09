@@ -39,8 +39,10 @@ function fakeDateClass(RealDate, startIso) {
  */
 async function launch(opts = {}) {
   const html = read('index.html').replace(/<script src="[^"]+"><\/script>/g, '');
+  // Стили проекта встраиваются, чтобы проверять видимость через вычисленный стиль
+  const htmlStyled = html.replace('<link rel="stylesheet" href="styles.css">', () => '<style>' + read('styles.css').replace(/@font-face\s*\{[^}]*\}/g, '') + '</style>');
   const errors = [];
-  const dom = new JSDOM(html, { url: 'https://zoo.test/', runScripts: 'outside-only', pretendToBeVisual: true });
+  const dom = new JSDOM(htmlStyled, { url: 'https://zoo.test/', runScripts: 'outside-only', pretendToBeVisual: true });
   const w = dom.window;
   w.addEventListener('error', e => errors.push(e.message));
   // Хранилище

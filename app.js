@@ -21,14 +21,15 @@
   'use strict';
 
   /* ===================== 1. Константы и хранилище ===================== */
-  const APP_VERSION = '0.1.1-alpha';
+  const APP_VERSION = '0.1.2-alpha';
   const KEY = {
     lang: 'zoo_lang',
     devNow: 'zoo_dev_now',       // подмена даты (сервисная панель)
     devGps: 'zoo_dev_gps',       // подмена местоположения
     approx: 'zoo_dev_approx',    // подсветка ориентировочных координат
     field: 'zoo_field',          // данные полевого режима
-    errors: 'zoo_errors'         // журнал ошибок
+    errors: 'zoo_errors',        // журнал ошибок
+    bannerClosed: 'zoo_banner_closed'   // плашка закрыта посетителем — до конца этого дня
   };
   const WALK_M_PER_MIN = 75;     // ~4,5 км/ч
   const TAP_COUNT = 7, TAP_WINDOW_MS = 3000;
@@ -220,10 +221,12 @@
       });
       m.bindPopup(() => popupHtml(p), { maxWidth: 280, minWidth: 220, className: 'zpop' });
       if (p.major) m.bindTooltip(esc(L(p.title)), { permanent: true, direction: 'bottom', offset: [0, 16], className: 'zlbl' });
+      m.on('dragend', () => Field.onMarkerDrag(p.id, m.getLatLng()));
       m.addTo(p.kind === 'animal' ? layers.animal : layers.infra);
       markers[p.id] = m;
     });
     applyFilter();
+    if (Field.isActive()) Field.applyMarkers();
   }
   function applyFilter() {
     if (!map) return;
@@ -520,15 +523,17 @@
     if (map) { map.closePopup(); buildMarkers(); }
     if (!opts || !opts.keepSheet) sheet(null);
   }
-  /** Плашка сверху карты: санитарный день, «зоопарк закрыт». */
+  const dayKey = d => d.getFullYear() + '-' + mmdd(d);
+  /** Плашка сверху карты: «зоопарк закрыт», санитарный день. Одна строка; крестик скрывает её до конца дня. */
   function renderBanner() {
     const d = now(), msgs = [];
     const h = zooHours(d);
     if (!isOpen(h.zoo, d)) msgs.push(t('zooClosedNow', { from: h.zoo[0], to: h.zoo[1] }));
     D.places.filter(p => isSanitary(p, d)).forEach(p => msgs.push(t('sanitaryToday', { name: L(p.title) })));
     const b = $('#banner');
-    b.hidden = !msgs.length;
-    b.innerHTML = msgs.map(m => `<p>${esc(m)}</p>`).join('');
+    b.hidden = !msgs.length || store.get(KEY.bannerClosed) === dayKey(d);
+    b.innerHTML = msgs.length ? `<p class="banner__text">${msgs.map(esc).join(' · ')}</p>` +
+      `<button type="button" class="banner__close" data-act="bannerClose" aria-label="${esc(t('close'))}">${uiIcon('u-close')}</button>` : '';
   }
   function showLangScreen() {
     const sug = deviceLang();
@@ -557,6 +562,7 @@
       case 'btnNear': return toggleNear();
       case 'btnToZoo': return fitZoo();
       case 'sheetClose': clearRoute(); return sheet(null);
+      case 'bannerClose': store.set(KEY.bannerClosed, dayKey(now())); return renderBanner();
       case 'focus': closeSearch(); return focusPlace(el.dataset.id);
       case 'toColl': return focusColl(el.dataset.id);
       case 'toZoo': sheet(null); return fitZoo();
@@ -704,6 +710,7 @@
   /** Полевой режим: точки, контуры, треки; хранение в localStorage; экспорт GeoJSON. */
   const Field = (function () {
     let active = false, mode = null, draft = [], draftLayer = null, watchId = null, wakeLock = null, recording = false;
+    let handles = [], editId = null;     // кружки точек контура; id контура, который правится
     const items = () => store.json(KEY.field, []);
     const save = list => store.setJson(KEY.field, list);
     const CATS = ['animal', 'infra', 'border', 'path', 'service', 'other'];
@@ -724,6 +731,8 @@
       layers.field.clearLayers();
       items().forEach(it => {
         const style = { color: '#FF00FF', weight: 3 };
+        if (it.id === editId) return;                              // правится — рисуется черновиком
+        if (it.type === 'point' && it.place && markers[it.place]) return;   // место показано самой пиктограммой
         if (it.type === 'point') L_.circleMarker(it.coords[0], { radius: 7, color: '#fff', weight: 2, fillColor: '#FF00FF', fillOpacity: 1 }).bindTooltip(esc(it.name)).addTo(layers.field);
         if (it.type === 'polygon') L_.polygon(it.coords, Object.assign({ fillOpacity: 0.1 }, style)).bindTooltip(esc(it.name)).addTo(layers.field);
         if (it.type === 'track') L_.polyline(it.coords, style).bindTooltip(esc(it.name)).addTo(layers.field);
@@ -732,26 +741,72 @@
     function start() {
       if (!authorized) return;
       active = true; mode = null;
-      if (map) { map.removeLayer(osm); sat.addTo(map); sat.bringToBack(); }
-      draw(); mainBar();
+      document.body.classList.add('field-on');                   // плашка и кнопки посетителя спрятаны
+      if (map) { map.closePopup(); map.removeLayer(osm); sat.addTo(map); sat.bringToBack(); }
+      applyMarkers(); draw(); mainBar();
     }
     function stop() {
       active = false; mode = null; cancelDraft();
-      if (map) { map.removeLayer(sat); osm.addTo(map); osm.bringToBack(); layers.field.clearLayers(); }
+      document.body.classList.remove('field-on');
+      if (map) {
+        map.removeLayer(sat); osm.addTo(map); osm.bringToBack(); layers.field.clearLayers();
+        D.places.forEach(p => { const m = markers[p.id]; if (m) { if (m.dragging) m.dragging.disable(); m.setLatLng([p.lat, p.lng]); } });
+      }
       bar('');
     }
-    function cancelDraft() { draft = []; if (draftLayer && map) map.removeLayer(draftLayer); draftLayer = null; }
+    /** Пиктограммы мест: перетаскиваются; стоят там, куда их перетащили (только в полевом режиме). */
+    function applyMarkers() {
+      const moved = {};
+      items().forEach(it => { if (it.type === 'point' && it.place) moved[it.place] = it.coords[0]; });
+      D.places.forEach(p => {
+        const m = markers[p.id]; if (!m) return;
+        if (m.dragging) m.dragging.enable();
+        if (moved[p.id]) m.setLatLng(moved[p.id]);
+      });
+    }
+    /** Перетащили пиктограмму — одна запись на место, повторное перетаскивание её заменяет. */
+    function onMarkerDrag(id, ll) {
+      if (!active) return;
+      const p = D.places.find(x => x.id === id); if (!p) return;
+      const list = items().filter(x => !(x.type === 'point' && x.place === id));
+      list.push({ id: 'f' + Date.now(), type: 'point', name: p.title.ru + ' — перетащено', place: id, cat: p.kind === 'animal' ? 'animal' : 'infra',
+        coords: [[+ll.lat.toFixed(7), +ll.lng.toFixed(7)]], acc: null, ts: new Date().toISOString() });
+      save(list); draw(); mainBar(); toast('Сохранено: ' + p.title.ru);
+    }
+    function cancelDraft() {
+      draft = []; editId = null;
+      if (draftLayer && map) map.removeLayer(draftLayer); draftLayer = null;
+      handles.forEach(h => map && map.removeLayer(h)); handles = [];
+      if (map) map.getContainer().classList.remove('drawing');
+    }
+    /** Черновик контура: линия + перетаскиваемые кружки точек. */
+    function redrawLine() {
+      if (draftLayer) map.removeLayer(draftLayer);
+      draftLayer = L_.polyline(draft.concat(draft.length > 2 ? [draft[0]] : []), { color: '#FF00FF', weight: 3, dashArray: '4 6' }).addTo(map);
+    }
+    function redrawDraft() {
+      map.getContainer().classList.add('drawing');                // пиктограммы не перехватывают тапы по углам контура
+      handles.forEach(h => map.removeLayer(h)); handles = [];
+      redrawLine();
+      handles = draft.map((ll, i) => {
+        const h = L_.marker(ll, { draggable: true, icon: L_.divIcon({ className: 'fh', html: '<span></span>', iconSize: [24, 24], iconAnchor: [12, 12] }), zIndexOffset: 2000 });
+        const upd = () => { const q = h.getLatLng(); draft[i] = [+q.lat.toFixed(7), +q.lng.toFixed(7)]; redrawLine(); };
+        h.on('drag', upd).on('dragend', upd);
+        return h.addTo(map);
+      });
+      polyBar();
+    }
+    function polyBar() {
+      bar(`<b>${editId ? 'Правка контура' : 'Контур'}</b><span class="muted">Точек: ${draft.length} · тап — добавить, перетащить — сдвинуть</span>` +
+        `<button type="button" class="btn btn--sm btn--ghost" data-f="undo" ${draft.length ? '' : 'disabled'}>Шаг назад</button>` +
+        `<button type="button" class="btn btn--sm" data-f="polyDone" ${draft.length > 2 ? '' : 'disabled'}>Готово</button>` +
+        `<button type="button" class="btn btn--sm btn--ghost" data-f="cancel">Отмена</button>`);
+    }
     function onMapClick(e) {
       if (!active || !mode) return false;
       const ll = [+e.latlng.lat.toFixed(7), +e.latlng.lng.toFixed(7)];
       if (mode === 'tapPoint') { mode = null; askName('point', [ll], null); return true; }
-      if (mode === 'polygon') {
-        draft.push(ll);
-        if (draftLayer) map.removeLayer(draftLayer);
-        draftLayer = L_.polyline(draft.concat(draft.length > 2 ? [draft[0]] : []), { color: '#FF00FF', weight: 3, dashArray: '4 6' }).addTo(map);
-        bar(`<b>Контур</b><span class="muted">точек: ${draft.length}</span><button type="button" class="btn btn--sm" data-f="polyDone" ${draft.length > 2 ? '' : 'disabled'}>Готово</button><button type="button" class="btn btn--sm btn--ghost" data-f="cancel">Отмена</button>`);
-        return true;
-      }
+      if (mode === 'polygon') { draft.push(ll); redrawDraft(); return true; }
       return false;
     }
     function gpsPoint() {
@@ -839,6 +894,7 @@
       bar(`<b>Записи: ${list.length}</b><button type="button" class="btn btn--sm btn--ghost" data-f="back">Назад</button>` +
         `<div class="flist">${list.map(it => `<div><span>${esc(it.name)} <small class="muted">${it.type}</small></span>` +
           `<button type="button" class="btn btn--sm btn--ghost" data-f="show" data-id="${it.id}">Показать</button>` +
+          (it.type === 'polygon' ? `<button type="button" class="btn btn--sm btn--ghost" data-f="edit" data-id="${it.id}">Изменить</button>` : '') +
           `<button type="button" class="btn btn--sm btn--ghost" data-f="del" data-id="${it.id}">Удалить</button></div>`).join('') || '<p class="muted">Пусто</p>'}</div>`);
     }
     /** Имя файла с датой и временем: zoo-points_2026-11-10_14-30.geojson */
@@ -875,14 +931,27 @@
       switch (b.dataset.f) {
         case 'gpsPoint': return gpsPoint();
         case 'tapPoint': mode = 'tapPoint'; return bar(`<b>Коснитесь карты</b><button type="button" class="btn btn--sm btn--ghost" data-f="cancel">Отмена</button>`);
-        case 'polygon': mode = 'polygon'; draft = []; return bar(`<b>Контур</b><span class="muted">касайтесь углов по порядку</span><button type="button" class="btn btn--sm btn--ghost" data-f="cancel">Отмена</button>`);
-        case 'polyDone': { const pts = draft.slice(); mode = null; cancelDraft(); return askName('polygon', pts, null); }
+        case 'polygon': cancelDraft(); mode = 'polygon'; return redrawDraft();
+        case 'undo': draft.pop(); return redrawDraft();
+        case 'edit': {
+          const it = items().find(x => x.id === b.dataset.id); if (!it) return;
+          cancelDraft(); mode = 'polygon'; editId = it.id; draft = it.coords.map(c => c.slice());
+          draw(); return redrawDraft();
+        }
+        case 'polyDone': {
+          const pts = draft.slice(), wasEdit = editId; mode = null; cancelDraft();
+          if (wasEdit) {                          // правка: координаты меняются, место и название — прежние
+            save(items().map(x => x.id === wasEdit ? Object.assign({}, x, { coords: pts, ts: new Date().toISOString() }) : x));
+            draw(); mainBar(); return toast('Контур обновлён');
+          }
+          return askName('polygon', pts, null);
+        }
         case 'track': return startTrack();
         case 'trackStop': return stopTrack();
         case 'list': return showList();
         case 'back': case 'cancel':
           if (watchId != null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
-          mode = null; cancelDraft(); return mainBar();
+          mode = null; cancelDraft(); draw(); return mainBar();
         case 'show': { const it = items().find(x => x.id === b.dataset.id); if (it && map) map.fitBounds(it.coords.length > 1 ? it.coords : [it.coords[0], it.coords[0]], { maxZoom: 19, padding: [40, 40] }); return; }
         case 'del': save(items().filter(x => x.id !== b.dataset.id)); draw(); return showList();
         case 'formCancel': $('#fieldForm').hidden = true; return mainBar();
@@ -890,7 +959,8 @@
         case 'exit': return stop();
       }
     }
-    return { start, stop, onMapClick, onClick, items, exportFile, fileName, toGeoJSON, isRecording: () => recording, isActive: () => active };
+    return { start, stop, onMapClick, onClick, items, exportFile, fileName, toGeoJSON, applyMarkers, onMarkerDrag,
+      isRecording: () => recording, isActive: () => active, debug: () => ({ handles: handles.slice() }) };
   })();
   /* ZOO:SYS-TOOLS:END */
 
@@ -931,6 +1001,7 @@
     get data() { return D; }, get state() { return Object.assign({}, S); },
     get map() { return map; }, get markers() { return Object.assign({}, markers); },
     get layers() { return layers; },
+    debugField: () => Field.debug(),
     fn: Object.freeze({ season, zooHours, placeStatus, isSanitary, dist, bearing, insideZoo, norm, doSearch, fileName: d => Field.fileName(d), now })
   });
 })();
