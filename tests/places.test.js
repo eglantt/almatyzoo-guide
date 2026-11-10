@@ -41,7 +41,7 @@ module.exports = async function () {
     check('М2b. Летом ларёк на карте', !!A.app.markers['kiosk-1']); A.close(); }
   { const A = await launch({ lang: 'ru', now: WINTER });
     check('М2c. Зимой ларька на карте нет', !A.app.markers['kiosk-1']);
-    check('М2d. Зимой другие объекты на месте', !!A.app.markers['kiosk-2'] && !!A.app.markers['cafe-1']);
+    check('М2d. Зимой другие объекты на месте', !!A.app.markers['kiosk-2'] && !!A.app.markers['cafe-2']);   // cafe-1 (за оградой) удалено в 0.1.7
     A.close(); }
 
   // М3. Временное закрытие «с — по» с причиной — иконка скрыта, потом возвращается сама
@@ -87,7 +87,7 @@ module.exports = async function () {
   const winterPatch = X => {
     const g = X.places.find(p => p.id === 'giraffes');
     g.winter = { from: '11-15', to: '03-15', mode: 'moves', place: 'winter-giraffes' };
-    X.places.find(p => p.id === 'zebras').winter = { from: '11-01', to: '03-31', mode: 'off' };
+    X.places.filter(p => p.zone === 'zebras').forEach(p => { p.winter = { from: '11-01', to: '03-31', mode: 'off' }; });   // 0.1.7: у зебр три места
     X.places.push({ id: 'winter-giraffes', kind: 'animal', cat: 'winter', winterFor: ['giraffes'], icon: g.icon, lat: g.lat + 0.0003, lng: g.lng - 0.0004, approx: true, major: false });
   };
   { const A = await launch({ lang: 'ru', now: SUMMER, patch: winterPatch });

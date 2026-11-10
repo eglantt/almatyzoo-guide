@@ -33,7 +33,8 @@ module.exports = async function () {
 
   // D3. Связи: место животного → зона, зона → место, обитатель → место
   const zoneIds = new Set(D.zones.map(z => z.id)), placeIds = new Set(D.places.map(p => p.id));
-  const badZone = D.places.filter(p => p.kind === 'animal' && !zoneIds.has(p.zone)).map(p => p.id);
+  // 0.1.7: зимний вольер принадлежит зонам через winterFor (своей зоны у него нет)
+  const badZone = D.places.filter(p => p.kind === 'animal' && !p.winterFor && !zoneIds.has(p.zone)).map(p => p.id);
   check('D3a. У каждого места с животными есть зона', badZone.length === 0, badZone);
   const lonely = D.zones.filter(z => !D.places.some(p => p.zone === z.id)).map(z => z.id);
   check('D3b. У каждой зоны есть место на карте', lonely.length === 0, lonely);
@@ -55,7 +56,8 @@ module.exports = async function () {
   check('D4d. Временные пиктограммы a-* помечены placeholder, силуэты заказчика s-* — нет', animalPh &&
     Object.keys(D.icons).filter(k => k.startsWith('s-')).length === 40 && Object.keys(D.icons).filter(k => k.startsWith('s-')).every(k => D.icons[k].placeholder === false));
   check('D4e. Знаки правил помечены как временные (placeholder)', D.rules.short.every(r => D.icons[r.icon].placeholder === true));
-  check('D4f. Инфраструктура утверждена — без пометки placeholder', D.places.filter(p => p.kind !== 'animal').every(p => D.icons[p.icon].placeholder === false));
+  // 0.1.7: новая иконка «Администрация» — заглушка до утверждения заказчиком (согласовано 10.11.2026); остальная инфраструктура утверждена
+  check('D4f. Инфраструктура утверждена — без пометки placeholder (кроме новой «Администрации»)', D.places.filter(p => p.kind !== 'animal' && p.icon !== 'i-admin').every(p => D.icons[p.icon].placeholder === false) && D.icons['i-admin'].placeholder === true);
 
   // D5. Координаты в границах карты; места на территории — внутри контура
   const [[s, w], [n, e]] = D.meta.bounds;
@@ -107,8 +109,9 @@ module.exports = async function () {
   const badW = D.places.filter(p => p.winter && (!['moves', 'off'].includes(p.winter.mode) || !md.test(p.winter.from) || !md.test(p.winter.to) ||
     (p.winter.mode === 'moves' && !((PI[p.winter.place] || {}).winterFor || []).includes(p.id)))).map(p => p.id);
   check('D10a. Зимняя настройка мест: режим moves/off, даты ММ-ДД; у moves — зимний вольер, в чьём winterFor есть это место', badW.length === 0, badW);
-  const badWo = D.places.filter(p => p.winterFor && (!p.winterFor.length || p.winterFor.some(id => !PI[id] || !PI[id].winter || PI[id].winter.place !== p.id))).map(p => p.id);
-  check('D10b. Зимний вольер: каждое место в winterFor существует и ссылается на него', badWo.length === 0, badWo);
+  // 0.1.7: зимние вольеры стоят на карте до того, как известны даты, — у мест переезд ещё не включён (winter нет)
+  const badWo = D.places.filter(p => p.winterFor && (!p.winterFor.length || p.winterFor.some(id => !PI[id] || (PI[id].winter && PI[id].winter.mode === 'moves' && PI[id].winter.place !== p.id)))).map(p => p.id);
+  check('D10b. Зимний вольер: каждое место в winterFor существует; если у места включён переезд — он сюда', badWo.length === 0, badWo);
   check('D10f. Старая схема (zone.winter, winterOf) не используется', !D.zones.some(z => z.winter) && !D.places.some(p => p.winterOf));
   const ymd = /^\d{4}-\d\d-\d\d$/;
   const badC = D.places.filter(p => (p.closures || []).some(c => !ymd.test(c.from) || !ymd.test(c.to) || c.from > c.to)).map(p => p.id);

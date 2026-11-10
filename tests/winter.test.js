@@ -22,7 +22,7 @@ module.exports = async function () {
     X.places.push(Object.assign({}, b, { id: 'bears-2', lat: 43.2629, lng: 76.9779, major: false,
       winter: { from: '12-01', to: '03-15', mode: 'moves', place: 'winter-1' } }));
     P('giraffes').winter = { from: '11-01', to: '03-31', mode: 'moves', place: 'winter-1' };
-    P('zebras').winter = { from: '11-01', to: '03-31', mode: 'off' };
+    X.places.filter(p => p.zone === 'zebras').forEach(p => { p.winter = { from: '11-01', to: '03-31', mode: 'off' }; });   // 0.1.7: у зебр три места
     X.places.push({ id: 'winter-1', kind: 'animal', cat: 'winter', winterFor: ['bears-2', 'giraffes'], icon: 'a-deer',
       lat: 43.2650, lng: 76.9775, approx: true, major: false,
       title: { kz: 'Жылы павильон', ru: 'Тёплый павильон', en: 'Warm pavilion' } });

@@ -21,7 +21,7 @@
   'use strict';
 
   /* ===================== 1. Константы и хранилище ===================== */
-  const APP_VERSION = '0.1.6-alpha';
+  const APP_VERSION = '0.1.7-alpha';
   const KEY = {
     lang: 'zoo_lang',
     devNow: 'zoo_dev_now',       // подмена даты (сервисная панель)
@@ -316,13 +316,14 @@
     D.places.forEach(p => {
       if (!all && !isShown(p, d)) return;
       if (p.area) L_.polygon(p.area, { color: iconColor(p), weight: 1.5, fillOpacity: 0.12, interactive: false }).addTo(layers.areas);
-      const cls = ['zmk', 'k-' + p.kind, p.major ? 'major' : 'minor', p.approx ? 'approx' : ''].join(' ');
+      const cls = ['zmk', 'k-' + p.kind, p.major ? 'major' : 'minor', p.approx ? 'approx' : '', all && Field.isRemoved(p.id) ? 'removed' : ''].join(' ');
       const m = L_.marker([p.lat, p.lng], {
         icon: L_.divIcon({ className: cls, html: markerSvg(iconOf(p, d), iconColor(p)), iconSize: [44, 44], iconAnchor: [22, 22], popupAnchor: [0, -18] }),
         title: L(titleOf(p)), keyboard: true, riseOnHover: true
       });
       // Карточка не уходит под фильтры сверху и под «Найти рядом» / «Где я?» снизу: карта сдвигается с запасом
-      m.bindPopup(() => popupHtml(p), { maxWidth: 280, minWidth: 220, className: 'zpop', autoPanPaddingTopLeft: [12, 120], autoPanPaddingBottomRight: [12, 90] });
+      if (all) m.on('click', () => Field.menu('place', p.id));         // полевой режим: меню «убрать / переименовать» вместо карточки
+      else m.bindPopup(() => popupHtml(p), { maxWidth: 280, minWidth: 220, className: 'zpop', autoPanPaddingTopLeft: [12, 120], autoPanPaddingBottomRight: [12, 90] });
       if (p.major) m.bindTooltip(esc(L(titleOf(p))), { permanent: true, direction: 'bottom', offset: [0, 16], className: 'zlbl' });
       m.on('dragend', () => Field.onMarkerDrag(p.id, m.getLatLng()));
       m.addTo(p.kind === 'animal' ? layers.animal : layers.infra);
@@ -680,9 +681,19 @@
   }
   let toastTimer = null;
   function toast(msg) {
-    const el = $('#toast'); el.textContent = msg; el.hidden = false;
+    const el = $('#toast'); el.textContent = msg; el.hidden = false; undoFn = null;
     clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, 2600);
   }
+  /** Подсказка с отменой: «Удалено · Вернуть» — 5 секунд (полевой режим, 0.1.7). */
+  let undoFn = null;
+  function toastUndo(msg, fn) {
+    const el = $('#toast');
+    el.innerHTML = `${esc(msg)} · <button type="button" class="toast__btn" data-f="undoDel">Вернуть</button>`;
+    el.hidden = false; undoFn = fn;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; undoFn = null; }, 5000);
+  }
+  function hideUndo() { if (undoFn) { undoFn = null; $('#toast').hidden = true; } }
+  function runUndo() { const fn = undoFn; undoFn = null; $('#toast').hidden = true; if (fn) fn(); }
 
   /** Все нажатия — через один обработчик на документе (элементы перерисовываются). */
   function onClick(e) {
@@ -875,12 +886,25 @@
       items().forEach(it => {
         const style = { color: '#FF00FF', weight: 3 };
         if (it.id === editId) return;                              // правится — рисуется черновиком
-        if (it.type === 'point' && it.place && markers[it.place]) return;
-        if (it.type === 'pathflag') return;                          // отметка показана стилем самой дорожки   // место показано самой пиктограммой
-        if (it.type === 'point') L_.circleMarker(it.coords[0], { radius: 7, color: '#fff', weight: 2, fillColor: '#FF00FF', fillOpacity: 1 }).bindTooltip(esc(it.name)).addTo(layers.field);
+        if (it.type === 'point' && it.place && markers[it.place]) return;   // место показано самой пиктограммой
+        if (it.type === 'pathflag' || it.type === 'remove' || it.type === 'rename') return;   // показано стилем дорожки / иконки места
+        if (it.type === 'point') {
+          const ic = recIcon(it);
+          if (ic) {                                                     // новое место — сразу иконкой: полупрозрачная, розовая пунктирная кайма
+            const m = L_.marker(it.coords[0], { draggable: true, zIndexOffset: 500,
+              icon: L_.divIcon({ className: 'zmk pending', html: pendingSvg(ic.icon, ic.color), iconSize: [44, 44], iconAnchor: [22, 22] }) });
+            m.on('dragend', () => { const q = m.getLatLng(); setCoords(it.id, [+q.lat.toFixed(7), +q.lng.toFixed(7)]); });
+            m.on('click', () => menu('rec', it.id));
+            m.bindTooltip(esc(it.name)).addTo(layers.field);
+          } else {
+            L_.circleMarker(it.coords[0], { radius: 7, color: '#fff', weight: 2, fillColor: '#FF00FF', fillOpacity: 1 })
+              .on('click', () => menu('rec', it.id)).bindTooltip(esc(it.name)).addTo(layers.field);
+          }
+        }
         if (it.type === 'polygon') L_.polygon(it.coords, Object.assign({ fillOpacity: 0.1 }, style)).bindTooltip(esc(it.name)).addTo(layers.field);
         if (it.type === 'track') L_.polyline(it.coords, style).bindTooltip(esc(it.name)).addTo(layers.field);
-        if (it.type === 'line') L_.polyline(it.coords, Object.assign({ dashArray: '8 5' }, style)).bindTooltip(esc(it.name)).addTo(layers.field);
+        if (it.type === 'line') L_.polyline(it.coords, it.service ? { color: '#8A8A8A', weight: 3.5, dashArray: '5 7' } : Object.assign({ dashArray: '8 5' }, style))
+          .on('click', () => menu('rec', it.id)).bindTooltip(esc(it.name)).addTo(layers.field);
       });
     }
     function start() {
@@ -896,6 +920,71 @@
       applyBase();
       if (map) { layers.field.clearLayers(); buildMarkers(); buildPaths(); }   // пиктограммы — на свои места, скрытые — снова скрыты
       bar('');
+    }
+    /** Иконка новой записи: зона / такое же место / первая зона зимнего вольера / силуэт новой зоны. null — розовая точка. */
+    function recIcon(it) {
+      const ref = it.newZone ? zonePlaces(it.newZone)[0] : it.newSame ? (placeById(it.newSame) || (D.service || []).find(x => x.id === it.newSame))
+        : it.newWinter && it.winterZones && it.winterZones.length ? zonePlaces(it.winterZones[0])[0] : null;
+      if (ref && ref.icon) return { icon: ref.icon, color: iconColor(ref) };
+      if (it.newZoneDef && it.newZoneDef.icon) return { icon: it.newZoneDef.icon, color: COLORS.animal };
+      return null;
+    }
+    function pendingSvg(icon, color) {
+      return `<svg viewBox="0 0 44 44" aria-hidden="true"><circle class="pend-ring" cx="22" cy="22" r="20.6" fill="none" stroke="#FF00FF" stroke-width="1.8" stroke-dasharray="3.2 2.6"/>` +
+        `<circle cx="22" cy="22" r="17" fill="${color}" stroke="#fff" stroke-width="3"/><svg x="11" y="11" width="22" height="22" color="#fff"><use href="#${icon}"/></svg></svg>`;
+    }
+    function setCoords(id, ll) { save(items().map(x => x.id === id ? Object.assign({}, x, { coords: [ll], ts: new Date().toISOString() }) : x)); }
+    const isRemoved = id => items().some(x => x.type === 'remove' && x.place === id);
+    /** Меню по нажатию на иконку (вариант А): удалить / убрать с карты / изменить название / отмена; после удаления — «Вернуть». */
+    function menu(kind, id) {
+      if (!active) return;
+      const f = $('#fieldFormBody');
+      const p = kind === 'place' ? placeById(id) : null, it = kind === 'rec' ? items().find(x => x.id === id) : null;
+      if (!p && !it) return;
+      const title = p ? titleOf(p).ru : it.name, removed = p && isRemoved(id);
+      f.dataset.menu = JSON.stringify({ kind, id }); hideUndo();
+      f.innerHTML = `<div class="dialog__head">${esc(title)}</div>` +
+        (p ? `<p class="muted small">Место из приложения. «Убрать с карты» — отметка уйдёт в экспорт; у посетителей место исчезнет после переноса.</p>` : '') +
+        `<div class="dialog__btns dialog__btns--col">` +
+        (removed ? `<button type="button" class="btn" data-f="mRestore">Вернуть на карту</button>`
+          : `<button type="button" class="btn btn--danger" data-f="mDel">${p ? 'Убрать с карты' : 'Удалить'}</button>`) +
+        `<button type="button" class="btn btn--ghost" data-f="mRename">Изменить название</button>` +
+        `<button type="button" class="btn btn--ghost" data-f="formCancel">Отмена</button></div>`;
+      $('#fieldForm').hidden = false;
+    }
+    function menuTarget() { try { return JSON.parse($('#fieldFormBody').dataset.menu || 'null'); } catch (e) { return null; } }
+    function menuDel() {
+      const t = menuTarget(); if (!t) return;
+      $('#fieldForm').hidden = true;
+      if (t.kind === 'place') {
+        const p = placeById(t.id);
+        const rec = { id: 'f' + Date.now(), type: 'remove', place: t.id, name: titleOf(p).ru + ' — убрать с карты', cat: 'other', coords: [[p.lat, p.lng]], acc: null, ts: new Date().toISOString() };
+        save(items().concat([rec])); buildMarkers(); mainBar();
+        return toastUndo('Убрано с карты', () => { save(items().filter(x => x.id !== rec.id)); buildMarkers(); mainBar(); });
+      }
+      const list = items(), i = list.findIndex(x => x.id === t.id); if (i < 0) return;
+      const [gone] = list.splice(i, 1); save(list); draw(); mainBar();
+      toastUndo('Удалено', () => { const l = items(); l.splice(Math.min(i, l.length), 0, gone); save(l); draw(); mainBar(); });
+    }
+    function menuRestore() {
+      const t = menuTarget(); if (!t) return;
+      save(items().filter(x => !(x.type === 'remove' && x.place === t.id))); $('#fieldForm').hidden = true; buildMarkers(); mainBar(); toast('Место возвращено');
+    }
+    function menuRename() {
+      const t = menuTarget(); if (!t) return;
+      const p = t.kind === 'place' ? placeById(t.id) : null, it = t.kind === 'rec' ? items().find(x => x.id === t.id) : null;
+      const cur = p ? ((items().filter(x => x.type === 'rename' && x.place === t.id).pop() || {}).name || titleOf(p).ru) : it.name;
+      $('#fieldFormBody').innerHTML = `<div class="dialog__head">Новое название</div><input type="text" id="fRename" value="${esc(cur)}" autocomplete="off">` +
+        `<div class="dialog__btns"><button type="button" class="btn btn--ghost" data-f="formCancel">Отмена</button><button type="button" class="btn" data-f="mRenameSave">Сохранить</button></div>`;
+      $('#fieldFormBody').dataset.menu = JSON.stringify(t);
+    }
+    function menuRenameSave() {
+      const t = menuTarget(), name = $('#fRename').value.trim(); if (!t || !name) return;
+      if (t.kind === 'place') {
+        const p = placeById(t.id);
+        save(items().filter(x => !(x.type === 'rename' && x.place === t.id)).concat([{ id: 'f' + Date.now(), type: 'rename', place: t.id, name, cat: 'other', coords: [[p.lat, p.lng]], acc: null, ts: new Date().toISOString() }]));
+      } else save(items().map(x => x.id === t.id ? Object.assign({}, x, { name }) : x));
+      $('#fieldForm').hidden = true; draw(); mainBar(); toast('Название сохранено');
     }
     /** Пиктограммы мест: перетаскиваются; стоят там, куда их перетащили (только в полевом режиме). */
     function applyMarkers() {
@@ -1028,13 +1117,40 @@
       f.innerHTML = `<div class="dialog__head">Новая запись: ${{ point: 'точка', polygon: 'контур', track: 'трек', line: 'дорожка' }[type]}</div>` +
         (acc != null ? `<p class="muted">Точность: ${acc} м</p>` : '') +
         placeSelect(type) +
+        (type === 'line' ? `<div class="fchoice" role="radiogroup" aria-label="Тип дорожки"><label><input type="radio" name="fSvc" id="fSvcNo" checked> Обычная</label>` +
+          `<label><input type="radio" name="fSvc" id="fSvcYes"> Служебная (проход запрещён)</label></div>` : '') +
+        (type === 'point' ? winterBlock() + zoneBlock() : '') +
         `<input type="text" id="fName" placeholder="Название или примечание, например «центр вольера»" autocomplete="off">` +
         `<select id="fCat">${CATS.map(c => `<option value="${c}">${CAT_NAMES[c]}</option>`).join('')}</select>` +
         `<div class="dialog__btns"><button type="button" class="btn btn--ghost" data-f="formCancel">Отмена</button><button type="button" class="btn" data-f="formSave">Сохранить</button></div>`;
       if (type === 'line') $('#fCat').value = 'path';
+      if (type === 'point') { $('#fPlace').addEventListener('change', updateExtra); updateExtra(); }
+      delete f.dataset.menu;
       f.dataset.pending = JSON.stringify({ type, coords, acc });
-      $('#fieldForm').hidden = false; setTimeout(() => $('#fName').focus(), 30);
+      hideUndo();                                              // подсказка «Вернуть» не закрывает кнопки формы
+      $('#fieldForm').hidden = false; setTimeout(() => { const n = $('#fName'); if (n) n.focus(); }, 30);   // форма могла смениться вопросом
     }
+    /** Новый зимний вольер: какие зоны в нём зимуют, экспонируется ли, даты «с — по» (ДД.ММ). */
+    function winterBlock() {
+      const zs = D.zones.slice().sort((a, b) => a.title.ru.localeCompare(b.title.ru, 'ru'));
+      return `<div class="fextra" id="fWinter" hidden><div class="muted small">Кто зимует в этом вольере</div><div class="fzones">` +
+        zs.map(z => `<label><input type="checkbox" name="fwz" value="${z.id}"> ${esc(z.title.ru)}</label>`).join('') + `</div>` +
+        `<div class="fchoice" role="radiogroup" aria-label="Экспонируется"><label><input type="radio" name="fwExp" id="fwExpYes" checked> Экспонируется</label>` +
+        `<label><input type="radio" name="fwExp" id="fwExpNo"> Не экспонируется</label></div>` +
+        `<div class="fdates"><label>с <input type="text" id="fwFrom" inputmode="decimal" placeholder="ДД.ММ"></label><label>по <input type="text" id="fwTo" inputmode="decimal" placeholder="ДД.ММ"></label></div></div>`;
+    }
+    /** Новая зона: силуэт из 40 (лист-образец №3); название — в поле «Название». */
+    function zoneBlock() {
+      const sil = Object.keys(D.icons).filter(k => /^s-\d-\d\d$/.test(k)).sort();
+      return `<div class="fextra" id="fZone" hidden><div class="muted small">Силуэт для новой зоны</div><input type="hidden" id="fZoneIcon" value="">` +
+        `<div class="fsil">${sil.map(k => `<button type="button" data-f="pickSil" data-icon="${k}" aria-pressed="false" title="${esc(D.icons[k].name || k)}"><svg viewBox="0 0 24 24"><use href="#${k}"/></svg></button>`).join('')}</div></div>`;
+    }
+    function updateExtra() {
+      const v = $('#fPlace') ? $('#fPlace').value : '';
+      if ($('#fWinter')) $('#fWinter').hidden = v !== 'new-winter';
+      if ($('#fZone')) $('#fZone').hidden = v !== 'new-zonedef';
+    }
+    const ddmm2mmdd = s => { const m = /^\s*(\d{1,2})\.(\d{1,2})\s*$/.exec(s || ''); return m ? `${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}` : null; };
     /** Привязка записи к существующему месту из data.json: перенос координат без угадывания. */
     function placeSelect(type) {
       const done = new Set(items().map(x => x.place).filter(Boolean));
@@ -1043,8 +1159,12 @@
       const group = (label, list) => list.length ? `<optgroup label="${label}">${list.sort(byTitle).map(p => `<option value="${p.id}">${esc(titleOf(p).ru)} · ${p.id}${mark(p.id)}</option>`).join('')}</optgroup>` : '';
       // 0.1.5: новые места — ещё одно место для зоны (одинаковая пиктограмма) и новый зимний вольер; переносятся в data.json по экспорту
       const zonesSorted = D.zones.slice().sort((a, b) => a.title.ru.localeCompare(b.title.ru, 'ru'));
-      const newPlaces = `<optgroup label="Новое место (нет в списке)"><option value="new-winter">Новый зимний вольер</option>` +
-        zonesSorted.map(z => `<option value="new-zone:${z.id}">Ещё одно место для зоны: ${esc(z.title.ru)}</option>`).join('') + `</optgroup>`;
+      // 0.1.7: «Ещё один такой же» — по одному варианту на тип инфраструктуры и служебного объекта; новая зона с силуэтом
+      const seen = new Set(), sameOf = D.places.filter(p => p.kind !== 'animal').concat((D.service || []).filter(x => !/^winter-/.test(x.id)))
+        .filter(p => !seen.has(p.cat) && seen.add(p.cat));
+      const newPlaces = `<optgroup label="Новое место (нет в списке)"><option value="new-zonedef">Новая зона (выбрать силуэт)</option><option value="new-winter">Новый зимний вольер</option>` +
+        zonesSorted.map(z => `<option value="new-zone:${z.id}">Ещё одно место для зоны: ${esc(z.title.ru)}</option>`).join('') +
+        sameOf.map(p => `<option value="new-same:${p.id}">Ещё один такой же: ${esc(titleOf(p).ru)}</option>`).join('') + `</optgroup>`;
       const opts = type === 'point'
         ? newPlaces + group('Животные', D.places.filter(p => p.kind === 'animal')) + group('Инфраструктура', D.places.filter(p => p.kind === 'infra')) + group('Снаружи', D.places.filter(p => p.kind === 'outside')) +
           group('Служебное (посетителям не видно)', (D.service || []).slice())
@@ -1060,17 +1180,51 @@
       const f = $('#fieldFormBody'), pend = JSON.parse(f.dataset.pending || '{}');
       const place = $('#fPlace') ? $('#fPlace').value : '';
       const newZone = place.startsWith('new-zone:') ? place.slice(9) : null, newWinter = place === 'new-winter';
-      const pl = place && !newZone && !newWinter && place !== 'boundary' && place !== 'park-route' ? (D.places.find(x => x.id === place) || (D.service || []).find(x => x.id === place)) : null;
+      const newSame = place.startsWith('new-same:') ? place.slice(9) : null, newZoneDef = place === 'new-zonedef';
+      const isNew = newZone || newWinter || newSame || newZoneDef;
+      const findAny = id => D.places.find(x => x.id === id) || (D.service || []).find(x => x.id === id);
+      const pl = place && !isNew && place !== 'boundary' && place !== 'park-route' ? findAny(place) : null;
+      const winterZones = newWinter ? Array.from(document.querySelectorAll('#fWinter input[name="fwz"]:checked')).map(x => x.value) : [];
       const label = place === 'boundary' ? 'Граница зоопарка' : place === 'park-route' ? 'Путь через парк'
-        : newZone ? (zoneTitle(newZone) || { ru: newZone }).ru + ' — ещё одно место' : newWinter ? 'Зимний вольер' : (pl ? titleOf(pl).ru : '');
+        : newZone ? (zoneTitle(newZone) || { ru: newZone }).ru + ' — ещё одно место'
+        : newSame ? titleOf(findAny(newSame)).ru + ' — ещё один такой же'
+        : newZoneDef ? 'Новая зона'
+        : newWinter ? 'Зимний вольер' + (winterZones.length ? ': ' + winterZones.map(z => (zoneTitle(z) || { ru: z }).ru).join(', ') : '')
+        : (pl ? titleOf(pl).ru : '');
+      if (newZoneDef && !$('#fZoneIcon').value) return toast('Выберите силуэт новой зоны');
       const note = $('#fName').value.trim();
       const name = [label, note].filter(Boolean).join(' — ') || ('Без названия ' + new Date().toLocaleTimeString('ru-RU'));
-      const list = items();
-      const rec = { id: 'f' + Date.now(), type: pend.type, name, place: (newZone || newWinter) ? null : (place || null), cat: $('#fCat').value, coords: pend.coords, acc: pend.acc, ts: new Date().toISOString() };
+      const rec = { id: 'f' + Date.now(), type: pend.type, name, place: isNew ? null : (place || null), cat: $('#fCat').value, coords: pend.coords, acc: pend.acc, ts: new Date().toISOString() };
       if (newZone) rec.newZone = newZone;
-      if (newWinter) rec.newWinter = true;
-      list.push(rec);
-      save(list); $('#fieldForm').hidden = true; draw(); mainBar(); toast('Сохранено');
+      if (newSame) rec.newSame = newSame;
+      if (newZoneDef) rec.newZoneDef = { icon: $('#fZoneIcon').value };
+      if (newWinter) Object.assign(rec, { newWinter: true, winterZones, winterExhibit: $('#fwExpYes').checked, winterFrom: ddmm2mmdd($('#fwFrom').value), winterTo: ddmm2mmdd($('#fwTo').value) });
+      if (pend.type === 'line') rec.service = !!($('#fSvcYes') && $('#fSvcYes').checked);
+      // У места уже есть точка → не переносить молча его единственную иконку: спросить
+      if (pend.type === 'point' && pl && items().some(x => x.type === 'point' && x.place === place)) return askConflict(rec, pl);
+      commit(rec);
+    }
+    function commit(rec, replacePlace) {
+      const list = items().filter(x => !(replacePlace && x.type === 'point' && x.place === replacePlace));
+      list.push(rec); save(list); $('#fieldForm').hidden = true; draw(); mainBar(); toast('Сохранено');
+      if (replacePlace && Field.isActive()) applyMarkers();
+    }
+    function askConflict(rec, pl) {
+      const f = $('#fieldFormBody'); f.dataset.conflict = JSON.stringify(rec);
+      f.innerHTML = `<div class="dialog__head">У «${esc(titleOf(pl).ru)}» уже есть точка</div>` +
+        `<p class="muted">Переместить это место сюда или добавить ещё одно такое же?</p>` +
+        `<div class="dialog__btns dialog__btns--col"><button type="button" class="btn" data-f="formMove">Переместить сюда</button>` +
+        `<button type="button" class="btn" data-f="formSame">Добавить ещё одно такое же</button>` +
+        `<button type="button" class="btn btn--ghost" data-f="formCancel">Отмена</button></div>`;
+    }
+    function resolveConflict(move) {
+      const rec = JSON.parse($('#fieldFormBody').dataset.conflict || 'null'); if (!rec) return;
+      if (move) return commit(rec, rec.place);
+      const pl = placeById(rec.place) || (D.service || []).find(x => x.id === rec.place), place = rec.place;
+      rec.place = null;
+      if (pl.zone) { rec.newZone = pl.zone; rec.name = rec.name.replace(titleOf(pl).ru, (zoneTitle(pl.zone) || titleOf(pl)).ru + ' — ещё одно место'); }
+      else { rec.newSame = place; rec.name = rec.name.replace(titleOf(pl).ru, titleOf(pl).ru + ' — ещё один такой же'); }
+      commit(rec);
     }
     function showList() {
       const list = items();
@@ -1078,7 +1232,8 @@
         `<div class="flist">${list.map(it => `<div><span>${esc(it.name)} <small class="muted">${it.type}</small></span>` +
           `<button type="button" class="btn btn--sm btn--ghost" data-f="show" data-id="${it.id}">Показать</button>` +
           (it.type === 'polygon' || it.type === 'line' ? `<button type="button" class="btn btn--sm btn--ghost" data-f="edit" data-id="${it.id}">Изменить</button>` : '') +
-          `<button type="button" class="btn btn--sm btn--ghost" data-f="del" data-id="${it.id}">Удалить</button></div>`).join('') || '<p class="muted">Пусто</p>'}</div>`);
+          `<button type="button" class="btn btn--sm btn--ghost" data-f="del" data-id="${it.id}">Удалить</button></div>`).join('') || '<p class="muted">Пусто</p>'}</div>` +
+        `<button type="button" class="btn btn--sm btn--ghost" data-f="back">Назад</button>`);
     }
     /** Имя файла с датой и временем: zoo-points_2026-11-10_14-30.geojson */
     function fileName(d) {
@@ -1093,8 +1248,9 @@
           type: 'Feature',
           properties: Object.assign({ id: it.id, name: it.name, place: it.place || null, cat: it.cat, kind: it.type, accuracy: it.acc, time: it.ts },
             it.type === 'pathflag' ? { path: it.path, service: it.service } : {},
-            it.newZone ? { newZone: it.newZone } : {}, it.newWinter ? { newWinter: true } : {}),
-          geometry: it.type === 'point' ? { type: 'Point', coordinates: [it.coords[0][1], it.coords[0][0]] }
+            it.newZone ? { newZone: it.newZone } : {}, it.newWinter ? { newWinter: true, winterZones: it.winterZones || [], winterExhibit: it.winterExhibit !== false, winterFrom: it.winterFrom || null, winterTo: it.winterTo || null } : {},
+            it.newSame ? { newSame: it.newSame } : {}, it.newZoneDef ? { newZoneDef: it.newZoneDef } : {}, it.type === 'line' ? { service: !!it.service } : {}),
+          geometry: (it.type === 'point' || it.type === 'remove' || it.type === 'rename') ? { type: 'Point', coordinates: [it.coords[0][1], it.coords[0][0]] }
             : it.type === 'polygon' ? { type: 'Polygon', coordinates: [it.coords.concat([it.coords[0]]).map(c => [c[1], c[0]])] }
               : { type: 'LineString', coordinates: it.coords.map(c => [c[1], c[0]]) }
         }))
@@ -1150,11 +1306,21 @@
         case 'show': { const it = items().find(x => x.id === b.dataset.id); if (it && map) map.fitBounds(it.coords.length > 1 ? it.coords : [it.coords[0], it.coords[0]], { maxZoom: 19, padding: [40, 40] }); return; }
         case 'del': save(items().filter(x => x.id !== b.dataset.id)); draw(); return showList();
         case 'formCancel': $('#fieldForm').hidden = true; return mainBar();
+        case 'formMove': return resolveConflict(true);
+        case 'formSame': return resolveConflict(false);
+        case 'mDel': return menuDel();
+        case 'mRestore': return menuRestore();
+        case 'mRename': return menuRename();
+        case 'mRenameSave': return menuRenameSave();
+        case 'undoDel': return runUndo();
+        case 'pickSil':
+          document.querySelectorAll('#fZone [data-f="pickSil"]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+          $('#fZoneIcon').value = b.dataset.icon; return;
         case 'formSave': return formSave();
         case 'exit': return stop();
       }
     }
-    return { start, stop, onMapClick, pathFlag, onClick, items, exportFile, fileName, toGeoJSON, applyMarkers, onMarkerDrag,
+    return { start, stop, onMapClick, pathFlag, menu, isRemoved, onClick, items, exportFile, fileName, toGeoJSON, applyMarkers, onMarkerDrag,
       isRecording: () => recording, isActive: () => active, debug: () => ({ handles: handles.slice() }) };
   })();
   /* ZOO:SYS-TOOLS:END */

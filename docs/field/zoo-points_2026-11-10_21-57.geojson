@@ -1,0 +1,1673 @@
+{
+ "type": "FeatureCollection",
+ "properties": {
+  "app": "almatyzoo-guide",
+  "version": "0.1.6-alpha",
+  "exported": "2026-11-10T16:57:32.742Z"
+ },
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794265995984",
+    "name": "Туалет — перетащено",
+    "place": "wc-1",
+    "cat": "infra",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-09T23:13:15.984Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9742382,
+     43.263132
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794266023416",
+    "name": "Зебры — перетащено",
+    "place": "zebras",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-09T23:13:43.416Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9749624,
+     43.2627258
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794266044352",
+    "name": "Пруд — перетащено",
+    "place": "pond",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-09T23:14:04.352Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9768667,
+     43.2639328
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794266066185",
+    "name": "Пруд",
+    "place": "pond",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-09T23:14:26.185Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9764483,
+     43.2644954
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794266086689",
+    "name": "Пруд",
+    "place": "pond",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-09T23:14:46.689Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9755685,
+     43.2634719
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794266093816",
+    "name": "Туалет — перетащено",
+    "place": "wc-2",
+    "cat": "infra",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-09T23:14:53.816Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9774568,
+     43.262882
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794266110488",
+    "name": "Медведи — перетащено",
+    "place": "bears",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-09T23:15:10.488Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9785994,
+     43.2639641
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794266150064",
+    "name": "Полярные волки — перетащено",
+    "place": "wolves",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-09T23:15:50.064Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9757295,
+     43.2649055
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794266171408",
+    "name": "Хищные птицы — перетащено",
+    "place": "raptors",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-09T23:16:11.408Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9757617,
+     43.2630773
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794266212040",
+    "name": "Беседка — перетащено",
+    "place": "gazebo-2",
+    "cat": "infra",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-09T23:16:52.040Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9759279,
+     43.2622609
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794266235944",
+    "name": "Ларёк — перетащено",
+    "place": "kiosk-2",
+    "cat": "infra",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-09T23:17:15.944Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9771081,
+     43.2653626
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794266249640",
+    "name": "Охрана — перетащено",
+    "place": "guard",
+    "cat": "infra",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-09T23:17:29.640Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9772476,
+     43.262089
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794266265504",
+    "name": "Белый медведь — перетащено",
+    "place": "polarbear",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-09T23:17:45.504Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9755846,
+     43.2653391
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794266291336",
+    "name": "Тигры — перетащено",
+    "place": "tigers",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-09T23:18:11.336Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9745654,
+     43.2641125
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794266307744",
+    "name": "Копытные — перетащено",
+    "place": "ungulates",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-09T23:18:27.744Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9751394,
+     43.2617179
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794266326232",
+    "name": "Экзотариум — перетащено",
+    "place": "exotarium",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-09T23:18:46.232Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9771993,
+     43.2626281
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794266377208",
+    "name": "Крокодилы — перетащено",
+    "place": "crocodiles",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-09T23:19:37.208Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9769579,
+     43.2626867
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794266410000",
+    "name": "Аквариум — перетащено",
+    "place": "aquarium",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-09T23:20:10.000Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9763598,
+     43.261753
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794266416320",
+    "name": "Дом птиц — перетащено",
+    "place": "birdhouse",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-09T23:20:16.320Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9762686,
+     43.2616984
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794266428248",
+    "name": "Фазаний ряд — перетащено",
+    "place": "pheasants",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-09T23:20:28.248Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9757885,
+     43.2616573
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794266443320",
+    "name": "Детская площадка — перетащено",
+    "place": "playground",
+    "cat": "infra",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-09T23:20:43.320Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9751018,
+     43.2636203
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794266454088",
+    "name": "Информация — перетащено",
+    "place": "info",
+    "cat": "infra",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-09T23:20:54.088Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.974898,
+     43.2633899
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794266501801",
+    "name": "Дорожка w398403152 — обычная",
+    "place": null,
+    "cat": "path",
+    "kind": "pathflag",
+    "accuracy": null,
+    "time": "2026-11-09T23:21:41.801Z",
+    "path": "w398403152",
+    "service": false
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      76.977075,
+      43.2629334
+     ],
+     [
+      76.9771153,
+      43.2630017
+     ],
+     [
+      76.9771508,
+      43.2630617
+     ],
+     [
+      76.9771926,
+      43.2631037
+     ],
+     [
+      76.9772949,
+      43.2632065
+     ],
+     [
+      76.9774046,
+      43.2633264
+     ],
+     [
+      76.9774733,
+      43.2634139
+     ],
+     [
+      76.9774664,
+      43.2635413
+     ],
+     [
+      76.977487,
+      43.2636112
+     ],
+     [
+      76.9779844,
+      43.2640009
+     ],
+     [
+      76.9779097,
+      43.2640501
+     ],
+     [
+      76.9778042,
+      43.2641884
+     ],
+     [
+      76.9777948,
+      43.2643028
+     ],
+     [
+      76.9778112,
+      43.2643489
+     ],
+     [
+      76.9778338,
+      43.2644284
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794327610358",
+    "name": "Пруд — перетащено",
+    "place": "pond-3",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:20:10.358Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9768775,
+     43.2639485
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794327636758",
+    "name": "Водоплавающие птицы — перетащено",
+    "place": "waterfowl-2",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:20:36.758Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9765341,
+     43.2645833
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794327664334",
+    "name": "Жирафы — перетащено",
+    "place": "giraffes",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:21:04.334Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9767085,
+     43.2655325
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794327805998",
+    "name": "Слон — перетащено",
+    "place": "elephant",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:23:25.998Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9785082,
+     43.2647844
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794327810022",
+    "name": "Носороги — перетащено",
+    "place": "rhinos",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:23:30.022Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9776043,
+     43.2652884
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794327813414",
+    "name": "Кенгуру — перетащено",
+    "place": "kangaroo",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:23:33.414Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9771081,
+     43.2644895
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794327818293",
+    "name": "Водоплавающие птицы — перетащено",
+    "place": "waterfowl",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:23:38.293Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9757,
+     43.2633586
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794327869638",
+    "name": "Фламинго",
+    "place": null,
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:24:29.638Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9764939,
+     43.2631223
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794327905454",
+    "name": "Зимний вольер — Фламинго. Зимний вольер.",
+    "place": null,
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:25:05.454Z",
+    "newWinter": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9766307,
+     43.2629289
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794327965806",
+    "name": "Зимний вольер — Жирафы. Зимний вольер",
+    "place": null,
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:26:05.806Z",
+    "newWinter": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9760969,
+     43.2655208
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794327999757",
+    "name": "Приматы — перетащено",
+    "place": "primates",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:26:39.757Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9781274,
+     43.2655696
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328015254",
+    "name": "Зимний вольер — Приматы. Зимний вольер",
+    "place": null,
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:26:55.254Z",
+    "newWinter": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.978071,
+     43.2656497
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328062062",
+    "name": "Зимний вольер — Носороги. Зимний вольер (не экспонируется)",
+    "place": null,
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:27:42.062Z",
+    "newWinter": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9780576,
+     43.2652884
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328096277",
+    "name": "Бегемоты — перетащено",
+    "place": "hippos",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:28:16.277Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9779155,
+     43.2647395
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328124320",
+    "name": "Зимний вольер — Бегемоты. Зимний вольер.",
+    "place": null,
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:28:44.320Z",
+    "newWinter": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9780818,
+     43.2646555
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328143998",
+    "name": "Зимний вольер — Слоны. Зимний вольер",
+    "place": null,
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:29:03.998Z",
+    "newWinter": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9782802,
+     43.2646848
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328215270",
+    "name": "Пруд",
+    "place": null,
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:30:15.270Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9761506,
+     43.2632297
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328238174",
+    "name": "Водоплавающие птицы — ещё одно место",
+    "place": null,
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:30:38.174Z",
+    "newZone": "waterfowl"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9762176,
+     43.2631711
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328250613",
+    "name": "Водоплавающие птицы — ещё одно место",
+    "place": null,
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:30:50.613Z",
+    "newZone": "waterfowl"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9769284,
+     43.2638039
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328284133",
+    "name": "Карпы Кои",
+    "place": null,
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:31:24.134Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9771001,
+     43.2634602
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328315262",
+    "name": "Служебная парковка",
+    "place": "service-parking",
+    "cat": "service",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:31:55.262Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9778591,
+     43.2626652
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328351150",
+    "name": "Служебный вход",
+    "place": "service-entrance",
+    "cat": "service",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:32:31.150Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9773147,
+     43.2620538
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328395221",
+    "name": "Служебный въезд",
+    "place": "service-gate",
+    "cat": "service",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:33:15.221Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9778618,
+     43.2624738
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328405005",
+    "name": "Пруд — перетащено",
+    "place": "pond-2",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:33:25.005Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9763973,
+     43.2645422
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328474942",
+    "name": "Тигры — ещё одно место",
+    "place": null,
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:34:34.942Z",
+    "newZone": "tigers"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9778189,
+     43.2635266
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328540421",
+    "name": "Туалет",
+    "place": null,
+    "cat": "infra",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:35:40.421Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9773924,
+     43.2656067
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328676413",
+    "name": "Медпункт — перетащено",
+    "place": "med",
+    "cat": "infra",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:37:56.413Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9745573,
+     43.2637102
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328681821",
+    "name": "Кафе — перетащено",
+    "place": "cafe-2",
+    "cat": "infra",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:38:01.821Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9744501,
+     43.2637805
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328694725",
+    "name": "Львы — перетащено",
+    "place": "lions",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:38:14.725Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9753888,
+     43.2640149
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328698182",
+    "name": "Дом хищников — перетащено",
+    "place": "predators",
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:38:18.182Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9754586,
+     43.2638586
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328711037",
+    "name": "Беседка — перетащено",
+    "place": "gazebo-1",
+    "cat": "infra",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:38:31.037Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9771644,
+     43.2633391
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328740821",
+    "name": "Беседка",
+    "place": null,
+    "cat": "infra",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:39:00.821Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9772261,
+     43.2639094
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328769373",
+    "name": "Беседка",
+    "place": null,
+    "cat": "infra",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:39:29.373Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9768023,
+     43.2626047
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328779541",
+    "name": "Ларёк — перетащено",
+    "place": "kiosk-1",
+    "cat": "infra",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:39:39.541Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9776767,
+     43.2629914
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328800405",
+    "name": "Тигры — ещё одно место",
+    "place": null,
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:40:00.405Z",
+    "newZone": "tigers"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9780308,
+     43.2637942
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328840869",
+    "name": "Зебры — ещё одно место",
+    "place": null,
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:40:40.869Z",
+    "newZone": "zebras"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9752628,
+     43.2625226
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328854765",
+    "name": "Зебры — ещё одно место",
+    "place": null,
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:40:54.765Z",
+    "newZone": "zebras"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.975539,
+     43.2623683
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328879501",
+    "name": "Хищные птицы — ещё одно место",
+    "place": null,
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:41:19.501Z",
+    "newZone": "raptors"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9761211,
+     43.2629504
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328893597",
+    "name": "Хищные птицы — ещё одно место",
+    "place": null,
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:41:33.597Z",
+    "newZone": "raptors"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9763356,
+     43.2628
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328902549",
+    "name": "Хищные птицы — ещё одно место",
+    "place": null,
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:41:42.549Z",
+    "newZone": "raptors"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9761828,
+     43.2626691
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328911701",
+    "name": "Хищные птицы — ещё одно место",
+    "place": null,
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:41:51.701Z",
+    "newZone": "raptors"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9760245,
+     43.2625168
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328931413",
+    "name": "Фазаний ряд — ещё одно место",
+    "place": null,
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:42:11.413Z",
+    "newZone": "pheasants"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9765905,
+     43.2626984
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794328986869",
+    "name": "Сайга",
+    "place": null,
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:43:06.869Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9757509,
+     43.2657903
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794329032853",
+    "name": "Приматы — ещё одно место — Гиббоны",
+    "place": null,
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:43:52.853Z",
+    "newZone": "primates"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9774354,
+     43.265429
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794329063989",
+    "name": "Служебный въезд",
+    "place": "service-gate",
+    "cat": "service",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:44:23.989Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9782883,
+     43.2658782
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794329092189",
+    "name": "Охрана",
+    "place": "guard",
+    "cat": "other",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:44:52.189Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.97824,
+     43.2658333
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794329107757",
+    "name": "Центральный вход и касса — перетащено",
+    "place": "entrance",
+    "cat": "infra",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:45:07.757Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.974037,
+     43.2634934
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794329127525",
+    "name": "Охрана",
+    "place": "guard",
+    "cat": "other",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:45:27.525Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9740155,
+     43.2633742
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794329176789",
+    "name": "Кафе — перетащено",
+    "place": "cafe-1",
+    "cat": "infra",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:46:16.789Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9722319,
+     43.2633801
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794329328085",
+    "name": "Остановка — Отстановка. Маршрут 60",
+    "place": "bus",
+    "cat": "other",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:48:48.085Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.975598,
+     43.2610206
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794329363701",
+    "name": "Остановка — Остановка. Маршрут 60",
+    "place": "bus",
+    "cat": "other",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:49:23.701Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9761184,
+     43.2611456
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794329414933",
+    "name": "Ветеринарная часть",
+    "place": null,
+    "cat": "service",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:50:14.933Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9784921,
+     43.2651321
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794329667508",
+    "name": "Дорожка к прудам",
+    "place": null,
+    "cat": "path",
+    "kind": "line",
+    "accuracy": null,
+    "time": "2026-11-10T16:54:27.508Z"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      76.9769418,
+      43.262882
+     ],
+     [
+      76.9768882,
+      43.2629406
+     ],
+     [
+      76.9768184,
+      43.2630012
+     ],
+     [
+      76.9767728,
+      43.2630519
+     ],
+     [
+      76.976746,
+      43.2630832
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794329696693",
+    "name": "Служебная дорожка",
+    "place": null,
+    "cat": "path",
+    "kind": "line",
+    "accuracy": null,
+    "time": "2026-11-10T16:54:56.693Z"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      76.9767433,
+      43.2630832
+     ],
+     [
+      76.9766253,
+      43.263177
+     ],
+     [
+      76.9765127,
+      43.2632492
+     ],
+     [
+      76.9763786,
+      43.2633059
+     ],
+     [
+      76.9762793,
+      43.2633625
+     ],
+     [
+      76.9761372,
+      43.2634348
+     ],
+     [
+      76.9760218,
+      43.2634934
+     ],
+     [
+      76.9759306,
+      43.2635403
+     ],
+     [
+      76.9758421,
+      43.2636067
+     ],
+     [
+      76.9757831,
+      43.2636848
+     ],
+     [
+      76.9757617,
+      43.2637688
+     ],
+     [
+      76.9758475,
+      43.2638547
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794329742605",
+    "name": "Хищные птицы (Тихая зона)",
+    "place": null,
+    "cat": "service",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:55:42.605Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9760594,
+     43.2637961
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794329776605",
+    "name": "Администрация",
+    "place": null,
+    "cat": "other",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:56:16.605Z"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9767594,
+     43.2619249
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "f1794329819932",
+    "name": "Зимний вольер — Зебры. Зимний вольер (не экспонируется)",
+    "place": null,
+    "cat": "animal",
+    "kind": "point",
+    "accuracy": null,
+    "time": "2026-11-10T16:56:59.932Z",
+    "newWinter": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.9749114,
+     43.2622746
+    ]
+   }
+  }
+ ]
+}

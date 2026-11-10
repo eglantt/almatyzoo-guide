@@ -31,7 +31,8 @@ module.exports = async function () {
     check(`A5. ${tag} Подписи меню на нужном языке`, A.$('[data-tab="rules"] span').textContent === D.ui.tabRules[lang]);
     check(`A6. ${tag} Атрибут lang документа`, A.w.document.documentElement.lang === (lang === 'kz' ? 'kk' : lang));
     // Карта: маркеры всех мест, подписи главных
-    check(`A7. ${tag} На карте маркер у каждого места`, Object.keys(A.app.markers).length === D.places.length, Object.keys(A.app.markers).length);
+    // 0.1.7: пустой зимний вольер летом не показывается — маркер у каждого места, кроме зимних вольеров
+    check(`A7. ${tag} На карте маркер у каждого места (кроме пустых летом зимних вольеров)`, Object.keys(A.app.markers).length === D.places.filter(p => !p.winterFor).length && D.places.filter(p => !p.winterFor).every(p => !!A.app.markers[p.id]), Object.keys(A.app.markers).length);
     // Фильтры
     A.click('[data-filter="animal"]');
     check(`A8a. ${tag} Фильтр «Животные» убирает инфраструктуру`, A.app.map.hasLayer(A.app.layers.animal) && !A.app.map.hasLayer(A.app.layers.infra));
@@ -71,7 +72,7 @@ module.exports = async function () {
     check('A13c. «арыстан» находит львов', ids('арыстан').includes('lions'));
     check('A13d. «КҰСТАР» (заглавные, ұ) находит Дом птиц', ids('КҰСТАР').includes('birdhouse'));
     check('A13e. «кустар» (без казахских букв) находит Дом птиц', ids('кустар').includes('birdhouse'));
-    check('A13f. «туал» находит оба туалета', ids('туал').filter(i => i.startsWith('wc')).length === 2);
+    check('A13f. «туал» находит все туалеты', ids('туал').filter(i => i.startsWith('wc')).length === D.places.filter(p => p.cat === 'wc').length && D.places.filter(p => p.cat === 'wc').length >= 2);
     check('A13g. Одна буква — пустой результат', ids('ж').length === 0);
     A.click('#btnSearch'); A.$('#searchInput').value = 'слон'; A.$('#searchInput').dispatchEvent(new A.w.Event('input'));
     const item = A.$('#searchResults [data-act="focus"]');

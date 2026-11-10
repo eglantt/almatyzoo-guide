@@ -75,10 +75,11 @@ module.exports = async function () {
 
   // Р5. Служебные дорожки у посетителя
   const pid = (D.paths[3] || {}).id;
+  const svcData = D.paths.filter(p => p.service).length;     // 0.1.7: в данных уже есть служебная дорожка (к тихой зоне)
   { const A = await launch({ lang: 'ru', now: NOW, patch: X => { X.paths[3].service = true; } });
     const lays = A.app.layers.paths.getLayers();
     const svc = lays.filter(l => l.options.dashArray), plain = lays.filter(l => !l.options.dashArray);
-    check('Р5a. Служебная дорожка — пунктиром и другим цветом, остальные — как были', svc.length === 1 && plain.length === lays.length - 1 && svc[0].options.color !== plain[0].options.color, { svc: svc.length, all: lays.length });
+    check('Р5a. Служебная дорожка — пунктиром и другим цветом, остальные — как были', svc.length === svcData + 1 && plain.length === lays.length - svcData - 1 && svc[0].options.color !== plain[0].options.color, { svc: svc.length, all: lays.length });
     if (svc[0]) { svc[0].fire('click', { latlng: svc[0].getLatLngs()[0] }); svc[0].openPopup(svc[0].getLatLngs()[0]); }
     const pop = A.w.document.querySelector('.leaflet-popup');
     check('Р5b. Нажатие на служебную дорожку — «Служебная дорожка · Проход запрещён»', !!pop && pop.textContent.includes('Служебная дорожка') && pop.textContent.includes('Проход запрещён'), pop && pop.textContent);
@@ -98,7 +99,7 @@ module.exports = async function () {
       let rec = items(A).filter(i => i.type === 'pathflag');
       check('Р6b. Нажатие рядом с дорожкой отмечает её служебной', rec.length === 1 && rec[0].path === pid && rec[0].service === true, rec);
       const lay = A.app.layers.paths.getLayers().filter(l => l.options.dashArray);
-      check('Р6c. На карте дорожка сразу стала пунктирной', lay.length === 1);
+      check('Р6c. На карте дорожка сразу стала пунктирной', lay.length === svcData + 1);
       A.app.map.fire('click', { latlng: mid });
       rec = items(A).filter(i => i.type === 'pathflag');
       check('Р6d. Повторное нажатие снимает отметку (одна запись на дорожку)', rec.length === 1 && rec[0].service === false, rec);
@@ -107,7 +108,7 @@ module.exports = async function () {
       check('Р6e. Нажатие вдали от дорожек ничего не отмечает', items(A).filter(i => i.type === 'pathflag').length === 1);
       A.click('[data-f="back"]');
       A.click('[data-f="exit"]');
-      check('Р6f. Вне полевого режима — дорожки по data.json (отметка только в записях)', A.app.layers.paths.getLayers().every(l => !l.options.dashArray));
+      check('Р6f. Вне полевого режима — дорожки по data.json (отметка только в записях)', A.app.layers.paths.getLayers().filter(l => l.options.dashArray).length === svcData);
       // Экспорт: отметка попадает в GeoJSON с геометрией дорожки
       A.click('[data-tab="more"]'); for (let i = 0; i < 7; i++) A.click('#versionTag'); await A.wait(5);
       let blobText = null; const RealBlob = A.w.Blob;

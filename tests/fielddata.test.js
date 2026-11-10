@@ -51,21 +51,25 @@ module.exports = async function () {
     predators: [43.2638664, 76.975531], exotarium: [43.2626281, 76.9771993], waterfowl: [43.2638313, 76.9770411], crocodiles: [43.2626867, 76.9769579],
     aquarium: [43.261753, 76.9763598], birdhouse: [43.2616984, 76.9762686], pheasants: [43.2616573, 76.9757885], playground: [43.2636203, 76.9751018],
     info: [43.2633899, 76.974898], med: [43.263425, 76.9740987] };
-  const off = Object.entries(FIELD).filter(([id, [la, ln]]) => Math.abs(P(id).lat - la) > 1e-7 || Math.abs(P(id).lng - ln) > 1e-7 || P(id).approx !== false).map(([id]) => id);
-  check('Ф3a. 30 мест — на координатах из полевого режима, без пометки approx', Object.keys(FIELD).length === 30 && off.length === 0, off);
-  const keep = ['giraffes', 'hippos', 'entrance', 'cafe-1', 'gazebo-1'];
-  check('Ф3b. 5 нетронутых мест остаются ориентировочными', keep.every(id => P(id).approx === true), keep.map(id => [id, P(id).approx]));
-  check('Ф3c. У перенесённых мест указан источник — полевой режим 10.11.2026', Object.keys(FIELD).every(id => P(id).src === 'field-2026-11-10'));
+  // 0.1.7: часть мест переставлена второй выгрузкой — сверка с самими файлами (docs/field/): итог — последняя выгрузка
+  const E1 = JSON.parse(read('docs/field/zoo-points_2026-11-10_04-24.geojson')), E2 = JSON.parse(read('docs/field/zoo-points_2026-11-10_21-57.geojson'));
+  const dragged2 = new Set(E2.features.filter(f => /перетащено/.test(f.properties.name)).map(f => f.properties.place));
+  const keep1 = Object.keys(FIELD).filter(id => !dragged2.has(id) && P(id).id);
+  const off = keep1.filter(id => Math.abs(P(id).lat - FIELD[id][0]) > 1e-7 || Math.abs(P(id).lng - FIELD[id][1]) > 1e-7 || P(id).approx !== false);
+  check('Ф3a. Места первой выгрузки, которые не переставлялись во второй, — на её координатах, без approx', E1.features.length > 30 && off.length === 0, off);
+  check('Ф3b. Ориентировочной осталась только парковка (все остальные места — из полевого режима)', D.places.filter(p => p.approx).map(p => p.id).join() === 'parking', D.places.filter(p => p.approx).map(p => p.id));
+  check('Ф3c. У каждого места из полевого режима указан источник — первая или вторая выгрузка', D.places.filter(p => !p.approx).every(p => ['field-2026-11-10', 'field-2026-11-10b'].includes(p.src)));
 
   // Ф4. Дополнительные места: два пруда и ещё одно место водоплавающих птиц
-  const extra = { 'pond-2': ['pond', 43.2644954, 76.9764483], 'pond-3': ['pond', 43.2634719, 76.9755685], 'waterfowl-2': ['waterfowl', 43.2633332, 76.9756088] };
+  const last = id => { const f = E2.features.filter(x => x.properties.place === id && /перетащено/.test(x.properties.name)).pop(); return f ? [f.geometry.coordinates[1], f.geometry.coordinates[0]] : null; };
+  const extra = { 'pond-2': ['pond', ...last('pond-2')], 'pond-3': ['pond', 43.2634719, 76.9755685], 'waterfowl-2': ['waterfowl', ...last('waterfowl-2')] };
   const badX = Object.entries(extra).filter(([id, [z, la, ln]]) => P(id).zone !== z || P(id).lat !== la || P(id).lng !== ln || P(id).approx !== false || P(id).icon !== MAP[z]).map(([id]) => id);
-  check('Ф4a. Пруд 2, пруд 3, водоплавающие 2 — на своих точках, зона и пиктограмма как у основного места', badX.length === 0, badX);
+  check('Ф4a. Пруд 2, водоплавающие 2 — на точках второй выгрузки; пруд 3 — на прежнем (случайный перенос не учтён)', badX.length === 0, badX);
   { const A = await launch({ lang: 'ru', now: NOW });
     check('Ф4b. На карте три пруда и два места водоплавающих', ['pond', 'pond-2', 'pond-3', 'waterfowl', 'waterfowl-2'].every(id => !!A.app.markers[id]));
     A.click('[data-tab="coll"]');
     const btn = A.$('#coll-pond [data-act="focusMany"]');
-    check('Ф4c. В разделе «Животные» пруд — одной строкой, «На карте» ведёт ко всем трём', !!btn && btn.dataset.ids.split(',').sort().join() === 'pond,pond-2,pond-3', btn && btn.dataset.ids);
+    check('Ф4c. В разделе «Животные» пруд — одной строкой, «На карте» ведёт ко всем четырём', !!btn && btn.dataset.ids.split(',').sort().join() === 'pond,pond-2,pond-3,pond-4', btn && btn.dataset.ids);
     A.close(); }
 
   // Ф5. Новые дорожки точками (полевой режим)
