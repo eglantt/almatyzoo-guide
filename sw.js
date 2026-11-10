@@ -5,7 +5,7 @@
    (проверяется тестом version). ASSETS_VERSION — только при замене
    содержимого существующих шрифтов/картинок.
    ===================================================================== */
-const CACHE_VERSION = '0.1.5-alpha';
+const CACHE_VERSION = '0.1.6-alpha';
 const ASSETS_VERSION = 'v1';
 const TILES_VERSION = 'v1';
 const APP_CACHE = `app-${CACHE_VERSION}`;

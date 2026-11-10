@@ -97,7 +97,8 @@ module.exports = async function () {
   // A15. Пиктограммы-заглушки помечены пурпурным кольцом, утверждённые — нет
   { const A = await launch({ lang: 'ru', now: NOW });
     const ring = id => !!A.app.markers[id].getElement().querySelector('circle[stroke="#FF00FF"]');
-    check('A15a. Маркер животного (заглушка) — с пурпурным кольцом', ring('elephant'));
+    // 0.1.6: у слона — утверждённый силуэт заказчика, заглушка осталась у пруда
+    check('A15a. Маркер-заглушка (пруд) — с пурпурным кольцом, утверждённый силуэт (слон) — без', ring('pond') && !ring('elephant'));
     check('A15b. Маркер инфраструктуры (утверждён) — без кольца', !ring('wc-1'));
     A.click('[data-tab="rules"]');
     check('A15c. Знаки правил (заглушки) — с кольцом', A.$$('#rulesBody .rule circle[stroke="#FF00FF"]').length === 13);

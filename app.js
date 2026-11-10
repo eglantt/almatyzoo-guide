@@ -21,7 +21,7 @@
   'use strict';
 
   /* ===================== 1. Константы и хранилище ===================== */
-  const APP_VERSION = '0.1.5-alpha';
+  const APP_VERSION = '0.1.6-alpha';
   const KEY = {
     lang: 'zoo_lang',
     devNow: 'zoo_dev_now',       // подмена даты (сервисная панель)
@@ -132,6 +132,8 @@
     if (p.winterFor) return hostedNow(p, d).length > 0;                  // зимний вольер — пока в нём кто-то есть
     return !placeWinter(p, d);                                           // летнее место зимой пусто
   }
+  /** Места обитателя: places — список (вид живёт в нескольких местах, 0.1.6) или place — одно место. */
+  const animalPlaces = a => a.places || (a.place ? [a.place] : []);
   const zoneTitle = id => { const z = D.zones.find(x => x.id === id); return z ? z.title : null; };
   /** Название места; у зимнего вольера без своего названия — «Зимний вольер». */
   const titleOf = p => p.title || D.ui.winterHouse;
@@ -496,8 +498,9 @@
       items.push({ type: p.kind === 'animal' ? 'animal' : 'place', id: p.id, placeId: p.id, icon: iconOf(p, d), color: iconColor(p), title: titleOf(p), extra });
     });
     D.animals.forEach(a => {
-      const p = shown.find(x => x.id === a.place);
-      if (p && !(a.title.ru === p.title.ru)) items.push({ type: 'animal', id: a.id, placeId: p.id, icon: p.icon, color: iconColor(p), title: a.title, sub: p.title, extra: [] });
+      animalPlaces(a).map(id => shown.find(x => x.id === id)).filter(Boolean).forEach(p => {
+        if (!(a.title.ru === p.title.ru)) items.push({ type: 'animal', id: a.id + '@' + p.id, placeId: p.id, icon: p.icon, color: iconColor(p), title: a.title, sub: p.title, extra: [] });
+      });
     });
     return items;
   }
@@ -531,7 +534,7 @@
       const zones = D.zones.filter(z => z.kind === kind).filter(z => {
         if (!q) return true;
         const ids = zonePlaces(z.id).map(x => x.id);
-        const names = [z.title].concat(D.animals.filter(a => ids.includes(a.place)).map(a => a.title));
+        const names = [z.title].concat(D.animals.filter(a => animalPlaces(a).some(id => ids.includes(id))).map(a => a.title));
         return names.some(n => LANGS.some(l => norm(n[l]).includes(q)));
       });
       if (!zones.length) return;
@@ -544,7 +547,7 @@
         const modes = zp.map(x => placeWinter(x, d));
         const targets = [...new Set(zp.map((x, i) => modes[i] === 'moves' ? x.winter.place : modes[i] === 'off' ? null : x.id).filter(id => id && placeById(id)))];
         const zids = zp.map(x => x.id);
-        const animals = D.animals.filter(a => zids.includes(a.place) && a.title.ru !== z.title.ru);
+        const animals = D.animals.filter(a => animalPlaces(a).some(id => zids.includes(id)) && a.title.ru !== z.title.ru);
         const notes = [];
         if (modes.includes('moves')) notes.push(`<span class="tag">${esc(t('winterHouse'))}</span>`);
         if (!targets.length && modes.includes('off')) notes.push(`<span class="tag tag--warn">${esc(t('winterOff'))}</span>`);
@@ -862,6 +865,7 @@
         `<button type="button" class="btn btn--sm" data-f="polygon">Контур</button>` +
         `<button type="button" class="btn btn--sm" data-f="track">Трек</button>` +
         `<button type="button" class="btn btn--sm" data-f="paths">Дорожки</button>` +
+        `<button type="button" class="btn btn--sm" data-f="line">Дорожка точками</button>` +
         `<button type="button" class="btn btn--sm btn--ghost" data-f="list">Список</button>` +
         `<button type="button" class="btn btn--sm btn--ghost" data-f="exit">Выйти</button>`);
     }
@@ -876,6 +880,7 @@
         if (it.type === 'point') L_.circleMarker(it.coords[0], { radius: 7, color: '#fff', weight: 2, fillColor: '#FF00FF', fillOpacity: 1 }).bindTooltip(esc(it.name)).addTo(layers.field);
         if (it.type === 'polygon') L_.polygon(it.coords, Object.assign({ fillOpacity: 0.1 }, style)).bindTooltip(esc(it.name)).addTo(layers.field);
         if (it.type === 'track') L_.polyline(it.coords, style).bindTooltip(esc(it.name)).addTo(layers.field);
+        if (it.type === 'line') L_.polyline(it.coords, Object.assign({ dashArray: '8 5' }, style)).bindTooltip(esc(it.name)).addTo(layers.field);
       });
     }
     function start() {
@@ -942,7 +947,8 @@
     /** Черновик контура: линия + перетаскиваемые кружки точек. */
     function redrawLine() {
       if (draftLayer) map.removeLayer(draftLayer);
-      draftLayer = L_.polyline(draft.concat(draft.length > 2 ? [draft[0]] : []), { color: '#FF00FF', weight: 3, dashArray: '4 6' }).addTo(map);
+      const closed = mode === 'polygon' && draft.length > 2;      // контур замкнут, дорожка — нет
+      draftLayer = L_.polyline(draft.concat(closed ? [draft[0]] : []), { color: '#FF00FF', weight: 3, dashArray: '4 6' }).addTo(map);
     }
     function redrawDraft() {
       map.getContainer().classList.add('drawing');                // пиктограммы не перехватывают тапы по углам контура
@@ -957,16 +963,18 @@
       polyBar();
     }
     function polyBar() {
-      bar(`<b>${editId ? 'Правка контура' : 'Контур'}</b><span class="muted">Точек: ${draft.length} · тап — добавить, перетащить — сдвинуть</span>` +
+      const line = mode === 'line';                                // дорожка точками (0.1.6): незамкнутая, от 2 точек
+      const title = line ? (editId ? 'Правка дорожки' : 'Дорожка') : (editId ? 'Правка контура' : 'Контур');
+      bar(`<b>${title}</b><span class="muted">Точек: ${draft.length} · тап — добавить, перетащить — сдвинуть</span>` +
         `<button type="button" class="btn btn--sm btn--ghost" data-f="undo" ${draft.length ? '' : 'disabled'}>Шаг назад</button>` +
-        `<button type="button" class="btn btn--sm" data-f="polyDone" ${draft.length > 2 ? '' : 'disabled'}>Готово</button>` +
+        `<button type="button" class="btn btn--sm" data-f="${line ? 'lineDone' : 'polyDone'}" ${draft.length > (line ? 1 : 2) ? '' : 'disabled'}>Готово</button>` +
         `<button type="button" class="btn btn--sm btn--ghost" data-f="cancel">Отмена</button>`);
     }
     function onMapClick(e) {
       if (!active || !mode) return false;
       const ll = [+e.latlng.lat.toFixed(7), +e.latlng.lng.toFixed(7)];
       if (mode === 'tapPoint') { mode = null; askName('point', [ll], null); return true; }
-      if (mode === 'polygon') { draft.push(ll); redrawDraft(); return true; }
+      if (mode === 'polygon' || mode === 'line') { draft.push(ll); redrawDraft(); return true; }
       if (mode === 'paths') { const p = nearestPath(e.latlng, 15); if (p) togglePath(p); else toast('Дорожка не найдена — нажмите ближе к линии'); return true; }
       return false;
     }
@@ -1017,12 +1025,13 @@
     }
     function askName(type, coords, acc) {
       const f = $('#fieldFormBody');
-      f.innerHTML = `<div class="dialog__head">Новая запись: ${{ point: 'точка', polygon: 'контур', track: 'трек' }[type]}</div>` +
+      f.innerHTML = `<div class="dialog__head">Новая запись: ${{ point: 'точка', polygon: 'контур', track: 'трек', line: 'дорожка' }[type]}</div>` +
         (acc != null ? `<p class="muted">Точность: ${acc} м</p>` : '') +
         placeSelect(type) +
         `<input type="text" id="fName" placeholder="Название или примечание, например «центр вольера»" autocomplete="off">` +
         `<select id="fCat">${CATS.map(c => `<option value="${c}">${CAT_NAMES[c]}</option>`).join('')}</select>` +
         `<div class="dialog__btns"><button type="button" class="btn btn--ghost" data-f="formCancel">Отмена</button><button type="button" class="btn" data-f="formSave">Сохранить</button></div>`;
+      if (type === 'line') $('#fCat').value = 'path';
       f.dataset.pending = JSON.stringify({ type, coords, acc });
       $('#fieldForm').hidden = false; setTimeout(() => $('#fName').focus(), 30);
     }
@@ -1044,6 +1053,7 @@
         : type === 'polygon'
           ? `<option value="boundary">Граница зоопарка${mark('boundary')}</option>` + group('Контур места', D.places.filter(p => p.kind === 'animal'))
           : '';
+      if (type === 'line') return `<label class="muted small" for="fPlace">Какая это дорожка</label><select id="fPlace"><option value="">Новая дорожка (нет на карте)</option></select>`;
       return `<label class="muted small" for="fPlace">Какое это место</label><select id="fPlace"><option value="">— новое, нет в списке —</option>${opts}</select>`;
     }
     function formSave() {
@@ -1067,7 +1077,7 @@
       bar(`<b>Записи: ${list.length}</b><button type="button" class="btn btn--sm btn--ghost" data-f="back">Назад</button>` +
         `<div class="flist">${list.map(it => `<div><span>${esc(it.name)} <small class="muted">${it.type}</small></span>` +
           `<button type="button" class="btn btn--sm btn--ghost" data-f="show" data-id="${it.id}">Показать</button>` +
-          (it.type === 'polygon' ? `<button type="button" class="btn btn--sm btn--ghost" data-f="edit" data-id="${it.id}">Изменить</button>` : '') +
+          (it.type === 'polygon' || it.type === 'line' ? `<button type="button" class="btn btn--sm btn--ghost" data-f="edit" data-id="${it.id}">Изменить</button>` : '') +
           `<button type="button" class="btn btn--sm btn--ghost" data-f="del" data-id="${it.id}">Удалить</button></div>`).join('') || '<p class="muted">Пусто</p>'}</div>`);
     }
     /** Имя файла с датой и временем: zoo-points_2026-11-10_14-30.geojson */
@@ -1107,10 +1117,11 @@
         case 'gpsPoint': return gpsPoint();
         case 'tapPoint': mode = 'tapPoint'; return bar(`<b>Коснитесь карты</b><button type="button" class="btn btn--sm btn--ghost" data-f="cancel">Отмена</button>`);
         case 'polygon': cancelDraft(); mode = 'polygon'; return redrawDraft();
+        case 'line': cancelDraft(); mode = 'line'; return redrawDraft();
         case 'undo': draft.pop(); return redrawDraft();
         case 'edit': {
           const it = items().find(x => x.id === b.dataset.id); if (!it) return;
-          cancelDraft(); mode = 'polygon'; editId = it.id; draft = it.coords.map(c => c.slice());
+          cancelDraft(); mode = it.type === 'line' ? 'line' : 'polygon'; editId = it.id; draft = it.coords.map(c => c.slice());
           draw(); return redrawDraft();
         }
         case 'polyDone': {
@@ -1120,6 +1131,14 @@
             draw(); mainBar(); return toast('Контур обновлён');
           }
           return askName('polygon', pts, null);
+        }
+        case 'lineDone': {
+          const pts = draft.slice(), wasEdit = editId; mode = null; cancelDraft();
+          if (wasEdit) {
+            save(items().map(x => x.id === wasEdit ? Object.assign({}, x, { coords: pts, ts: new Date().toISOString() }) : x));
+            draw(); mainBar(); return toast('Дорожка обновлена');
+          }
+          return askName('line', pts, null);
         }
         case 'track': return startTrack();
         case 'paths': mode = 'paths'; return bar(`<b>Дорожки</b><span class="muted">Нажмите на дорожку: служебная / обычная</span><button type="button" class="btn btn--sm" data-f="back">Готово</button>`);

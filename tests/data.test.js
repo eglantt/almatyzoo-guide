@@ -50,8 +50,10 @@ module.exports = async function () {
   const uiUse = new Set([...read('index.html').matchAll(/href="#([a-z]-[a-z]+)"/g), ...read('app.js').matchAll(/'([ui]-[a-z]+)'/g)].map(m => m[1]));
   const uiMissing = [...uiUse].filter(i => !spriteIds.has(i));
   check('D4c. Иконки интерфейса из index.html и app.js есть в спрайте', uiMissing.length === 0, uiMissing);
-  const animalPh = D.places.filter(p => p.kind === 'animal').every(p => D.icons[p.icon].placeholder === true);
-  check('D4d. Пиктограммы животных помечены как временные (placeholder)', animalPh);
+  const animalPh = Object.keys(D.icons).filter(k => k.startsWith('a-')).every(k => D.icons[k].placeholder === true);
+  // 0.1.6: силуэты заказчика (s-*) утверждены, временные пиктограммы Claude (a-*) — по-прежнему «заглушки»
+  check('D4d. Временные пиктограммы a-* помечены placeholder, силуэты заказчика s-* — нет', animalPh &&
+    Object.keys(D.icons).filter(k => k.startsWith('s-')).length === 40 && Object.keys(D.icons).filter(k => k.startsWith('s-')).every(k => D.icons[k].placeholder === false));
   check('D4e. Знаки правил помечены как временные (placeholder)', D.rules.short.every(r => D.icons[r.icon].placeholder === true));
   check('D4f. Инфраструктура утверждена — без пометки placeholder', D.places.filter(p => p.kind !== 'animal').every(p => D.icons[p.icon].placeholder === false));
 
@@ -70,7 +72,9 @@ module.exports = async function () {
   check('D5c. Центральный вход стоит на контуре (не дальше 30 м от границы)', edgeDist <= 30, Math.round(edgeDist) + ' м');
   const entPlace = D.places.find(p => p.cat === 'entrance');
   check('D5e. Место «Центральный вход» совпадает с meta.entrance', entPlace && entPlace.lat === D.meta.entrance.lat && entPlace.lng === D.meta.entrance.lng);
-  check('D5d. Все места помечены approx (до полевого сбора)', D.places.every(p => p.approx === true));
+  // 0.1.6: approx снят ровно у мест с координатами из полевого режима (src), у остальных — стоит
+  check('D5d. Пометка approx: нет — у мест из полевого режима (src), есть — у всех остальных', D.places.every(p => p.src ? p.approx === false : p.approx === true),
+    D.places.filter(p => !!p.src === (p.approx === true)).map(p => p.id));
 
   // D6. Часы и сезоны
   const hm = /^\d\d:\d\d$/, md = /^\d\d-\d\d$/;

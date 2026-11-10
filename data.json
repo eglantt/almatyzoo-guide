@@ -1,6 +1,6 @@
 {
  "meta": {
-  "dataVersion": "0.1.5-alpha.1",
+  "dataVersion": "0.1.6-alpha.1",
   "_note": "Координаты мест ориентировочные (approx), будут заменены данными полевого режима. Контур и дорожки — из OpenStreetMap.",
   "center": [
    43.26391,
@@ -542,10 +542,10 @@
    "zone": "exotarium",
    "kind": "animal",
    "cat": "pavilion",
-   "icon": "a-snake",
-   "lat": 43.2658,
-   "lng": 76.9765,
-   "approx": true,
+   "icon": "s-5-02",
+   "lat": 43.2626281,
+   "lng": 76.9771993,
+   "approx": false,
    "major": true,
    "title": {
     "kz": "Экзотариум",
@@ -561,17 +561,18 @@
     "10:00",
     "18:00"
    ],
-   "sanitaryDay": 2
+   "sanitaryDay": 2,
+   "src": "field-2026-11-10"
   },
   {
    "id": "aquarium",
    "zone": "aquarium",
    "kind": "animal",
    "cat": "pavilion",
-   "icon": "a-fish",
-   "lat": 43.2661,
-   "lng": 76.9775,
-   "approx": true,
+   "icon": "s-6-02",
+   "lat": 43.261753,
+   "lng": 76.9763598,
+   "approx": false,
    "major": true,
    "title": {
     "kz": "Аквариум",
@@ -582,17 +583,18 @@
     "kz": "Тұщы және теңіз суының балықтары",
     "ru": "Пресноводные и морские рыбы",
     "en": "Freshwater and marine fish"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "birdhouse",
    "zone": "birdhouse",
    "kind": "animal",
    "cat": "pavilion",
-   "icon": "a-birdhouse",
-   "lat": 43.2638,
-   "lng": 76.9761,
-   "approx": true,
+   "icon": "s-4-03",
+   "lat": 43.2616984,
+   "lng": 76.9762686,
+   "approx": false,
    "major": true,
    "title": {
     "kz": "Құстар үйі",
@@ -604,17 +606,18 @@
     "ru": "Тропические и экзотические птицы",
     "en": "Tropical and exotic birds"
    },
-   "sanitaryDay": 4
+   "sanitaryDay": 4,
+   "src": "field-2026-11-10"
   },
   {
    "id": "primates",
    "zone": "primates",
    "kind": "animal",
    "cat": "pavilion",
-   "icon": "a-monkey",
-   "lat": 43.263,
-   "lng": 76.9748,
-   "approx": true,
+   "icon": "s-3-01",
+   "lat": 43.2655891,
+   "lng": 76.9780201,
+   "approx": false,
    "major": true,
    "title": {
     "kz": "Приматтар",
@@ -625,17 +628,18 @@
     "kz": "Маймылдар павильоны",
     "ru": "Павильон обезьян",
     "en": "Monkey pavilion"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "predators",
    "zone": "predators",
    "kind": "animal",
    "cat": "pavilion",
-   "icon": "a-paw",
-   "lat": 43.2612,
-   "lng": 76.975,
-   "approx": true,
+   "icon": "s-1-04",
+   "lat": 43.2638664,
+   "lng": 76.975531,
+   "approx": false,
    "major": true,
    "title": {
     "kz": "Жыртқыштар үйі",
@@ -646,30 +650,32 @@
     "kz": "Ірі және кіші жыртқыштар",
     "ru": "Крупные и мелкие хищники",
     "en": "Large and small carnivores"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "elephant",
    "zone": "elephant",
    "kind": "animal",
    "cat": "enclosure",
-   "icon": "a-elephant",
-   "lat": 43.2641,
-   "lng": 76.9746,
-   "approx": true,
+   "icon": "s-2-01",
+   "lat": 43.2647883,
+   "lng": 76.9784868,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Піл",
     "ru": "Слон",
     "en": "Elephant"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "giraffes",
    "zone": "giraffes",
    "kind": "animal",
    "cat": "enclosure",
-   "icon": "a-giraffe",
+   "icon": "s-2-02",
    "lat": 43.2634,
    "lng": 76.9766,
    "approx": true,
@@ -685,7 +691,7 @@
    "zone": "hippos",
    "kind": "animal",
    "cat": "enclosure",
-   "icon": "a-hippo",
+   "icon": "s-2-03",
    "lat": 43.2626,
    "lng": 76.9759,
    "approx": true,
@@ -701,208 +707,221 @@
    "zone": "rhinos",
    "kind": "animal",
    "cat": "enclosure",
-   "icon": "a-rhino",
-   "lat": 43.2631,
-   "lng": 76.9774,
-   "approx": true,
+   "icon": "s-2-04",
+   "lat": 43.2653274,
+   "lng": 76.9778109,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Мүйізтұмсықтар",
     "ru": "Носороги",
     "en": "Rhinos"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "polarbear",
    "zone": "polarbear",
    "kind": "animal",
    "cat": "enclosure",
-   "icon": "a-polar",
-   "lat": 43.262,
-   "lng": 76.975,
-   "approx": true,
+   "icon": "s-1-01",
+   "lat": 43.2653391,
+   "lng": 76.9755846,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Ақ аю",
     "ru": "Белый медведь",
     "en": "Polar bear"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "bears",
    "zone": "bears",
    "kind": "animal",
    "cat": "enclosure",
-   "icon": "a-bear",
-   "lat": 43.2644,
-   "lng": 76.9787,
-   "approx": true,
+   "icon": "s-1-01",
+   "lat": 43.2639641,
+   "lng": 76.9785994,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Аюлар",
     "ru": "Медведи",
     "en": "Bears"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "tigers",
    "zone": "tigers",
    "kind": "animal",
    "cat": "enclosure",
-   "icon": "a-tiger",
-   "lat": 43.2632,
-   "lng": 76.9786,
-   "approx": true,
+   "icon": "s-1-05",
+   "lat": 43.2641125,
+   "lng": 76.9745654,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Жолбарыстар",
     "ru": "Тигры",
     "en": "Tigers"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "lions",
    "zone": "lions",
    "kind": "animal",
    "cat": "enclosure",
-   "icon": "a-lion",
-   "lat": 43.2638,
-   "lng": 76.9782,
-   "approx": true,
+   "icon": "s-1-02",
+   "lat": 43.264011,
+   "lng": 76.9754076,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Арыстандар",
     "ru": "Львы",
     "en": "Lions"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "wolves",
    "zone": "wolves",
    "kind": "animal",
    "cat": "enclosure",
-   "icon": "a-wolf",
-   "lat": 43.2617,
-   "lng": 76.9766,
-   "approx": true,
+   "icon": "s-1-09",
+   "lat": 43.2649055,
+   "lng": 76.9757295,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Поляр қасқырлары",
     "ru": "Полярные волки",
     "en": "Arctic wolves"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "zebras",
    "zone": "zebras",
    "kind": "animal",
    "cat": "enclosure",
-   "icon": "a-zebra",
-   "lat": 43.264,
-   "lng": 76.9772,
-   "approx": true,
+   "icon": "s-2-09",
+   "lat": 43.2627258,
+   "lng": 76.9749624,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Зебралар",
     "ru": "Зебры",
     "en": "Zebras"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "kangaroo",
    "zone": "kangaroo",
    "kind": "animal",
    "cat": "enclosure",
-   "icon": "a-kangaroo",
-   "lat": 43.2647,
-   "lng": 76.9766,
-   "approx": true,
+   "icon": "s-1-07",
+   "lat": 43.2645344,
+   "lng": 76.977092,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Кенгурулар",
     "ru": "Кенгуру",
     "en": "Kangaroos"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "crocodiles",
    "zone": "crocodiles",
    "kind": "animal",
    "cat": "enclosure",
-   "icon": "a-croc",
-   "lat": 43.2645,
-   "lng": 76.9754,
-   "approx": true,
+   "icon": "s-5-01",
+   "lat": 43.2626867,
+   "lng": 76.9769579,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Қолтырауындар",
     "ru": "Крокодилы",
     "en": "Crocodiles"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "raptors",
    "zone": "raptors",
    "kind": "animal",
    "cat": "zone",
-   "icon": "a-eagle",
-   "lat": 43.265,
-   "lng": 76.9748,
-   "approx": true,
+   "icon": "s-4-01",
+   "lat": 43.2630773,
+   "lng": 76.9757617,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Жыртқыш құстар",
     "ru": "Хищные птицы",
     "en": "Birds of prey"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "waterfowl",
    "zone": "waterfowl",
    "kind": "animal",
    "cat": "zone",
-   "icon": "a-duck",
-   "lat": 43.2657,
-   "lng": 76.9757,
-   "approx": true,
+   "icon": "s-4-08",
+   "lat": 43.2638313,
+   "lng": 76.9770411,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Суда жүзетін құстар",
     "ru": "Водоплавающие птицы",
     "en": "Waterfowl"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "pheasants",
    "zone": "pheasants",
    "kind": "animal",
    "cat": "zone",
-   "icon": "a-pheasant",
-   "lat": 43.2651,
-   "lng": 76.9759,
-   "approx": true,
+   "icon": "s-4-05",
+   "lat": 43.2616573,
+   "lng": 76.9757885,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Қырғауылдар қатары",
     "ru": "Фазаний ряд",
     "en": "Pheasant Row"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "ungulates",
    "zone": "ungulates",
    "kind": "animal",
    "cat": "zone",
-   "icon": "a-deer",
-   "lat": 43.2621,
-   "lng": 76.977,
-   "approx": true,
+   "icon": "s-2-08",
+   "lat": 43.2617179,
+   "lng": 76.9751394,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Тұяқтылар",
     "ru": "Копытные",
     "en": "Hoofed animals"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "pond",
@@ -910,9 +929,9 @@
    "kind": "animal",
    "cat": "zone",
    "icon": "a-pond",
-   "lat": 43.2653,
-   "lng": 76.977,
-   "approx": true,
+   "lat": 43.2639328,
+   "lng": 76.9768667,
+   "approx": false,
    "major": true,
    "title": {
     "kz": "Тоған",
@@ -923,7 +942,8 @@
     "kz": "Тоған және оның тұрғындары",
     "ru": "Пруд и его обитатели",
     "en": "The pond and its residents"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "entrance",
@@ -950,9 +970,9 @@
    "kind": "infra",
    "cat": "wc",
    "icon": "i-wc",
-   "lat": 43.2639,
-   "lng": 76.9744,
-   "approx": true,
+   "lat": 43.263132,
+   "lng": 76.9742382,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Дәретхана",
@@ -970,22 +990,24 @@
      }
     }
    ],
-   "_example": "Пример для проверки 0.1.3; заменить настоящими данными"
+   "_example": "Пример для проверки 0.1.3; заменить настоящими данными",
+   "src": "field-2026-11-10"
   },
   {
    "id": "wc-2",
    "kind": "infra",
    "cat": "wc",
    "icon": "i-wc",
-   "lat": 43.2627,
-   "lng": 76.9768,
-   "approx": true,
+   "lat": 43.262882,
+   "lng": 76.9774568,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Дәретхана",
     "ru": "Туалет",
     "en": "Toilet"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "cafe-1",
@@ -1007,24 +1029,25 @@
    "kind": "infra",
    "cat": "food",
    "icon": "i-cafe",
-   "lat": 43.2623,
-   "lng": 76.9745,
-   "approx": true,
+   "lat": 43.2637532,
+   "lng": 76.9744849,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Кафе",
     "ru": "Кафе",
     "en": "Café"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "kiosk-1",
    "kind": "infra",
    "cat": "food",
    "icon": "i-kiosk",
-   "lat": 43.2633,
-   "lng": 76.97465,
-   "approx": true,
+   "lat": 43.2630031,
+   "lng": 76.9777143,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Дүңгіршек",
@@ -1032,37 +1055,40 @@
     "en": "Kiosk"
    },
    "summerOnly": true,
-   "_example": "Пример для проверки 0.1.3; заменить настоящими данными"
+   "_example": "Пример для проверки 0.1.3; заменить настоящими данными",
+   "src": "field-2026-11-10"
   },
   {
    "id": "kiosk-2",
    "kind": "infra",
    "cat": "food",
    "icon": "i-kiosk",
-   "lat": 43.2633,
-   "lng": 76.9755,
-   "approx": true,
+   "lat": 43.2653626,
+   "lng": 76.9771081,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Дүңгіршек",
     "ru": "Ларёк",
     "en": "Kiosk"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "med",
    "kind": "infra",
    "cat": "med",
    "icon": "i-med",
-   "lat": 43.2632,
-   "lng": 76.9743,
-   "approx": true,
+   "lat": 43.263425,
+   "lng": 76.9740987,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Медпункт",
     "ru": "Медпункт",
     "en": "First aid"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "gazebo-1",
@@ -1084,54 +1110,57 @@
    "kind": "infra",
    "cat": "gazebo",
    "icon": "i-gazebo",
-   "lat": 43.2619,
-   "lng": 76.9757,
-   "approx": true,
+   "lat": 43.2622609,
+   "lng": 76.9759279,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Шатыр",
     "ru": "Беседка",
     "en": "Gazebo"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "playground",
    "kind": "infra",
    "cat": "play",
    "icon": "i-play",
-   "lat": 43.2616,
-   "lng": 76.9745,
-   "approx": true,
+   "lat": 43.2636203,
+   "lng": 76.9751018,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Балалар алаңы",
     "ru": "Детская площадка",
     "en": "Playground"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "info",
    "kind": "infra",
    "cat": "info",
    "icon": "i-info",
-   "lat": 43.2634,
-   "lng": 76.97425,
-   "approx": true,
+   "lat": 43.2633899,
+   "lng": 76.974898,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Ақпарат",
     "ru": "Информация",
     "en": "Information"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "guard",
    "kind": "infra",
    "cat": "guard",
    "icon": "i-guard",
-   "lat": 43.2637,
-   "lng": 76.97425,
-   "approx": true,
+   "lat": 43.262089,
+   "lng": 76.9772476,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Күзет",
@@ -1142,7 +1171,8 @@
     "kz": "Бала адасып кетсе — осында хабарласыңыз",
     "ru": "Если потерялся ребёнок — обращайтесь сюда",
     "en": "If a child is lost, come here"
-   }
+   },
+   "src": "field-2026-11-10"
   },
   {
    "id": "parking",
@@ -1183,6 +1213,57 @@
     "ru": "Автобус № 60",
     "en": "Bus No. 60"
    }
+  },
+  {
+   "id": "pond-2",
+   "zone": "pond",
+   "kind": "animal",
+   "cat": "zone",
+   "icon": "a-pond",
+   "lat": 43.2644954,
+   "lng": 76.9764483,
+   "approx": false,
+   "major": false,
+   "title": {
+    "kz": "Тоған",
+    "ru": "Пруд",
+    "en": "Pond"
+   },
+   "src": "field-2026-11-10"
+  },
+  {
+   "id": "pond-3",
+   "zone": "pond",
+   "kind": "animal",
+   "cat": "zone",
+   "icon": "a-pond",
+   "lat": 43.2634719,
+   "lng": 76.9755685,
+   "approx": false,
+   "major": false,
+   "title": {
+    "kz": "Тоған",
+    "ru": "Пруд",
+    "en": "Pond"
+   },
+   "src": "field-2026-11-10"
+  },
+  {
+   "id": "waterfowl-2",
+   "zone": "waterfowl",
+   "kind": "animal",
+   "cat": "zone",
+   "icon": "s-4-08",
+   "lat": 43.2633332,
+   "lng": 76.9756088,
+   "approx": false,
+   "major": false,
+   "title": {
+    "kz": "Суда жүзетін құстар",
+    "ru": "Водоплавающие птицы",
+    "en": "Waterfowl"
+   },
+   "src": "field-2026-11-10"
   }
  ],
  "_winterNote": "Зимние вольеры (0.1.5): у летнего места поле winter {from, to (ММ-ДД), mode: moves | off, place: id зимнего вольера}; зимний вольер — место kind animal, cat winter, winterFor: [id летних мест], название необязательно. У одной зоны может быть несколько мест (одинаковая пиктограмма). Неэкспозиционный зимний вольер в данные не вносится (mode off). Пока все места остаются на месте — список от заказчика.",
@@ -3044,104 +3125,241 @@
  "animals": [],
  "_animalsNote": "Обитатели (виды) — по полной коллекции от заказчика.",
  "icons": {
-  "a-elephant": {
-   "placeholder": true
+  "s-1-04": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "леопард?"
   },
-  "a-hippo": {
-   "placeholder": true
+  "s-2-04": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "носорог"
   },
-  "a-croc": {
-   "placeholder": true
-  },
-  "a-fish": {
-   "placeholder": true
-  },
-  "i-info": {
-   "placeholder": false
-  },
-  "a-tiger": {
-   "placeholder": true
+  "s-6-02": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "рыба-ангел"
   },
   "a-pond": {
    "placeholder": true
   },
-  "i-wc": {
+  "i-med": {
    "placeholder": false
-  },
-  "a-zebra": {
-   "placeholder": true
-  },
-  "i-bus": {
-   "placeholder": false
-  },
-  "a-pheasant": {
-   "placeholder": true
-  },
-  "a-birdhouse": {
-   "placeholder": true
-  },
-  "a-paw": {
-   "placeholder": true
-  },
-  "a-rhino": {
-   "placeholder": true
-  },
-  "i-cafe": {
-   "placeholder": false
-  },
-  "a-polar": {
-   "placeholder": true
-  },
-  "a-wolf": {
-   "placeholder": true
-  },
-  "a-deer": {
-   "placeholder": true
-  },
-  "i-gazebo": {
-   "placeholder": false
-  },
-  "i-guard": {
-   "placeholder": false
-  },
-  "a-eagle": {
-   "placeholder": true
-  },
-  "a-bear": {
-   "placeholder": true
-  },
-  "a-kangaroo": {
-   "placeholder": true
-  },
-  "a-snake": {
-   "placeholder": true
-  },
-  "i-ticket": {
-   "placeholder": false
-  },
-  "a-duck": {
-   "placeholder": true
   },
   "i-parking": {
    "placeholder": false
   },
-  "i-med": {
+  "s-2-02": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "жираф"
+  },
+  "i-bus": {
    "placeholder": false
   },
-  "i-play": {
+  "i-cafe": {
    "placeholder": false
+  },
+  "i-gazebo": {
+   "placeholder": false
+  },
+  "i-ticket": {
+   "placeholder": false
+  },
+  "i-info": {
+   "placeholder": false
+  },
+  "s-4-03": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "какаду / попугай"
+  },
+  "s-1-05": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "тигр"
+  },
+  "s-5-02": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "змея (кобра)"
   },
   "i-kiosk": {
    "placeholder": false
   },
-  "a-monkey": {
-   "placeholder": true
+  "s-2-01": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "слон"
   },
-  "a-lion": {
-   "placeholder": true
+  "i-guard": {
+   "placeholder": false
   },
-  "a-giraffe": {
-   "placeholder": true
+  "s-5-01": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "крокодил"
+  },
+  "s-1-02": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "лев"
+  },
+  "s-2-03": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "бегемот"
+  },
+  "s-4-01": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "орёл — хищная птица"
+  },
+  "i-play": {
+   "placeholder": false
+  },
+  "s-4-05": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "павлин"
+  },
+  "i-wc": {
+   "placeholder": false
+  },
+  "s-3-01": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "павиан / горилла?"
+  },
+  "s-1-09": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "волк; шакал — та же, мельче"
+  },
+  "s-2-08": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "олень"
+  },
+  "s-2-09": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "зебра / лошадь"
+  },
+  "s-4-08": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "лебедь"
+  },
+  "s-1-01": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "медведь"
+  },
+  "s-1-07": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "кенгуру"
+  },
+  "s-1-03": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "каракал?"
+  },
+  "s-1-06": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "снежный барс (на будущее)"
+  },
+  "s-1-08": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "лиса"
+  },
+  "s-1-10": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "грызун"
+  },
+  "s-2-05": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "бизон / як?"
+  },
+  "s-2-06": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "верблюд"
+  },
+  "s-2-07": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "архар / муфлон?"
+  },
+  "s-2-10": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "антилопы"
+  },
+  "s-3-02": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "лемур?"
+  },
+  "s-3-03": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "мартышка"
+  },
+  "s-4-02": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "фламинго?"
+  },
+  "s-4-04": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "сова"
+  },
+  "s-4-06": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "страус / фламинго?"
+  },
+  "s-4-07": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "пеликан"
+  },
+  "s-5-03": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "черепаха"
+  },
+  "s-6-01": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "акула"
+  },
+  "s-6-03": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "скат"
+  },
+  "s-6-04": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "рыба"
+  },
+  "s-6-05": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "рыба"
+  },
+  "s-6-06": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "рыба"
   },
   "r-feed": {
    "placeholder": true
