@@ -32,7 +32,8 @@ module.exports = async function () {
   { const A = await launch({ lang: 'ru', now: SUMMER, patch });
     check('В1a. Летом у медведей две пиктограммы на карте', !!A.app.markers.bears && !!A.app.markers['bears-2']);
     check('В1b. Пиктограммы одинаковые', iconOf(A, 'bears') && iconOf(A, 'bears') === iconOf(A, 'bears-2'), [iconOf(A, 'bears'), iconOf(A, 'bears-2')]);
-    check('В1c. Летом общего зимнего вольера на карте нет (в нём никого)', !A.app.markers['winter-1']);
+    { const el = A.app.markers['winter-1'] && A.app.markers['winter-1'].getElement();
+      check('В1c. Летом общий зимний вольер — серый полупрозрачный (в нём никого, 0.1.8)', !!el && el.classList.contains('ghost')); }
     A.click('[data-tab="coll"]');
     const rows = A.$$('#collList .coll__item').filter(el => el.textContent.includes('Медведи') && !el.textContent.includes('Белый'));
     check('В1d. В разделе «Животные» медведи — одной строкой', rows.length === 1, rows.length);
@@ -113,10 +114,11 @@ module.exports = async function () {
     check('В5h. Экспорт: newZone и newWinter в свойствах точек', fs.some(f => f.properties.newZone === 'bears') && fs.some(f => f.properties.newWinter === true), fs.map(f => f.properties));
     A.close(); }
 
-  // В6. Без зимних настроек всё как раньше: одна пиктограмма на зону, зимой все на месте
+  // В6. Настоящие данные (0.1.8): зимой летние места с переездом скрыты, их зимние вольеры видны; остальные зоны — на месте
   { const A = await launch({ lang: 'ru', now: '2027-01-15T12:00:00' });
     const animalZones = D.zones.filter(z => D.places.some(p => p.zone === z.id));
-    check('В6. Настоящие данные: зимой все зоны на карте (список зимних вольеров ещё не передан)', animalZones.every(z => D.places.filter(p => p.zone === z.id).every(p => !!A.app.markers[p.id])));
+    const ok = animalZones.every(z => D.places.filter(p => p.zone === z.id).every(p => p.winter ? (!A.app.markers[p.id] && !!A.app.markers[p.winter.place]) : !!A.app.markers[p.id]));
+    check('В6. Настоящие данные: зимой переехавшие — в зимних вольерах, остальные зоны на месте', ok);
     A.close(); }
   return done();
 };

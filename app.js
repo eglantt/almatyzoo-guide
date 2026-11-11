@@ -21,7 +21,7 @@
   'use strict';
 
   /* ===================== 1. Константы и хранилище ===================== */
-  const APP_VERSION = '0.1.7-alpha';
+  const APP_VERSION = '0.1.8-alpha';
   const KEY = {
     lang: 'zoo_lang',
     devNow: 'zoo_dev_now',       // подмена даты (сервисная панель)
@@ -114,22 +114,28 @@
      Неэкспозиционный зимний вольер в данные не вносится: у летнего места mode 'off'. */
   const inPeriod = (x, from, to) => from <= to ? (x >= from && x <= to) : (x >= from || x <= to);
   const placeById = id => D.places.find(x => x.id === id);
-  /** Летнее место сейчас в зимнем положении: 'moves' (в экспонируемом зимнем вольере), 'off' (не экспонируется) или null (на месте). */
+  /** Летнее место сейчас в зимнем положении: 'moves' (в экспонируемом зимнем вольере), 'off' (не экспонируется) или null (на месте).
+      Даты: свои у места (winter.from/to) или общие settings.winterMove (0.1.8: 15.10 — 14.04). */
   function placeWinter(p, d) {
-    const w = p && p.winter;
-    return w && (w.mode === 'moves' || w.mode === 'off') && inPeriod(mmdd(d), w.from, w.to) ? w.mode : null;
+    const w = p && p.winter, def = (D.settings && D.settings.winterMove) || {};
+    const from = w && (w.from || def.from), to = w && (w.to || def.to);
+    return w && (w.mode === 'moves' || w.mode === 'off') && from && to && inPeriod(mmdd(d), from, to) ? w.mode : null;
   }
   /** Кто сейчас в зимнем вольере: летние места, переехавшие в него на эту дату (по порядку winterFor). */
   function hostedNow(w, d) {
-    return (w.winterFor || []).map(placeById).filter(s => s && placeWinter(s, d) === 'moves' && s.winter.place === w.id);
+    return (w.winterFor || []).map(placeById).filter(s => s && placeWinter(s, d) && s.winter.place === w.id);
   }
+  /** Состояние зимнего вольера: 'on' — экспонируется и в нём кто-то есть; 'off' — неэкспонируемый, в нём кто-то есть;
+      'ghost' — пуст (летом): экспонируемый виден серым полупрозрачным, неэкспонируемый скрыт. */
+  function winterState(p, d) { return !hostedNow(p, d).length ? 'ghost' : p.exhibit === false ? 'off' : 'on'; }
   /** Действующее временное закрытие места (даты «с — по» включительно) или null. */
   function activeClosure(p, d) { const x = dayKey(d); return (p.closures || []).find(c => x >= c.from && x <= c.to) || null; }
   /** Показывается ли место посетителю в этот день. */
   function isShown(p, d) {
+    if (p.staffOnly) return false;                                       // ветчасть, тихая зона — только полевой режим
     if (p.summerOnly && season(d) === 'winter') return false;           // «работает только летом»
     if (p.kind !== 'animal' && activeClosure(p, d)) return false;        // ларёк, туалет на ремонте — иконка скрыта
-    if (p.winterFor) return hostedNow(p, d).length > 0;                  // зимний вольер — пока в нём кто-то есть
+    if (p.winterFor) return p.exhibit !== false || hostedNow(p, d).length > 0;   // экспонируемый — всегда; неэкспонируемый — пока в нём кто-то есть
     return !placeWinter(p, d);                                           // летнее место зимой пусто
   }
   /** Места обитателя: places — список (вид живёт в нескольких местах, 0.1.6) или place — одно место. */
@@ -185,8 +191,19 @@
   const placeLatLng = p => ({ lat: p.lat, lng: p.lng });
 
   /* ===================== 5. Пиктограммы и маркеры ===================== */
-  const COLORS = { animal: '#4E8C12', infra: '#2E5A0A', food: '#C4920A' };
-  function iconColor(place) { return place.cat === 'food' ? COLORS.food : (place.kind === 'animal' ? COLORS.animal : COLORS.infra); }
+  const COLORS = { animal: '#4E8C12', infra: '#2E5A0A', food: '#C4920A', service: '#6E6E6E', ghost: '#8A8A8A' };
+  /** 0.1.8: цвет круга у силуэтов животных — по классу (ряд листа-образца №3, самый тёмный оттенок брендбука):
+      1 хищные — красный, 2 копытные — оранжевый, 3 приматы — жёлтый, 4 птицы — голубой, 5 рептилии — зелёный, 6 рыбы — бирюзовый. */
+  const CLASS_COLORS = { 1: '#A70E13', 2: '#B44B15', 3: '#C16E02', 4: '#0082B7', 5: '#5C9330', 6: '#008F91' };
+  const classColor = icon => { const m = /^s-(\d)-/.exec(icon || ''); return m ? CLASS_COLORS[m[1]] || null : null; };
+  /** Цвет маркера места (на дату d): служебные и пустые зимние вольеры — серые, животные — по классу пиктограммы. */
+  function iconColor(place, d) {
+    if (place.kind === 'service') return COLORS.service;
+    if (place.winterFor) { const s = winterState(place, d || now()); if (s !== 'on') return s === 'off' ? COLORS.service : COLORS.ghost; }
+    if (place.cat === 'food') return COLORS.food;
+    if (place.kind !== 'animal') return COLORS.infra;
+    return classColor(iconOf(place, d || now())) || COLORS.animal;
+  }
   function isPlaceholder(iconId) { return !!(D.icons[iconId] && D.icons[iconId].placeholder); }
   /** Маркер стиля А: цветной круг, белая обводка, белая пиктограмма; тонкое пурпурное кольцо у заглушек. */
   function markerSvg(iconId, color) {
@@ -211,7 +228,7 @@
 
   function initMap() {
     if (map || typeof L_ === 'undefined') return;
-    const b = D.meta.bounds;
+    const b = D.meta.bounds;                   // 0.1.8: симметрично относительно центра зоопарка
     map = L_.map('map', {
       zoomControl: false, minZoom: 16, maxZoom: 19,
       maxBounds: L_.latLngBounds(b[0], b[1]), maxBoundsViscosity: 1.0,
@@ -230,6 +247,8 @@
     applyBase();
     // Контур и дорожки — из OpenStreetMap (data.json): видны и без сети. Пунктир — только у ориентировочного контура.
     L_.polygon(D.meta.boundary, { color: '#4E8C12', weight: 3, dashArray: D.meta.boundaryApprox ? '8 6' : null, fillColor: '#95C12B', fillOpacity: 0.08, interactive: false, attribution: OSM_ATTR }).addTo(map);
+    layers.contours = L_.layerGroup().addTo(map);     // 0.1.8: вольеры, здания, водоёмы — под дорожками
+    buildContours();
     layers.paths = L_.layerGroup().addTo(map);
     buildPaths();
     layers.areas = L_.layerGroup().addTo(map);
@@ -279,6 +298,19 @@
       l.addTo(layers.paths);
     });
   }
+  /** 0.1.8. Контуры: вольеры — светло-зелёные, здания — светло-серые, водоёмы — голубые. Порядок снизу вверх: вольеры, здания, водоёмы. */
+  const CONTOUR_STYLE = {
+    enclosure: { color: '#4E8C12', weight: 1.5, fillColor: '#B9DC8C', fillOpacity: 0.45 },
+    building: { color: '#7A7A7A', weight: 1.5, fillColor: '#D6D6D2', fillOpacity: 0.9 },
+    water: { color: '#4A9BD1', weight: 1, fillColor: '#9FD0F0', fillOpacity: 0.9 }
+  };
+  const CONTOUR_KINDS = ['enclosure', 'building', 'water'];
+  function buildContours() {
+    if (!map) return;
+    layers.contours.clearLayers();
+    const list = (D.contours || []).slice().sort((a, b) => CONTOUR_KINDS.indexOf(a.kind) - CONTOUR_KINDS.indexOf(b.kind));
+    list.forEach(c => { if (CONTOUR_STYLE[c.kind]) L_.polygon(c.coords, Object.assign({ interactive: false }, CONTOUR_STYLE[c.kind])).addTo(layers.contours); });
+  }
   /** Путь через Парк культуры — только по кнопке; при открытии карта остаётся на зоопарке. */
   function showParkRoute() {
     const R = D.parkRoute; if (!R) return;
@@ -289,6 +321,8 @@
       .bindTooltip(esc(L(R.title)), { direction: 'top', offset: [0, -8] }).addTo(layers.route);
     // Путь ~800 м шире экрана телефона на масштабе 16 — на время показа разрешён 15; низ — под карточку
     map.setMinZoom(15);
+    // 0.1.8: на масштабе 15 экран выше рамки — Leaflet ставил бы рамку по центру и уводил вход в парк под карточку; на время показа рамка шире
+    map.setMaxBounds(L_.latLngBounds(D.meta.bounds[0], D.meta.bounds[1]).pad(0.25));
     const fit = () => { map.invalidateSize(); map.fitBounds(R.coords, { paddingTopLeft: [30, 70], paddingBottomRight: [30, 290], maxZoom: 18 }); };
     fit(); setTimeout(fit, 0);
     sheet(`<b>${esc(t('parkRoute'))}</b><br>${esc(t('parkRouteText'))}<br>${esc(fmtDist(R.m))} · ${esc(t('minWalk', { n: walkMin(R.m) }))}`);
@@ -316,9 +350,11 @@
     D.places.forEach(p => {
       if (!all && !isShown(p, d)) return;
       if (p.area) L_.polygon(p.area, { color: iconColor(p), weight: 1.5, fillOpacity: 0.12, interactive: false }).addTo(layers.areas);
-      const cls = ['zmk', 'k-' + p.kind, p.major ? 'major' : 'minor', p.approx ? 'approx' : '', all && Field.isRemoved(p.id) ? 'removed' : ''].join(' ');
+      const ghost = p.winterFor && winterState(p, d) === 'ghost';    // пустой зимний вольер (летом) — серый полупрозрачный
+      const cls = ['zmk', 'k-' + p.kind, p.major ? 'major' : 'minor', p.approx ? 'approx' : '', ghost ? 'ghost' : '', p.staffOnly ? 'staff' : '',
+        all && Field.isRemoved(p.id) ? 'removed' : ''].join(' ');
       const m = L_.marker([p.lat, p.lng], {
-        icon: L_.divIcon({ className: cls, html: markerSvg(iconOf(p, d), iconColor(p)), iconSize: [44, 44], iconAnchor: [22, 22], popupAnchor: [0, -18] }),
+        icon: L_.divIcon({ className: cls, html: markerSvg(iconOf(p, d), iconColor(p, d)), iconSize: [44, 44], iconAnchor: [22, 22], popupAnchor: [0, -18] }),
         title: L(titleOf(p)), keyboard: true, riseOnHover: true
       });
       // Карточка не уходит под фильтры сверху и под «Найти рядом» / «Где я?» снизу: карта сдвигается с запасом
@@ -338,17 +374,32 @@
     ['animal', 'infra'].forEach(k => { if (show[k]) layers[k].addTo(map); else map.removeLayer(layers[k]); });
     $$('#mapFilters button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.filter === S.filter)));
   }
+  /** Строка «Открыто / Закрыто · часы»; label — подпись перед часами (касса, зоопарк). */
+  function hoursLine(range, d, label) {
+    const open = isOpen(range, d);
+    return `<div class="pp__st ${open ? 'pp__st--open' : 'pp__st--closed'}">${label ? esc(label) + ' ' : ''}${range[0]}–${range[1]} · ${esc(t(open ? 'openNow' : 'closedNow'))}</div>`;
+  }
+  const zoneNames = list => [...new Set(list.map(s => s.zone))].map(zoneTitle).filter(Boolean).map(L);
   function popupHtml(p) {
     const d = now(), st = placeStatus(p, d), h = placeHours(p, d), cl = activeClosure(p, d);
     let status = '';
+    // 0.1.8: часы — только у мест с признаком showHours (четыре павильона и касса); у кассы — часы кассы и зоопарка
     if (cl) status = `<div class="pp__st pp__st--closed">${esc(closureText(cl))}</div>`;
     else if (st === 'sanitary') status = `<div class="pp__st pp__st--closed">${esc(t('todayClosed'))} · ${esc(t('sanitaryDay'))}</div>`;
-    else if (p.kind !== 'outside') status = `<div class="pp__st ${st === 'open' ? 'pp__st--open' : 'pp__st--closed'}">${esc(t(st === 'open' ? 'openNow' : 'closedNow'))} · ${h[0]}–${h[1]}</div>`;
+    else if (p.showHours && p.cat === 'entrance') { const zh = zooHours(d); status = hoursLine(zh.cash, d, t('hoursCash')) + hoursLine(zh.zoo, d, t('hoursZoo')); }
+    else if (p.showHours) status = hoursLine(h, d, '');
+    if (p.kind === 'service') status = `<div class="pp__st pp__st--closed">${esc(t(p.cat === 'service-gate' ? 'vehiclesOnly' : 'staffOnly'))}</div>`;
     const san = p.sanitaryDay && st !== 'sanitary' ? `<div class="pp__note">${esc(t('sanitaryEvery', { day: weekday(p.sanitaryDay) }))}</div>` : '';
-    // Зимний вольер: пометка и кто в нём сейчас («Зимний вольер: Медведи, Жирафы»)
-    const hosted = p.winterFor ? [...new Set(hostedNow(p, d).map(s => s.zone))].map(zoneTitle).filter(Boolean).map(L) : [];
-    const note = (p.winterFor ? `<div class="pp__note"><b>${esc(t('winterHouse'))}</b>${hosted.length ? ': ' + esc(hosted.join(', ')) : ''}</div>` : '') +
-      (p.note ? `<div class="pp__note pp__note--warn">${esc(L(p.note))}</div>` : '');
+    // Зимний вольер: «Зимний вольер · Сейчас здесь: …» / «· Сюда зимой переводят: …» (летом) / «· не экспонируется: …»
+    let wnote = '';
+    if (p.winterFor) {
+      const ws = winterState(p, d), now_ = zoneNames(hostedNow(p, d));
+      const txt = ws === 'ghost' ? t('winterGoesHere', { list: zoneNames(p.winterFor.map(placeById).filter(Boolean)).join(', ') })
+        : ws === 'off' ? t('winterNotShown') + ': ' + now_.join(', ') : t('winterHereNow', { list: now_.join(', ') });
+      // без своего названия заголовок карточки и так «Зимний вольер» — не повторяем
+      wnote = `<div class="pp__note">${p.title ? `<b>${esc(t('winterHouse'))}</b> · ` : ''}${esc(txt)}</div>`;
+    }
+    const note = wnote + (p.note ? `<div class="pp__note pp__note--warn">${esc(L(p.note))}</div>` : '');
     let distLine = '';
     if (S.user) { const m = dist(S.user, placeLatLng(p)); distLine = `<div class="pp__dist">${esc(fmtDist(m))} · ${esc(t('minWalk', { n: walkMin(m) }))}</div>`; }
     const collId = collRowOf(p, d);
@@ -466,7 +517,9 @@
   }
   function clearRoute() {
     if (layers.route) layers.route.clearLayers();
-    if (map && map.getMinZoom() !== 16) map.setMinZoom(16);          // после пути через парк — обычный предел
+    if (map && map.getMinZoom() !== 16) {                             // после пути через парк — обычный масштаб и рамка
+      map.setMinZoom(16); map.setMaxBounds(L_.latLngBounds(D.meta.bounds[0], D.meta.bounds[1]));
+    }
   }
   /** «К выходу», этап 1: линия до центрального входа, расстояние, направление. */
   async function toExit() {
@@ -492,15 +545,15 @@
   /* ===================== 8. Поиск ===================== */
   function searchIndex() {
     const items = [], d = now();
-    const shown = D.places.filter(p => isShown(p, d));
+    const shown = D.places.filter(p => isShown(p, d) && p.kind !== 'service');      // служебные объекты в поиске не участвуют
     shown.forEach(p => {
       const extra = (p.keywords || []).slice();
       if (p.winterFor) hostedNow(p, d).forEach(s => { const zt = zoneTitle(s.zone); if (zt) LANGS.forEach(l => extra.push(zt[l])); });
-      items.push({ type: p.kind === 'animal' ? 'animal' : 'place', id: p.id, placeId: p.id, icon: iconOf(p, d), color: iconColor(p), title: titleOf(p), extra });
+      items.push({ type: p.kind === 'animal' ? 'animal' : 'place', id: p.id, placeId: p.id, icon: iconOf(p, d), color: iconColor(p, d), title: titleOf(p), extra });
     });
     D.animals.forEach(a => {
       animalPlaces(a).map(id => shown.find(x => x.id === id)).filter(Boolean).forEach(p => {
-        if (!(a.title.ru === p.title.ru)) items.push({ type: 'animal', id: a.id + '@' + p.id, placeId: p.id, icon: p.icon, color: iconColor(p), title: a.title, sub: p.title, extra: [] });
+        if (!(a.title.ru === p.title.ru)) items.push({ type: 'animal', id: a.id + '@' + p.id, placeId: p.id, icon: p.icon, color: iconColor(p, d), title: a.title, sub: p.title, extra: [] });
       });
     });
     return items;
@@ -546,18 +599,19 @@
         const d = now(), st = placeStatus(p, d), cl = activeClosure(p, d);
         // Куда ведёт «На карте»: каждое летнее место — на месте, в зимнем вольере или нигде (не экспонируется)
         const modes = zp.map(x => placeWinter(x, d));
-        const targets = [...new Set(zp.map((x, i) => modes[i] === 'moves' ? x.winter.place : modes[i] === 'off' ? null : x.id).filter(id => id && placeById(id)))];
+        // 0.1.8: неэкспонируемый зимний вольер тоже на карте (серый) — «На карте» ведёт и к нему
+        const targets = [...new Set(zp.map((x, i) => modes[i] ? x.winter.place : x.id).filter(id => { const q = id && placeById(id); return q && isShown(q, d); }))];
         const zids = zp.map(x => x.id);
         const animals = D.animals.filter(a => animalPlaces(a).some(id => zids.includes(id)) && a.title.ru !== z.title.ru);
         const notes = [];
         if (modes.includes('moves')) notes.push(`<span class="tag">${esc(t('winterHouse'))}</span>`);
-        if (!targets.length && modes.includes('off')) notes.push(`<span class="tag tag--warn">${esc(t('winterOff'))}</span>`);
+        if (modes.includes('off')) notes.push(`<span class="tag tag--warn">${esc(t('winterOff'))}</span>`);
         if (cl) notes.push(`<span class="tag tag--warn">${esc(closureText(cl))}</span>`);
         else if (st === 'sanitary') notes.push(`<span class="tag tag--warn">${esc(t('todayClosed'))}</span>`);
-        if (p.hours) notes.push(`<span class="tag">${esc(t('ownHours', { h: p.hours[0] + '–' + p.hours[1] }))}</span>`);
+        else if (p.showHours) { const h = placeHours(p, d); notes.push(`<span class="tag ${st === 'open' ? 'tag--ok' : ''}">${esc(t(st === 'open' ? 'openNow' : 'closedNow'))} · ${h[0]}–${h[1]}</span>`); }
         if (p.sanitaryDay && st !== 'sanitary') notes.push(`<span class="tag">${esc(t('sanitaryEvery', { day: weekday(p.sanitaryDay) }))}</span>`);
         html += `<article class="coll__item" id="coll-${p.id}">` +
-          `<span class="mkmini mkmini--lg">${markerSvg(p.icon, iconColor(p))}</span>` +
+          `<span class="mkmini mkmini--lg">${markerSvg(p.icon, iconColor(p, d))}</span>` +
           `<div class="coll__txt"><b>${esc(L(z.title))}</b>` +
           (animals.length ? `<small>${animals.map(a => esc(L(a.title))).join(', ')}</small>` : (kind === 'pavilion' ? `<small class="muted">${esc(t('collSoon'))}</small>` : '')) +
           (notes.length ? `<div class="tags">${notes.join('')}</div>` : '') + `</div>` +
@@ -863,6 +917,10 @@
   const Field = (function () {
     let active = false, mode = null, draft = [], draftLayer = null, watchId = null, wakeLock = null, recording = false;
     let handles = [], editId = null;     // кружки точек контура; id контура, который правится
+    let contourKind = null, hist = [];   // 0.1.8: вид контура (boundary | enclosure | building | water); снимки черновика для «Шаг назад»
+    const CONTOUR_NAMES = { boundary: 'Граница зоопарка', enclosure: 'Вольер', building: 'Здание', water: 'Водоём' };
+    /** Запись о месте, которого больше нет в данных (например, удалённое кафе): не рисуется и не выгружается. */
+    const isStale = it => !!it.place && it.place !== 'boundary' && it.place !== 'park-route' && !placeById(it.place) && !(D.service || []).some(x => x.id === it.place);
     const items = () => store.json(KEY.field, []);
     const save = list => store.setJson(KEY.field, list);
     const CATS = ['animal', 'infra', 'border', 'path', 'service', 'other'];
@@ -873,7 +931,7 @@
       bar(`<b>Полевой режим</b><span class="muted">записей: ${items().length}</span>` +
         `<button type="button" class="btn btn--sm" data-f="gpsPoint">Точка: я здесь</button>` +
         `<button type="button" class="btn btn--sm" data-f="tapPoint">Точка тапом</button>` +
-        `<button type="button" class="btn btn--sm" data-f="polygon">Контур</button>` +
+        `<button type="button" class="btn btn--sm" data-f="contours">Контуры</button>` +
         `<button type="button" class="btn btn--sm" data-f="track">Трек</button>` +
         `<button type="button" class="btn btn--sm" data-f="paths">Дорожки</button>` +
         `<button type="button" class="btn btn--sm" data-f="line">Дорожка точками</button>` +
@@ -882,26 +940,29 @@
     }
     function draw() {
       if (!map) return;
-      layers.field.clearLayers();
+      layers.field.clearLayers(); recMarkers = {};
       items().forEach(it => {
         const style = { color: '#FF00FF', weight: 3 };
         if (it.id === editId) return;                              // правится — рисуется черновиком
+        if (isStale(it)) return;                                   // места больше нет (0.1.8)
         if (it.type === 'point' && it.place && markers[it.place]) return;   // место показано самой пиктограммой
         if (it.type === 'pathflag' || it.type === 'remove' || it.type === 'rename') return;   // показано стилем дорожки / иконки места
         if (it.type === 'point') {
           const ic = recIcon(it);
-          if (ic) {                                                     // новое место — сразу иконкой: полупрозрачная, розовая пунктирная кайма
-            const m = L_.marker(it.coords[0], { draggable: true, zIndexOffset: 500,
-              icon: L_.divIcon({ className: 'zmk pending', html: pendingSvg(ic.icon, ic.color), iconSize: [44, 44], iconAnchor: [22, 22] }) });
-            m.on('dragend', () => { const q = m.getLatLng(); setCoords(it.id, [+q.lat.toFixed(7), +q.lng.toFixed(7)]); });
-            m.on('click', () => menu('rec', it.id));
-            m.bindTooltip(esc(it.name)).addTo(layers.field);
-          } else {
-            L_.circleMarker(it.coords[0], { radius: 7, color: '#fff', weight: 2, fillColor: '#FF00FF', fillOpacity: 1 })
-              .on('click', () => menu('rec', it.id)).bindTooltip(esc(it.name)).addTo(layers.field);
-          }
+          // новое место — сразу иконкой (полупрозрачная, розовая пунктирная кайма); без иконки — розовая точка. Перетаскиваются обе (0.1.8)
+          const m = L_.marker(it.coords[0], { draggable: true, zIndexOffset: 500,
+            icon: ic ? L_.divIcon({ className: 'zmk pending', html: pendingSvg(ic.icon, ic.color), iconSize: [44, 44], iconAnchor: [22, 22] })
+              : L_.divIcon({ className: 'fdot', html: '<span></span>', iconSize: [20, 20], iconAnchor: [10, 10] }) });
+          m.on('dragend', () => onRecDrag(it.id, m.getLatLng()));
+          m.on('click', () => menu('rec', it.id));
+          m.bindTooltip(esc(it.name)).addTo(layers.field);
+          recMarkers[it.id] = m;
         }
-        if (it.type === 'polygon') L_.polygon(it.coords, Object.assign({ fillOpacity: 0.1 }, style)).bindTooltip(esc(it.name)).addTo(layers.field);
+        if (it.type === 'polygon') {
+          const k = it.contour || (it.place === 'boundary' ? 'boundary' : null);
+          const st = Object.assign({}, CONTOUR_STYLE[k] || { fillOpacity: k === 'boundary' ? 0 : 0.1 }, { color: '#FF00FF', weight: 2.5, dashArray: '6 4' });
+          L_.polygon(it.coords, st).on('click', () => menu('rec', it.id)).bindTooltip(esc(it.name)).addTo(layers.field);
+        }
         if (it.type === 'track') L_.polyline(it.coords, style).bindTooltip(esc(it.name)).addTo(layers.field);
         if (it.type === 'line') L_.polyline(it.coords, it.service ? { color: '#8A8A8A', weight: 3.5, dashArray: '5 7' } : Object.assign({ dashArray: '8 5' }, style))
           .on('click', () => menu('rec', it.id)).bindTooltip(esc(it.name)).addTo(layers.field);
@@ -934,6 +995,13 @@
         `<circle cx="22" cy="22" r="17" fill="${color}" stroke="#fff" stroke-width="3"/><svg x="11" y="11" width="22" height="22" color="#fff"><use href="#${icon}"/></svg></svg>`;
     }
     function setCoords(id, ll) { save(items().map(x => x.id === id ? Object.assign({}, x, { coords: [ll], ts: new Date().toISOString() }) : x)); }
+    let recMarkers = {};
+    /** Перетащили свою точку (новое место или розовую точку): новая координата, 5 секунд — «Вернуть» (0.1.8). */
+    function onRecDrag(id, q) {
+      const prev = items(), it = prev.find(x => x.id === id); if (!it) return;
+      setCoords(id, [+q.lat.toFixed(7), +q.lng.toFixed(7)]); draw();
+      toastUndo('Перенесено: ' + it.name, () => { save(prev); draw(); mainBar(); });
+    }
     const isRemoved = id => items().some(x => x.type === 'remove' && x.place === id);
     /** Меню по нажатию на иконку (вариант А): удалить / убрать с карты / изменить название / отмена; после удаления — «Вернуть». */
     function menu(kind, id) {
@@ -946,6 +1014,7 @@
       f.innerHTML = `<div class="dialog__head">${esc(title)}</div>` +
         (p ? `<p class="muted small">Место из приложения. «Убрать с карты» — отметка уйдёт в экспорт; у посетителей место исчезнет после переноса.</p>` : '') +
         `<div class="dialog__btns dialog__btns--col">` +
+        (it && (it.type === 'polygon' || it.type === 'line') ? `<button type="button" class="btn" data-f="edit" data-id="${it.id}">Изменить точки</button>` : '') +
         (removed ? `<button type="button" class="btn" data-f="mRestore">Вернуть на карту</button>`
           : `<button type="button" class="btn btn--danger" data-f="mDel">${p ? 'Убрать с карты' : 'Удалить'}</button>`) +
         `<button type="button" class="btn btn--ghost" data-f="mRename">Изменить название</button>` +
@@ -1000,10 +1069,13 @@
     function onMarkerDrag(id, ll) {
       if (!active) return;
       const p = D.places.find(x => x.id === id); if (!p) return;
-      const list = items().filter(x => !(x.type === 'point' && x.place === id));
-      list.push({ id: 'f' + Date.now(), type: 'point', name: titleOf(p).ru + ' — перетащено', place: id, cat: p.kind === 'animal' ? 'animal' : 'infra',
+      const prev = items(), list = prev.filter(x => !(x.type === 'point' && x.place === id));
+      list.push({ id: 'f' + Date.now(), type: 'point', name: titleOf(p).ru + ' — перетащено', place: id,
+        cat: p.kind === 'animal' ? 'animal' : p.kind === 'service' ? 'service' : 'infra',
         coords: [[+ll.lat.toFixed(7), +ll.lng.toFixed(7)]], acc: null, ts: new Date().toISOString() });
-      save(list); draw(); mainBar(); toast('Сохранено: ' + titleOf(p).ru);
+      save(list); draw(); mainBar();
+      // 0.1.8: 5 секунд — «Вернуть» (иконка встаёт туда, где была до перетаскивания)
+      toastUndo('Сохранено: ' + titleOf(p).ru, () => { save(prev); buildMarkers(); draw(); mainBar(); });
     }
     /** Служебные дорожки: отметка — запись pathflag (одна на дорожку), в экспорт — с геометрией дорожки. */
     function pathFlag(id, def) { const r = items().filter(x => x.type === 'pathflag' && x.path === id).pop(); return r ? !!r.service : def; }
@@ -1028,7 +1100,7 @@
       save(list); buildPaths(); toast(svc ? 'Служебная дорожка' : 'Обычная дорожка');
     }
     function cancelDraft() {
-      draft = []; editId = null;
+      draft = []; editId = null; contourKind = null; hist = [];
       if (draftLayer && map) map.removeLayer(draftLayer); draftLayer = null;
       handles.forEach(h => map && map.removeLayer(h)); handles = [];
       if (map) map.getContainer().classList.remove('drawing');
@@ -1039,31 +1111,73 @@
       const closed = mode === 'polygon' && draft.length > 2;      // контур замкнут, дорожка — нет
       draftLayer = L_.polyline(draft.concat(closed ? [draft[0]] : []), { color: '#FF00FF', weight: 3, dashArray: '4 6' }).addTo(map);
     }
+    const snap = () => hist.push(draft.map(c => c.slice()));      // снимок перед изменением — для «Шаг назад»
+    const llOf = q => [+q.lat.toFixed(7), +q.lng.toFixed(7)];
+    /** 0.1.8: перетащить кружок — сдвинуть точку; нажать на кружок — удалить точку; малый кружок посередине отрезка —
+        новая точка (нажать или потянуть). Так правится и граница зоопарка. */
     function redrawDraft() {
       map.getContainer().classList.add('drawing');                // пиктограммы не перехватывают тапы по углам контура
       handles.forEach(h => map.removeLayer(h)); handles = [];
       redrawLine();
+      const closed = mode === 'polygon', min = closed ? 3 : 2;
       handles = draft.map((ll, i) => {
         const h = L_.marker(ll, { draggable: true, icon: L_.divIcon({ className: 'fh', html: '<span></span>', iconSize: [24, 24], iconAnchor: [12, 12] }), zIndexOffset: 2000 });
-        const upd = () => { const q = h.getLatLng(); draft[i] = [+q.lat.toFixed(7), +q.lng.toFixed(7)]; redrawLine(); };
-        h.on('drag', upd).on('dragend', upd);
+        h.on('dragstart', snap);
+        h.on('drag', () => { draft[i] = llOf(h.getLatLng()); redrawLine(); });
+        h.on('dragend', () => { draft[i] = llOf(h.getLatLng()); redrawDraft(); });
+        h.on('click', () => { if (draft.length <= min) return toast('Меньше ' + min + ' точек нельзя'); snap(); draft.splice(i, 1); redrawDraft(); });
+        h._fIndex = i;
         return h.addTo(map);
       });
+      const segs = draft.length < 2 ? 0 : closed ? (draft.length > 2 ? draft.length : 1) : draft.length - 1;
+      for (let i = 0; i < segs; i++) {
+        const a = draft[i], b = draft[(i + 1) % draft.length];
+        const h = L_.marker([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], { draggable: true, zIndexOffset: 1900,
+          icon: L_.divIcon({ className: 'fmid', html: '<span></span>', iconSize: [24, 24], iconAnchor: [12, 12] }) });
+        const insert = q => { snap(); draft.splice(i + 1, 0, llOf(q)); redrawDraft(); };
+        h.on('click', () => insert(h.getLatLng()));
+        h.on('dragend', () => insert(h.getLatLng()));
+        h._fMid = i;
+        handles.push(h.addTo(map));
+      }
       polyBar();
     }
     function polyBar() {
       const line = mode === 'line';                                // дорожка точками (0.1.6): незамкнутая, от 2 точек
-      const title = line ? (editId ? 'Правка дорожки' : 'Дорожка') : (editId ? 'Правка контура' : 'Контур');
-      bar(`<b>${title}</b><span class="muted">Точек: ${draft.length} · тап — добавить, перетащить — сдвинуть</span>` +
-        `<button type="button" class="btn btn--sm btn--ghost" data-f="undo" ${draft.length ? '' : 'disabled'}>Шаг назад</button>` +
+      const title = line ? (editId ? 'Правка дорожки' : 'Дорожка')
+        : contourKind ? (editId || contourKind === 'boundary' ? 'Правка: ' : '') + CONTOUR_NAMES[contourKind] : (editId ? 'Правка контура' : 'Контур');
+      const hint = contourKind === 'boundary' ? 'перетащить — сдвинуть, нажать на точку — удалить, кружок посередине — новая точка'
+        : 'тап по карте — добавить, перетащить — сдвинуть, нажать на точку — удалить';
+      bar(`<b>${esc(title)}</b><span class="muted">Точек: ${draft.length} · ${hint}</span>` +
+        `<button type="button" class="btn btn--sm btn--ghost" data-f="undo" ${hist.length ? '' : 'disabled'}>Шаг назад</button>` +
         `<button type="button" class="btn btn--sm" data-f="${line ? 'lineDone' : 'polyDone'}" ${draft.length > (line ? 1 : 2) ? '' : 'disabled'}>Готово</button>` +
         `<button type="button" class="btn btn--sm btn--ghost" data-f="cancel">Отмена</button>`);
+    }
+    /** «Контуры»: выбор вида — граница зоопарка (правка нынешней), вольер, здание, водоём (обвести по точкам). */
+    function contoursBar() {
+      bar(`<b>Контуры</b><span class="muted">Что обводим</span>` +
+        `<button type="button" class="btn btn--sm" data-f="cBoundary">Граница зоопарка</button>` +
+        `<button type="button" class="btn btn--sm" data-f="cKind" data-k="enclosure">Вольер</button>` +
+        `<button type="button" class="btn btn--sm" data-f="cKind" data-k="building">Здание</button>` +
+        `<button type="button" class="btn btn--sm" data-f="cKind" data-k="water">Водоём (пруд, бассейн)</button>` +
+        `<button type="button" class="btn btn--sm btn--ghost" data-f="back">Назад</button>`);
+    }
+    /** Граница зоопарка: последняя правка с этого устройства или граница из данных; точки сразу можно двигать. */
+    function startBoundary() {
+      cancelDraft(); mode = 'polygon'; contourKind = 'boundary';
+      const rec = items().filter(x => x.type === 'polygon' && x.place === 'boundary').pop();
+      let pts = (rec ? rec.coords : D.meta.boundary).map(c => [c[0], c[1]]);
+      const f = pts[0], l = pts[pts.length - 1];
+      if (pts.length > 3 && f[0] === l[0] && f[1] === l[1]) pts = pts.slice(0, -1);     // кольцо: последняя точка = первая
+      draft = pts; if (rec) editId = rec.id;
+      draw(); redrawDraft();
     }
     function onMapClick(e) {
       if (!active || !mode) return false;
       const ll = [+e.latlng.lat.toFixed(7), +e.latlng.lng.toFixed(7)];
       if (mode === 'tapPoint') { mode = null; askName('point', [ll], null); return true; }
-      if (mode === 'polygon' || mode === 'line') { draft.push(ll); redrawDraft(); return true; }
+      if (contourKind === 'boundary') return true;                 // границу правят кружками, тап по карте точку не добавляет
+      if (mode === 'polygon' || mode === 'line') { snap(); draft.push(ll); redrawDraft(); return true; }
       if (mode === 'paths') { const p = nearestPath(e.latlng, 15); if (p) togglePath(p); else toast('Дорожка не найдена — нажмите ближе к линии'); return true; }
       return false;
     }
@@ -1112,7 +1226,7 @@
       else askName('track', pts, null);
       tryPendingReload();
     }
-    function askName(type, coords, acc) {
+    function askName(type, coords, acc, contour) {
       const f = $('#fieldFormBody');
       f.innerHTML = `<div class="dialog__head">Новая запись: ${{ point: 'точка', polygon: 'контур', track: 'трек', line: 'дорожка' }[type]}</div>` +
         (acc != null ? `<p class="muted">Точность: ${acc} м</p>` : '') +
@@ -1126,7 +1240,8 @@
       if (type === 'line') $('#fCat').value = 'path';
       if (type === 'point') { $('#fPlace').addEventListener('change', updateExtra); updateExtra(); }
       delete f.dataset.menu;
-      f.dataset.pending = JSON.stringify({ type, coords, acc });
+      f.dataset.pending = JSON.stringify({ type, coords, acc, contour: type === 'polygon' ? (contour || null) : null });
+      if (type === 'polygon' && $('#fCat')) $('#fCat').value = 'border';
       hideUndo();                                              // подсказка «Вернуть» не закрывает кнопки формы
       $('#fieldForm').hidden = false; setTimeout(() => { const n = $('#fName'); if (n) n.focus(); }, 30);   // форма могла смениться вопросом
     }
@@ -1161,19 +1276,21 @@
       const zonesSorted = D.zones.slice().sort((a, b) => a.title.ru.localeCompare(b.title.ru, 'ru'));
       // 0.1.7: «Ещё один такой же» — по одному варианту на тип инфраструктуры и служебного объекта; новая зона с силуэтом
       const seen = new Set(), sameOf = D.places.filter(p => p.kind !== 'animal').concat((D.service || []).filter(x => !/^winter-/.test(x.id)))
-        .filter(p => !seen.has(p.cat) && seen.add(p.cat));
+        .filter(p => !p.staffOnly && !seen.has(p.cat) && seen.add(p.cat));
       const newPlaces = `<optgroup label="Новое место (нет в списке)"><option value="new-zonedef">Новая зона (выбрать силуэт)</option><option value="new-winter">Новый зимний вольер</option>` +
         zonesSorted.map(z => `<option value="new-zone:${z.id}">Ещё одно место для зоны: ${esc(z.title.ru)}</option>`).join('') +
         sameOf.map(p => `<option value="new-same:${p.id}">Ещё один такой же: ${esc(titleOf(p).ru)}</option>`).join('') + `</optgroup>`;
       const opts = type === 'point'
         ? newPlaces + group('Животные', D.places.filter(p => p.kind === 'animal')) + group('Инфраструктура', D.places.filter(p => p.kind === 'infra')) + group('Снаружи', D.places.filter(p => p.kind === 'outside')) +
-          group('Служебное (посетителям не видно)', (D.service || []).slice())
+          group('Служебное', D.places.filter(p => p.kind === 'service').concat((D.service || []).slice()))
         : type === 'track'
           ? `<option value="park-route">Путь через парк (заменит линию)${mark('park-route')}</option>`
         : type === 'polygon'
-          ? `<option value="boundary">Граница зоопарка${mark('boundary')}</option>` + group('Контур места', D.places.filter(p => p.kind === 'animal'))
+          ? group('Животные', D.places.filter(p => p.kind === 'animal')) + group('Инфраструктура', D.places.filter(p => p.kind === 'infra')) + group('Служебное', D.places.filter(p => p.kind === 'service'))
           : '';
       if (type === 'line') return `<label class="muted small" for="fPlace">Какая это дорожка</label><select id="fPlace"><option value="">Новая дорожка (нет на карте)</option></select>`;
+      // 0.1.8: контур вольера / здания / водоёма — привязка к месту необязательна
+      if (type === 'polygon') return `<label class="muted small" for="fPlace">К какому месту относится (необязательно)</label><select id="fPlace"><option value="">— без привязки —</option>${opts}</select>`;
       return `<label class="muted small" for="fPlace">Какое это место</label><select id="fPlace"><option value="">— новое, нет в списке —</option>${opts}</select>`;
     }
     function formSave() {
@@ -1185,7 +1302,8 @@
       const findAny = id => D.places.find(x => x.id === id) || (D.service || []).find(x => x.id === id);
       const pl = place && !isNew && place !== 'boundary' && place !== 'park-route' ? findAny(place) : null;
       const winterZones = newWinter ? Array.from(document.querySelectorAll('#fWinter input[name="fwz"]:checked')).map(x => x.value) : [];
-      const label = place === 'boundary' ? 'Граница зоопарка' : place === 'park-route' ? 'Путь через парк'
+      const label = pend.contour ? CONTOUR_NAMES[pend.contour] + (pl ? ': ' + titleOf(pl).ru : '')
+        : place === 'boundary' ? 'Граница зоопарка' : place === 'park-route' ? 'Путь через парк'
         : newZone ? (zoneTitle(newZone) || { ru: newZone }).ru + ' — ещё одно место'
         : newSame ? titleOf(findAny(newSame)).ru + ' — ещё один такой же'
         : newZoneDef ? 'Новая зона'
@@ -1195,6 +1313,7 @@
       const note = $('#fName').value.trim();
       const name = [label, note].filter(Boolean).join(' — ') || ('Без названия ' + new Date().toLocaleTimeString('ru-RU'));
       const rec = { id: 'f' + Date.now(), type: pend.type, name, place: isNew ? null : (place || null), cat: $('#fCat').value, coords: pend.coords, acc: pend.acc, ts: new Date().toISOString() };
+      if (pend.contour) rec.contour = pend.contour;
       if (newZone) rec.newZone = newZone;
       if (newSame) rec.newSame = newSame;
       if (newZoneDef) rec.newZoneDef = { icon: $('#fZoneIcon').value };
@@ -1228,8 +1347,12 @@
     }
     function showList() {
       const list = items();
+      // 0.1.8: записи о местах, которых больше нет в данных, — серые, «места больше нет», только «Удалить запись»
       bar(`<b>Записи: ${list.length}</b><button type="button" class="btn btn--sm btn--ghost" data-f="back">Назад</button>` +
-        `<div class="flist">${list.map(it => `<div><span>${esc(it.name)} <small class="muted">${it.type}</small></span>` +
+        `<div class="flist">${list.map(it => isStale(it)
+          ? `<div class="stale" data-stale="${it.id}"><span>${esc(it.name)} <small><b>места больше нет</b></small></span>` +
+            `<button type="button" class="btn btn--sm btn--ghost" data-f="del" data-id="${it.id}">Удалить запись</button></div>`
+          : `<div><span>${esc(it.name)} <small class="muted">${it.type}</small></span>` +
           `<button type="button" class="btn btn--sm btn--ghost" data-f="show" data-id="${it.id}">Показать</button>` +
           (it.type === 'polygon' || it.type === 'line' ? `<button type="button" class="btn btn--sm btn--ghost" data-f="edit" data-id="${it.id}">Изменить</button>` : '') +
           `<button type="button" class="btn btn--sm btn--ghost" data-f="del" data-id="${it.id}">Удалить</button></div>`).join('') || '<p class="muted">Пусто</p>'}</div>` +
@@ -1244,9 +1367,10 @@
       return {
         type: 'FeatureCollection',
         properties: { app: 'almatyzoo-guide', version: APP_VERSION, exported: new Date().toISOString() },
-        features: items().map(it => ({
+        features: items().filter(it => !isStale(it)).map(it => ({
           type: 'Feature',
           properties: Object.assign({ id: it.id, name: it.name, place: it.place || null, cat: it.cat, kind: it.type, accuracy: it.acc, time: it.ts },
+            it.contour ? { contour: it.contour } : {},
             it.type === 'pathflag' ? { path: it.path, service: it.service } : {},
             it.newZone ? { newZone: it.newZone } : {}, it.newWinter ? { newWinter: true, winterZones: it.winterZones || [], winterExhibit: it.winterExhibit !== false, winterFrom: it.winterFrom || null, winterTo: it.winterTo || null } : {},
             it.newSame ? { newSame: it.newSame } : {}, it.newZoneDef ? { newZoneDef: it.newZoneDef } : {}, it.type === 'line' ? { service: !!it.service } : {}),
@@ -1273,20 +1397,32 @@
         case 'gpsPoint': return gpsPoint();
         case 'tapPoint': mode = 'tapPoint'; return bar(`<b>Коснитесь карты</b><button type="button" class="btn btn--sm btn--ghost" data-f="cancel">Отмена</button>`);
         case 'polygon': cancelDraft(); mode = 'polygon'; return redrawDraft();
+        case 'contours': cancelDraft(); mode = null; return contoursBar();
+        case 'cBoundary': return startBoundary();
+        case 'cKind': cancelDraft(); mode = 'polygon'; contourKind = b.dataset.k; return redrawDraft();
         case 'line': cancelDraft(); mode = 'line'; return redrawDraft();
-        case 'undo': draft.pop(); return redrawDraft();
+        case 'undo': if (hist.length) draft = hist.pop(); return redrawDraft();
         case 'edit': {
           const it = items().find(x => x.id === b.dataset.id); if (!it) return;
+          $('#fieldForm').hidden = true;
+          if (it.type === 'polygon' && it.place === 'boundary') return startBoundary();
           cancelDraft(); mode = it.type === 'line' ? 'line' : 'polygon'; editId = it.id; draft = it.coords.map(c => c.slice());
+          contourKind = it.type === 'polygon' ? (it.contour || null) : null;
           draw(); return redrawDraft();
         }
         case 'polyDone': {
-          const pts = draft.slice(), wasEdit = editId; mode = null; cancelDraft();
+          const pts = draft.slice(), wasEdit = editId, kind = contourKind; mode = null; cancelDraft();
+          if (kind === 'boundary') {              // 0.1.8: граница зоопарка — одна запись, новая правка её заменяет
+            const rec = { id: wasEdit || 'f' + Date.now(), type: 'polygon', contour: 'boundary', place: 'boundary', name: 'Граница зоопарка', cat: 'border',
+              coords: pts, acc: null, ts: new Date().toISOString() };
+            save(items().filter(x => !(x.type === 'polygon' && x.place === 'boundary')).concat([rec]));
+            draw(); mainBar(); return toast('Граница сохранена');
+          }
           if (wasEdit) {                          // правка: координаты меняются, место и название — прежние
             save(items().map(x => x.id === wasEdit ? Object.assign({}, x, { coords: pts, ts: new Date().toISOString() }) : x));
             draw(); mainBar(); return toast('Контур обновлён');
           }
-          return askName('polygon', pts, null);
+          return askName('polygon', pts, null, kind);
         }
         case 'lineDone': {
           const pts = draft.slice(), wasEdit = editId; mode = null; cancelDraft();
@@ -1321,7 +1457,7 @@
       }
     }
     return { start, stop, onMapClick, pathFlag, menu, isRemoved, onClick, items, exportFile, fileName, toGeoJSON, applyMarkers, onMarkerDrag,
-      isRecording: () => recording, isActive: () => active, debug: () => ({ handles: handles.slice() }) };
+      isRecording: () => recording, isActive: () => active, debug: () => ({ handles: handles.filter(h => h._fMid == null), mids: handles.filter(h => h._fMid != null) }) };
   })();
   /* ZOO:SYS-TOOLS:END */
 

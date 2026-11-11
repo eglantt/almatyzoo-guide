@@ -91,15 +91,17 @@ module.exports = async function () {
     X.places.push({ id: 'winter-giraffes', kind: 'animal', cat: 'winter', winterFor: ['giraffes'], icon: g.icon, lat: g.lat + 0.0003, lng: g.lng - 0.0004, approx: true, major: false });
   };
   { const A = await launch({ lang: 'ru', now: SUMMER, patch: winterPatch });
-    check('М6a. Летом жирафы в летнем вольере, зимнего вольера на карте нет', !!A.app.markers.giraffes && !A.app.markers['winter-giraffes']);
+    const ghost = id => { const m = A.app.markers[id], el = m && m.getElement(); return !!el && el.classList.contains('ghost'); };
+    check('М6a. Летом жирафы в летнем вольере, зимний вольер — серый полупрозрачный (0.1.8)', !!A.app.markers.giraffes && ghost('winter-giraffes'));
     check('М6b. Летом зебры на карте', !!A.app.markers.zebras);
     A.close(); }
   { const A = await launch({ lang: 'ru', now: '2026-11-10T12:00:00', patch: winterPatch });
-    check('М6c. Свои даты места: 10 ноября у зоопарка зима, а жирафы ещё в летнем вольере', A.app.fn.season(A.app.fn.now()) === 'winter' && !!A.app.markers.giraffes && !A.app.markers['winter-giraffes']);
+    const ghost = id => { const m = A.app.markers[id], el = m && m.getElement(); return !!el && el.classList.contains('ghost'); };
+    check('М6c. Свои даты места: 10 ноября у зоопарка зима, а жирафы ещё в летнем вольере (зимний — серый)', A.app.fn.season(A.app.fn.now()) === 'winter' && !!A.app.markers.giraffes && ghost('winter-giraffes'));
     check('М6d. 10 ноября зебры уже не на карте (их перевод с 1 ноября)', !A.app.markers.zebras);
     A.close(); }
   { const A = await launch({ lang: 'ru', now: '2027-01-15T12:00:00', patch: winterPatch });
-    check('М6e. Зимой (через Новый год) маркер у зимнего вольера, у летнего вольера — нет', !A.app.markers.giraffes && !!A.app.markers['winter-giraffes']);
+    check('М6e. Зимой (через Новый год) маркер у зимнего вольера (не серый), у летнего вольера — нет', !A.app.markers.giraffes && !!A.app.markers['winter-giraffes'] && !A.app.markers['winter-giraffes'].getElement().classList.contains('ghost'));
     const txt = A.app.markers['winter-giraffes'] ? popupText(A, 'winter-giraffes') : '';
     check('М6f. В попапе зимнего вольера — «Зимний вольер»', txt.includes('Зимний вольер'), txt);
     A.click('[data-tab="coll"]');
@@ -110,7 +112,8 @@ module.exports = async function () {
     check('М6i. Поиск зимой ведёт к зимнему вольеру, к зебрам — не ведёт на карту', res.some(r => r.placeId === 'winter-giraffes') && !res.some(r => r.placeId === 'giraffes') && !zeb.some(r => r.placeId === 'zebras'), { res: res.map(r => r.placeId), zeb: zeb.map(r => r.placeId) });
     A.close(); }
   { const A = await launch({ lang: 'ru', now: '2027-03-16T12:00:00', patch: winterPatch });
-    check('М6j. Весной жирафы вернулись в летний вольер сами', !!A.app.markers.giraffes && !A.app.markers['winter-giraffes']);
+    const el = A.app.markers['winter-giraffes'] && A.app.markers['winter-giraffes'].getElement();
+    check('М6j. Весной жирафы вернулись в летний вольер сами, зимний снова серый', !!A.app.markers.giraffes && !!el && el.classList.contains('ghost'));
     A.close(); }
 
   // М7. Подмена даты из сервисной панели действует на сезонные объекты и зимние вольеры
@@ -154,11 +157,11 @@ module.exports = async function () {
     check('М9b. После выхода — снова скрыт', !A.app.markers['kiosk-1']);
     A.close(); }
 
-  // М10. Служебные входы, въезд и парковка — можно отметить в полевом режиме; посетителям не показываются
-  { const ids = (D.service || []).map(s => s.id);
+  // М10. Служебные входы, въезды и парковка — можно отметить в полевом режиме; с 0.1.8 видны посетителю серыми (М11)
+  { const ids = D.places.filter(p => p.kind === 'service' && !p.staffOnly).map(s => s.id);
     check('М10a. В данных есть служебный вход, служебный въезд, служебная парковка', ['service-entrance', 'service-gate', 'service-parking'].every(i => ids.includes(i)), ids);
     const A = await launch({ lang: 'ru', now: SUMMER });
-    check('М10b. Посетителю служебные объекты не показываются', ids.every(i => !A.app.markers[i]) && ids.length > 0);
+    check('М10b. Посетителю служебные вход, въезды и парковка показываются (0.1.8)', ids.every(i => !!A.app.markers[i]) && ids.length === 4, ids);
     await enterField(A);
     A.click('[data-f="tapPoint"]'); A.app.map.fire('click', { latlng: { lat: 43.264, lng: 76.976 } });
     const opts = Array.from(A.w.document.querySelectorAll('#fPlace option')).map(o => o.value);

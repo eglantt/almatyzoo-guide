@@ -57,8 +57,8 @@ module.exports = async function () {
   const keep1 = Object.keys(FIELD).filter(id => !dragged2.has(id) && P(id).id);
   const off = keep1.filter(id => Math.abs(P(id).lat - FIELD[id][0]) > 1e-7 || Math.abs(P(id).lng - FIELD[id][1]) > 1e-7 || P(id).approx !== false);
   check('Ф3a. Места первой выгрузки, которые не переставлялись во второй, — на её координатах, без approx', E1.features.length > 30 && off.length === 0, off);
-  check('Ф3b. Ориентировочной осталась только парковка (все остальные места — из полевого режима)', D.places.filter(p => p.approx).map(p => p.id).join() === 'parking', D.places.filter(p => p.approx).map(p => p.id));
-  check('Ф3c. У каждого места из полевого режима указан источник — первая или вторая выгрузка', D.places.filter(p => !p.approx).every(p => ['field-2026-11-10', 'field-2026-11-10b'].includes(p.src)));
+  check('Ф3b. Ориентировочных мест не осталось (0.1.8: парковку заказчик поставил сам)', D.places.filter(p => p.approx).length === 0, D.places.filter(p => p.approx).map(p => p.id));
+  check('Ф3c. У каждого места из полевого режима указан источник — одна из трёх выгрузок', D.places.every(p => ['field-2026-11-10', 'field-2026-11-10b', 'field-2026-11-11'].includes(p.src)), D.places.filter(p => !['field-2026-11-10', 'field-2026-11-10b', 'field-2026-11-11'].includes(p.src)).map(p => p.id));
 
   // Ф4. Дополнительные места: два пруда и ещё одно место водоплавающих птиц
   const last = id => { const f = E2.features.filter(x => x.properties.place === id && /перетащено/.test(x.properties.name)).pop(); return f ? [f.geometry.coordinates[1], f.geometry.coordinates[0]] : null; };

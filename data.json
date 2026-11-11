@@ -1,6 +1,6 @@
 {
  "meta": {
-  "dataVersion": "0.1.7-alpha.1",
+  "dataVersion": "0.1.8-alpha.1",
   "_note": "Координаты мест ориентировочные (approx), будут заменены данными полевого режима. Контур и дорожки — из OpenStreetMap.",
   "center": [
    43.26391,
@@ -8,12 +8,12 @@
   ],
   "bounds": [
    [
-    43.255,
-    76.962
+    43.25493,
+    76.96152
    ],
    [
-    43.2705,
-    76.9822
+    43.27289,
+    76.99112
    ]
   ],
   "boundary": [
@@ -306,12 +306,16 @@
   ]
  },
  "settings": {
-  "_note": "Даты сезонов — временные, до уточнения заказчиком (позже — через админпанель).",
+  "_note": "Даты сезонов — временные, до уточнения заказчиком (позже — через админпанель). winterMove — общие даты перевода в зимние вольеры (ориентировочно, заказчик 11.11.2026: в зимние — 15 октября, в летние — 15 апреля); свои даты у места (place.winter.from/to) важнее.",
   "seasons": {
    "summer": {
     "from": "04-01",
     "to": "10-31"
    }
+  },
+  "winterMove": {
+   "from": "10-15",
+   "to": "04-14"
   },
   "hours": {
    "summer": {
@@ -589,7 +593,8 @@
     "18:00"
    ],
    "sanitaryDay": 2,
-   "src": "field-2026-11-10"
+   "src": "field-2026-11-10",
+   "showHours": true
   },
   {
    "id": "aquarium",
@@ -611,7 +616,8 @@
     "ru": "Пресноводные и морские рыбы",
     "en": "Freshwater and marine fish"
    },
-   "src": "field-2026-11-10"
+   "src": "field-2026-11-10",
+   "showHours": true
   },
   {
    "id": "birdhouse",
@@ -634,7 +640,8 @@
     "en": "Tropical and exotic birds"
    },
    "sanitaryDay": 4,
-   "src": "field-2026-11-10"
+   "src": "field-2026-11-10",
+   "showHours": true
   },
   {
    "id": "primates",
@@ -656,7 +663,11 @@
     "ru": "Павильон обезьян",
     "en": "Monkey pavilion"
    },
-   "src": "field-2026-11-10b"
+   "src": "field-2026-11-10b",
+   "winter": {
+    "mode": "moves",
+    "place": "winter-primates"
+   }
   },
   {
    "id": "predators",
@@ -678,7 +689,8 @@
     "ru": "Крупные и мелкие хищники",
     "en": "Large and small carnivores"
    },
-   "src": "field-2026-11-10b"
+   "src": "field-2026-11-10b",
+   "showHours": true
   },
   {
    "id": "elephant",
@@ -695,7 +707,11 @@
     "ru": "Слон",
     "en": "Elephant"
    },
-   "src": "field-2026-11-10b"
+   "src": "field-2026-11-10b",
+   "winter": {
+    "mode": "moves",
+    "place": "winter-elephant"
+   }
   },
   {
    "id": "giraffes",
@@ -712,7 +728,11 @@
     "ru": "Жирафы",
     "en": "Giraffes"
    },
-   "src": "field-2026-11-10b"
+   "src": "field-2026-11-10b",
+   "winter": {
+    "mode": "moves",
+    "place": "winter-giraffes"
+   }
   },
   {
    "id": "hippos",
@@ -729,7 +749,11 @@
     "ru": "Бегемоты",
     "en": "Hippos"
    },
-   "src": "field-2026-11-10b"
+   "src": "field-2026-11-10b",
+   "winter": {
+    "mode": "moves",
+    "place": "winter-hippos"
+   }
   },
   {
    "id": "rhinos",
@@ -746,7 +770,11 @@
     "ru": "Носороги",
     "en": "Rhinos"
    },
-   "src": "field-2026-11-10b"
+   "src": "field-2026-11-10b",
+   "winter": {
+    "mode": "off",
+    "place": "winter-rhinos"
+   }
   },
   {
    "id": "polarbear",
@@ -848,7 +876,11 @@
     "ru": "Зебры",
     "en": "Zebras"
    },
-   "src": "field-2026-11-10"
+   "src": "field-2026-11-10",
+   "winter": {
+    "mode": "off",
+    "place": "winter-zebras"
+   }
   },
   {
    "id": "kangaroo",
@@ -993,7 +1025,8 @@
     "ru": "Единственный вход и выход для посетителей",
     "en": "The only entrance and exit for visitors"
    },
-   "src": "field-2026-11-10b"
+   "src": "field-2026-11-10b",
+   "showHours": true
   },
   {
    "id": "wc-1",
@@ -1195,9 +1228,9 @@
    "kind": "outside",
    "cat": "parking",
    "icon": "i-parking",
-   "lat": 43.2662,
-   "lng": 76.9736,
-   "approx": true,
+   "lat": 43.2638157,
+   "lng": 76.9734442,
+   "approx": false,
    "major": false,
    "title": {
     "kz": "Келушілер автотұрағы",
@@ -1208,7 +1241,8 @@
     "kz": "Маусымда жиі бос орын болмайды — қоғамдық көлікті пайдаланыңыз",
     "ru": "В сезон часто нет мест — удобнее приехать на общественном транспорте",
     "en": "Often full in season — public transport is easier"
-   }
+   },
+   "src": "field-2026-11-11"
   },
   {
    "id": "bus",
@@ -1297,6 +1331,10 @@
     "kz": "Қоқиқаздар",
     "ru": "Фламинго",
     "en": "Flamingos"
+   },
+   "winter": {
+    "mode": "moves",
+    "place": "winter-flamingo"
    }
   },
   {
@@ -1464,7 +1502,11 @@
     "ru": "Зебры",
     "en": "Zebras"
    },
-   "src": "field-2026-11-10b"
+   "src": "field-2026-11-10b",
+   "winter": {
+    "mode": "off",
+    "place": "winter-zebras"
+   }
   },
   {
    "id": "zebras-3",
@@ -1481,7 +1523,11 @@
     "ru": "Зебры",
     "en": "Zebras"
    },
-   "src": "field-2026-11-10b"
+   "src": "field-2026-11-10b",
+   "winter": {
+    "mode": "off",
+    "place": "winter-zebras"
+   }
   },
   {
    "id": "raptors-2",
@@ -1601,7 +1647,11 @@
     "en": "Primates"
    },
    "src": "field-2026-11-10b",
-   "note_ru": "Гиббоны"
+   "note_ru": "Гиббоны",
+   "winter": {
+    "mode": "moves",
+    "place": "winter-primates"
+   }
   },
   {
    "id": "guard-2",
@@ -1737,9 +1787,142 @@
    "approx": false,
    "major": false,
    "src": "field-2026-11-10b"
+  },
+  {
+   "id": "winter-rhinos",
+   "kind": "animal",
+   "cat": "winter",
+   "exhibit": false,
+   "winterFor": [
+    "rhinos"
+   ],
+   "icon": "s-2-04",
+   "lat": 43.2652884,
+   "lng": 76.9780576,
+   "approx": false,
+   "major": false,
+   "src": "field-2026-11-10b"
+  },
+  {
+   "id": "winter-zebras",
+   "kind": "animal",
+   "cat": "winter",
+   "exhibit": false,
+   "winterFor": [
+    "zebras",
+    "zebras-2",
+    "zebras-3"
+   ],
+   "icon": "s-2-09",
+   "lat": 43.2622746,
+   "lng": 76.9749114,
+   "approx": false,
+   "major": false,
+   "src": "field-2026-11-10b"
+  },
+  {
+   "id": "service-entrance",
+   "kind": "service",
+   "cat": "service-entrance",
+   "icon": "u-exit",
+   "lat": 43.2620538,
+   "lng": 76.9773147,
+   "approx": false,
+   "major": false,
+   "src": "field-2026-11-10b",
+   "title": {
+    "kz": "Қызметтік кіреберіс",
+    "ru": "Служебный вход",
+    "en": "Staff entrance"
+   }
+  },
+  {
+   "id": "service-gate",
+   "kind": "service",
+   "cat": "service-gate",
+   "icon": "u-exit",
+   "lat": 43.2624738,
+   "lng": 76.9778618,
+   "approx": false,
+   "major": false,
+   "src": "field-2026-11-10b",
+   "title": {
+    "kz": "Қызметтік көлік кіреберісі",
+    "ru": "Служебный въезд",
+    "en": "Service vehicle gate"
+   }
+  },
+  {
+   "id": "service-parking",
+   "kind": "service",
+   "cat": "service-parking",
+   "icon": "i-parking",
+   "lat": 43.2626652,
+   "lng": 76.9778591,
+   "approx": false,
+   "major": false,
+   "src": "field-2026-11-10b",
+   "title": {
+    "kz": "Қызметтік автотұрақ",
+    "ru": "Служебная парковка",
+    "en": "Staff parking"
+   }
+  },
+  {
+   "id": "service-gate-2",
+   "kind": "service",
+   "cat": "service-gate",
+   "icon": "u-exit",
+   "lat": 43.2658782,
+   "lng": 76.9782883,
+   "approx": false,
+   "major": false,
+   "src": "field-2026-11-10b",
+   "title": {
+    "kz": "Қызметтік көлік кіреберісі",
+    "ru": "Служебный въезд",
+    "en": "Service vehicle gate"
+   }
+  },
+  {
+   "id": "vet",
+   "kind": "service",
+   "cat": "vet",
+   "icon": "i-med",
+   "lat": 43.2651321,
+   "lng": 76.9784921,
+   "approx": false,
+   "major": false,
+   "src": "field-2026-11-10b",
+   "title": {
+    "kz": "Ветеринарлық бөлім",
+    "ru": "Ветеринарная часть",
+    "en": "Veterinary unit"
+   },
+   "staffOnly": true
+  },
+  {
+   "id": "raptors-quiet",
+   "kind": "service",
+   "cat": "quiet",
+   "icon": "s-4-01",
+   "lat": 43.2637961,
+   "lng": 76.9760594,
+   "approx": false,
+   "major": false,
+   "src": "field-2026-11-10b",
+   "title": {
+    "kz": "Жыртқыш құстар — тыныш аймақ",
+    "ru": "Хищные птицы — тихая зона",
+    "en": "Birds of prey — quiet zone"
+   },
+   "staffOnly": true
   }
  ],
- "_winterNote": "Зимние вольеры (0.1.5): у летнего места поле winter {from, to (ММ-ДД), mode: moves | off, place: id зимнего вольера}; зимний вольер — место kind animal, cat winter, winterFor: [id летних мест], название необязательно. У одной зоны может быть несколько мест (одинаковая пиктограмма). Неэкспозиционный зимний вольер в данные не вносится (mode off). Пока все места остаются на месте — список от заказчика.",
+ "_winterNote": "Зимние вольеры (0.1.8): у летнего места поле winter {mode: moves | off, place: id зимнего вольера, from?, to? (ММ-ДД)}; без своих дат действуют общие settings.winterMove. Зимний вольер — место kind animal, cat winter, winterFor: [id летних мест], exhibit: false — неэкспонируемый. У одной зоны может быть несколько мест (одинаковая пиктограмма).",
+ "_serviceNote": "Служебные объекты (0.1.8) — места kind service: вход, въезды, служебная парковка видны посетителю серым; staffOnly — только полевой режим.",
+ "contours": [],
+ "_contoursNote": "Контуры (0.1.8): {id, kind: enclosure | building | water, coords: [[lat, lng]…], place?} — из полевого режима.",
  "paths": [
   {
    "id": "w1423865962",
@@ -3464,106 +3647,7 @@
    "service": true
   }
  ],
- "service": [
-  {
-   "id": "service-entrance",
-   "cat": "service-entrance",
-   "title": {
-    "kz": "Қызметтік кіреберіс",
-    "ru": "Служебный вход",
-    "en": "Staff entrance"
-   },
-   "lat": 43.2620538,
-   "lng": 76.9773147,
-   "src": "field-2026-11-10b"
-  },
-  {
-   "id": "service-gate",
-   "cat": "service-gate",
-   "title": {
-    "kz": "Қызметтік көлік кіреберісі",
-    "ru": "Служебный въезд",
-    "en": "Service vehicle gate"
-   },
-   "lat": 43.2624738,
-   "lng": 76.9778618,
-   "src": "field-2026-11-10b"
-  },
-  {
-   "id": "service-parking",
-   "cat": "service-parking",
-   "title": {
-    "kz": "Қызметтік автотұрақ",
-    "ru": "Служебная парковка",
-    "en": "Staff parking"
-   },
-   "lat": 43.2626652,
-   "lng": 76.9778591,
-   "src": "field-2026-11-10b"
-  },
-  {
-   "id": "winter-rhinos",
-   "cat": "winter-off",
-   "winterOf": "rhinos",
-   "lat": 43.2652884,
-   "lng": 76.9780576,
-   "src": "field-2026-11-10b",
-   "title": {
-    "kz": "Қысқы вольер (көрсетілмейді)",
-    "ru": "Зимний вольер (не экспонируется)",
-    "en": "Winter enclosure (not on display)"
-   }
-  },
-  {
-   "id": "service-gate-2",
-   "cat": "service-gate",
-   "title": {
-    "kz": "Қызметтік көлік кіреберісі",
-    "ru": "Служебный въезд",
-    "en": "Service vehicle gate"
-   },
-   "lat": 43.2658782,
-   "lng": 76.9782883,
-   "src": "field-2026-11-10b"
-  },
-  {
-   "id": "vet",
-   "cat": "vet",
-   "lat": 43.2651321,
-   "lng": 76.9784921,
-   "src": "field-2026-11-10b",
-   "title": {
-    "kz": "Ветеринарлық бөлім",
-    "ru": "Ветеринарная часть",
-    "en": "Veterinary unit"
-   }
-  },
-  {
-   "id": "raptors-quiet",
-   "cat": "quiet",
-   "lat": 43.2637961,
-   "lng": 76.9760594,
-   "src": "field-2026-11-10b",
-   "title": {
-    "kz": "Жыртқыш құстар — тыныш аймақ",
-    "ru": "Хищные птицы — тихая зона",
-    "en": "Birds of prey — quiet zone"
-   }
-  },
-  {
-   "id": "winter-zebras",
-   "cat": "winter-off",
-   "winterOf": "zebras",
-   "lat": 43.2622746,
-   "lng": 76.9749114,
-   "src": "field-2026-11-10b",
-   "title": {
-    "kz": "Қысқы вольер (көрсетілмейді)",
-    "ru": "Зимний вольер (не экспонируется)",
-    "en": "Winter enclosure (not on display)"
-   }
-  }
- ],
+ "service": [],
  "parkRoute": {
   "_note": "Рекомендуемый путь от центрального входа в ПКиО до центрального входа в зоопарк (решение заказчика 10.11.2026). Показывается только по кнопке. Можно заменить треком из полевого режима.",
   "title": {
@@ -3758,10 +3842,43 @@
  "animals": [],
  "_animalsNote": "Обитатели (виды) — по полной коллекции от заказчика.",
  "icons": {
+  "a-pond": {
+   "placeholder": true
+  },
+  "i-admin": {
+   "placeholder": true
+  },
+  "i-bus": {
+   "placeholder": false
+  },
+  "i-cafe": {
+   "placeholder": false
+  },
+  "i-gazebo": {
+   "placeholder": false
+  },
+  "i-guard": {
+   "placeholder": false
+  },
   "i-info": {
    "placeholder": false
   },
+  "i-kiosk": {
+   "placeholder": false
+  },
+  "i-med": {
+   "placeholder": false
+  },
+  "i-parking": {
+   "placeholder": false
+  },
   "i-play": {
+   "placeholder": false
+  },
+  "i-ticket": {
+   "placeholder": false
+  },
+  "i-wc": {
    "placeholder": false
   },
   "s-1-01": {
@@ -3769,8 +3886,105 @@
    "sheet": 3,
    "name": "медведь"
   },
-  "i-wc": {
-   "placeholder": false
+  "s-1-02": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "лев"
+  },
+  "s-1-04": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "леопард?"
+  },
+  "s-1-05": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "тигр"
+  },
+  "s-1-07": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "кенгуру"
+  },
+  "s-1-09": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "волк; шакал — та же, мельче"
+  },
+  "s-2-01": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "слон"
+  },
+  "s-2-02": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "жираф"
+  },
+  "s-2-03": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "бегемот"
+  },
+  "s-2-04": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "носорог"
+  },
+  "s-2-08": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "олень"
+  },
+  "s-2-09": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "зебра / лошадь"
+  },
+  "s-2-10": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "антилопы"
+  },
+  "s-3-01": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "павиан / горилла?"
+  },
+  "s-4-01": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "орёл — хищная птица"
+  },
+  "s-4-02": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "фламинго?"
+  },
+  "s-4-03": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "какаду / попугай"
+  },
+  "s-4-05": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "павлин"
+  },
+  "s-4-08": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "лебедь"
+  },
+  "s-5-01": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "крокодил"
+  },
+  "s-5-02": {
+   "placeholder": false,
+   "sheet": 3,
+   "name": "змея (кобра)"
   },
   "s-6-02": {
    "placeholder": false,
@@ -3782,135 +3996,8 @@
    "sheet": 3,
    "name": "рыба"
   },
-  "s-1-02": {
-   "placeholder": false,
-   "sheet": 3,
-   "name": "лев"
-  },
-  "i-bus": {
+  "u-exit": {
    "placeholder": false
-  },
-  "s-5-02": {
-   "placeholder": false,
-   "sheet": 3,
-   "name": "змея (кобра)"
-  },
-  "s-1-04": {
-   "placeholder": false,
-   "sheet": 3,
-   "name": "леопард?"
-  },
-  "s-2-09": {
-   "placeholder": false,
-   "sheet": 3,
-   "name": "зебра / лошадь"
-  },
-  "a-pond": {
-   "placeholder": true
-  },
-  "s-2-02": {
-   "placeholder": false,
-   "sheet": 3,
-   "name": "жираф"
-  },
-  "i-gazebo": {
-   "placeholder": false
-  },
-  "s-2-04": {
-   "placeholder": false,
-   "sheet": 3,
-   "name": "носорог"
-  },
-  "i-guard": {
-   "placeholder": false
-  },
-  "s-1-05": {
-   "placeholder": false,
-   "sheet": 3,
-   "name": "тигр"
-  },
-  "s-2-08": {
-   "placeholder": false,
-   "sheet": 3,
-   "name": "олень"
-  },
-  "s-2-01": {
-   "placeholder": false,
-   "sheet": 3,
-   "name": "слон"
-  },
-  "s-4-03": {
-   "placeholder": false,
-   "sheet": 3,
-   "name": "какаду / попугай"
-  },
-  "s-1-09": {
-   "placeholder": false,
-   "sheet": 3,
-   "name": "волк; шакал — та же, мельче"
-  },
-  "i-cafe": {
-   "placeholder": false
-  },
-  "s-2-10": {
-   "placeholder": false,
-   "sheet": 3,
-   "name": "антилопы"
-  },
-  "s-4-02": {
-   "placeholder": false,
-   "sheet": 3,
-   "name": "фламинго?"
-  },
-  "s-5-01": {
-   "placeholder": false,
-   "sheet": 3,
-   "name": "крокодил"
-  },
-  "s-2-03": {
-   "placeholder": false,
-   "sheet": 3,
-   "name": "бегемот"
-  },
-  "s-4-08": {
-   "placeholder": false,
-   "sheet": 3,
-   "name": "лебедь"
-  },
-  "s-4-05": {
-   "placeholder": false,
-   "sheet": 3,
-   "name": "павлин"
-  },
-  "i-ticket": {
-   "placeholder": false
-  },
-  "i-med": {
-   "placeholder": false
-  },
-  "i-admin": {
-   "placeholder": true
-  },
-  "s-1-07": {
-   "placeholder": false,
-   "sheet": 3,
-   "name": "кенгуру"
-  },
-  "s-4-01": {
-   "placeholder": false,
-   "sheet": 3,
-   "name": "орёл — хищная птица"
-  },
-  "i-kiosk": {
-   "placeholder": false
-  },
-  "i-parking": {
-   "placeholder": false
-  },
-  "s-3-01": {
-   "placeholder": false,
-   "sheet": 3,
-   "name": "павиан / горилла?"
   },
   "s-1-03": {
    "placeholder": false,
@@ -4808,6 +4895,31 @@
    "kz": "Мәдениет және демалыс саябағының орталық кіреберісінен хайуанаттар бағының орталық кіреберісіне дейін",
    "ru": "От центрального входа в Парк культуры и отдыха до центрального входа в зоопарк",
    "en": "From the Central Park entrance to the main zoo entrance"
+  },
+  "staffOnly": {
+   "kz": "Тек қызметкерлерге арналған",
+   "ru": "Только для персонала",
+   "en": "Staff only"
+  },
+  "vehiclesOnly": {
+   "kz": "Тек техникаға арналған",
+   "ru": "Только для техники",
+   "en": "Service vehicles only"
+  },
+  "winterGoesHere": {
+   "kz": "Қыста мұнда ауыстырылады: {list}",
+   "ru": "Сюда зимой переводят: {list}",
+   "en": "Moved here in winter: {list}"
+  },
+  "winterHereNow": {
+   "kz": "Қазір мұнда: {list}",
+   "ru": "Сейчас здесь: {list}",
+   "en": "Here now: {list}"
+  },
+  "winterNotShown": {
+   "kz": "көрсетілмейді",
+   "ru": "не экспонируется",
+   "en": "not on display"
   },
   "servicePath": {
    "kz": "Қызметтік жол",

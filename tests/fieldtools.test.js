@@ -37,18 +37,19 @@ module.exports = async function () {
   check('Ф1f. Охрана — 3 поста, остановки — 2, туалеты — 3, беседки — 4', cat('guard') === 3 && cat('bus') === 2 && cat('wc') === 3 && cat('gazebo') === 4,
     { guard: cat('guard'), bus: cat('bus'), wc: cat('wc'), gazebo: cat('gazebo') });
   check('Ф1g. Администрация — на карте для посетителей (новая иконка — заглушка до утверждения)', P('admin').kind === 'infra' && P('admin').icon === 'i-admin' && D.icons['i-admin'] && D.icons['i-admin'].placeholder === true);
-  const S = id => (D.service || []).find(x => x.id === id) || {};
+  const S = id => D.places.find(x => x.id === id && x.kind === 'service') || {};   // 0.1.8: служебные — места kind service
   check('Ф1h. Служебный слой: вход, парковка, два въезда, ветчасть, тихая зона хищных птиц — с координатами',
     ['service-entrance', 'service-parking', 'service-gate', 'service-gate-2', 'vet', 'raptors-quiet'].every(id => typeof S(id).lat === 'number'));
-  check('Ф1i. Неэкспозиционные зимние вольеры (носороги, зебры) — только в служебном слое', !!S('winter-rhinos').lat && !!S('winter-zebras').lat && !P('winter-rhinos').id && !P('winter-zebras').id);
+  check('Ф1i. Неэкспозиционные зимние вольеры (носороги, зебры) — места с exhibit: false (0.1.8)', ['rhinos', 'zebras'].every(z => P('winter-' + z).exhibit === false && (P('winter-' + z).winterFor || []).includes(z)));
   const wv = ['flamingo', 'giraffes', 'primates', 'hippos', 'elephant'];
-  check('Ф1j. Экспонируемые зимние вольеры (5) на месте; переезды не включены, пока нет дат', wv.every(z => (P('winter-' + z).winterFor || []).includes(z)) &&
-    !D.places.some(p => p.winter));
+  check('Ф1j. Экспонируемые зимние вольеры (5) на месте; переезды включены по общим датам 15.10–14.04 (0.1.8)', wv.every(z => (P('winter-' + z).winterFor || []).includes(z) && P(z).winter && P(z).winter.place === 'winter-' + z) &&
+    D.settings.winterMove.from === '10-15' && D.settings.winterMove.to === '04-14');
   const fp = (D.paths || []).filter(p => p.src === 'field-2026-11-10b');
   check('Ф1k. Дорожки из полевого режима: одна обычная, одна служебная (к тихой зоне)', fp.length === 2 && fp.filter(p => p.service).length === 1, fp.map(p => [p.id, p.service]));
   { const A = await launch({ lang: 'ru', now: NOW });
     check('Ф1l. Посетитель: администрация на карте, тихая зона и ветчасть — нет', !!A.app.markers.admin && !A.app.markers['raptors-quiet'] && !A.app.markers.vet);
-    check('Ф1m. Посетитель: летом зимних вольеров на карте нет', wv.every(z => !A.app.markers['winter-' + z]));
+    const gh = id => { const m = A.app.markers[id], el = m && m.getElement(); return !!el && el.classList.contains('ghost'); };
+    check('Ф1m. Посетитель летом: экспонируемые зимние вольеры серые полупрозрачные, неэкспонируемых нет (0.1.8)', wv.every(z => gh('winter-' + z)) && !A.app.markers['winter-rhinos'] && !A.app.markers['winter-zebras']);
     check('Ф1n. Запуск без ошибок', A.errors.length === 0, A.errors);
     A.close(); }
 

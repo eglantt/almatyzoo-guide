@@ -49,11 +49,15 @@ module.exports = async function () {
       const txt = A.$('#sheetBody').textContent, dm = Math.max(10, Math.round(R.m / 10) * 10);
       check(`Р3d. Карточка: название, расстояние, время (${lang})`, !A.$('#sheet').hidden && txt.includes(D.ui.parkRoute[lang]) && txt.includes(String(dm)), txt);
       check(`Р3f. На время показа пути карта отдаляется до масштаба 15 (путь шире экрана на 16) (${lang})`, A.app.map.getMinZoom() === 15);
+      { const mb = A.app.map.options.maxBounds, [[bs, bw]] = D.meta.bounds;
+        check(`Р3i. На время показа пути рамка карты шире обычной — вход в парк не уходит под карточку (0.1.8) (${lang})`, !!mb && mb.getSouth() < bs - 0.001 && mb.getWest() < bw - 0.001); }
       A.app.map.fire('moveend');
       check(`Р3g. Пока открыта карточка, «К зоопарку» спрятана (не наезжает на фильтры) (${lang})`, A.$('#btnToZoo').hidden);
       A.click('#sheetClose');
       check(`Р3e. Закрытие карточки убирает путь (${lang})`, A.app.layers.route.getLayers().length === 0);
       check(`Р3h. После закрытия — обычный предел масштаба 16 (${lang})`, A.app.map.getMinZoom() === 16);
+      { const mb = A.app.map.options.maxBounds, [[bs, bw], [bn, be]] = D.meta.bounds;
+        check(`Р3j. После закрытия — обычная рамка карты (${lang})`, !!mb && Math.abs(mb.getSouth() - bs) < 1e-9 && Math.abs(mb.getEast() - be) < 1e-9); }
     }
     A.close();
   }

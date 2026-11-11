@@ -83,14 +83,15 @@ module.exports = async function () {
     let bound = JSON.parse(A.w.localStorage.getItem('zoo_field') || '[]').pop() || {};
     check('П5k. Запись привязана к месту, название собрано из места и примечания', bound.place === 'giraffes' && bound.name === 'Жирафы — центр вольера', bound);
     { const it = JSON.parse(A.w.localStorage.getItem('zoo_field')); A.w.localStorage.setItem('zoo_field', JSON.stringify(it.slice(0, 1))); }
-    A.click('[data-f="polygon"]');
+    // 0.1.8: «Контуры» → вид контура (граница зоопарка правится отдельно — набор fieldtools)
+    A.click('[data-f="contours"]'); A.click('[data-f="cKind"][data-k="enclosure"]');
     [[43.2650, 76.9740], [43.2650, 76.9750], [43.2645, 76.9750]].forEach(([lat, lng]) => A.app.map.fire('click', { latlng: { lat, lng } }));
     A.click('[data-f="polyDone"]');
-    check('П5l. В форме контура есть «Граница зоопарка»', !!A.$('#fPlace option[value="boundary"]'));
-    if (A.$('#fPlace')) A.$('#fPlace').value = 'boundary';
+    check('П5l. В форме контура — привязка к месту, необязательная', !!A.$('#fPlace option[value=""]') && !!A.$('#fPlace option[value="giraffes"]'));
+    if (A.$('#fPlace')) A.$('#fPlace').value = 'giraffes';
     A.$('#fName').value = ''; A.click('[data-f="formSave"]');
     items = JSON.parse(A.w.localStorage.getItem('zoo_field'));
-    check('П5m. Контур сохранён как граница зоопарка', items[1] && items[1].place === 'boundary' && items[1].name === 'Граница зоопарка', items[1]);
+    check('П5m. Контур сохранён как вольер жирафов', items[1] && items[1].place === 'giraffes' && items[1].contour === 'enclosure' && items[1].name === 'Вольер: Жирафы', items[1]);
     check('П5e. Контур из трёх точек сохранён', items.length === 2 && items[1].type === 'polygon' && items[1].coords.length === 3);
     A.click('[data-f="list"]');
     check('П5f. Список записей показывает обе', A.$$('#fieldbar .flist > div').length === 2);

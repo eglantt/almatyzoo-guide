@@ -49,7 +49,7 @@ module.exports = async function () {
   // Ф4. Контур: шаг назад и перетаскивание точки
   { const A = await launch({ lang: 'ru', now: '2026-07-08T12:00:00' });
     await enterField(A);
-    A.click('[data-f="polygon"]');
+    A.click('[data-f="contours"]'); A.click('[data-f="cKind"][data-k="enclosure"]');
     [[43.2650, 76.9740], [43.2650, 76.9750], [43.2645, 76.9750], [43.2640, 76.9745]].forEach(([a, b]) => tapMap(A, a, b));
     check('Ф4i. Пока рисуется контур, пиктограммы пропускают тапы (класс drawing)', A.app.map.getContainer().classList.contains('drawing'));
     const undo = A.$('#fieldbar [data-f="undo"]');
@@ -63,7 +63,7 @@ module.exports = async function () {
     check('Ф4d. Точки контура показаны перетаскиваемыми кружками', handles.length === 3, handles.length);
     const hm = A.app.debugField && A.app.debugField().handles[1];
     if (hm) { hm.setLatLng([43.2652, 76.9752]); hm.fire('drag'); hm.fire('dragend'); }
-    A.click('[data-f="polyDone"]'); if (A.$('#fPlace')) A.$('#fPlace').value = 'boundary'; A.click('[data-f="formSave"]');
+    A.click('[data-f="polyDone"]'); if (A.$('#fPlace')) A.$('#fPlace').value = 'elephant'; A.click('[data-f="formSave"]');
     const poly = items(A).find(i => i.type === 'polygon');
     check('Ф4e. Перетаскивание меняет только эту точку', poly && poly.coords[1][0] === 43.2652 && poly.coords[1][1] === 76.9752 && poly.coords[0][0] === 43.2650 && poly.coords[2][0] === 43.2645, poly && poly.coords);
     // Правка сохранённого контура
@@ -76,7 +76,7 @@ module.exports = async function () {
       tapMap(A, 43.2641, 76.9741);
       A.click('[data-f="polyDone"]');
       const after = items(A).filter(i => i.type === 'polygon');
-      check('Ф4h. Изменённый контур сохранён на месте прежнего, с тем же местом, без повторного вопроса', after.length === 1 && after[0].coords.length === 4 && after[0].place === 'boundary' && A.$('#fieldForm').hidden, after);
+      check('Ф4h. Изменённый контур сохранён на месте прежнего, с тем же местом, без повторного вопроса', after.length === 1 && after[0].coords.length === 4 && after[0].place === 'elephant' && after[0].contour === 'enclosure' && A.$('#fieldForm').hidden, after);
       check('Ф4j. После «Готово» пиктограммы снова нажимаются', !A.app.map.getContainer().classList.contains('drawing'));
     }
     A.close(); }

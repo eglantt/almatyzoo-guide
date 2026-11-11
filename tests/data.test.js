@@ -64,8 +64,15 @@ module.exports = async function () {
   const outB = D.places.filter(p => !(p.lat > s && p.lat < n && p.lng > w && p.lng < e)).map(p => p.id);
   check('D5a. Все места внутри границ карты', outB.length === 0, outB);
   const inPoly = (p, poly) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [yi, xi] = poly[i], [yj, xj] = poly[j]; if (((yi > p.lat) !== (yj > p.lat)) && (p.lng < (xj - xi) * (p.lat - yi) / (yj - yi) + xi)) c = !c; } return c; };
-  const wrongSide = D.places.filter(p => (p.kind === 'outside') === inPoly(p, D.meta.boundary)).map(p => p.id);
+  // 0.1.8: служебные вход и въезды стоят на линии ограды (граница из OSM неточна) — не проверяются
+  const wrongSide = D.places.filter(p => p.kind !== 'service' && (p.kind === 'outside') === inPoly(p, D.meta.boundary)).map(p => p.id);
   check('D5b. Места зоопарка внутри контура, парковка и остановка — снаружи', wrongSide.length === 0, wrongSide);
+  // 0.1.8: рамка карты симметрична относительно центра зоопарка (вариант Б: ±1200 м по ширине, ±1000 м по высоте)
+  { const [c0, c1] = D.meta.center, kx = 111320 * Math.cos(c0 * Math.PI / 180), ky = 111320;
+    const m = [(c0 - s) * ky, (n - c0) * ky, (c1 - w) * kx, (e - c1) * kx].map(Math.round);
+    check('D5c. Рамка симметрична: до юга и севера ≈1000 м, до запада и востока ≈1200 м (±5 м)', Math.abs(m[0] - 1000) <= 5 && Math.abs(m[1] - 1000) <= 5 && Math.abs(m[2] - 1200) <= 5 && Math.abs(m[3] - 1200) <= 5, m);
+    const pr = D.parkRoute.coords.filter(([la, ln]) => !(la > s && la < n && ln > w && ln < e));
+    check('D5d. Путь через парк целиком внутри рамки', pr.length === 0 && D.parkRoute.from.lng > w, pr.length); }
   // Расстояние от входа до ближайшей стороны контура (плоское приближение, метры)
   const toXY = p => [p[1] * 111320 * Math.cos(43.26 * Math.PI / 180), p[0] * 110540];
   const segDist = (pt, a, b) => { const [px, py] = pt, [ax, ay] = a, [bx, by] = b; const dx = bx - ax, dy = by - ay; const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy))); return Math.hypot(px - ax - t * dx, py - ay - t * dy); };
@@ -106,9 +113,11 @@ module.exports = async function () {
   // D10 (0.1.3, 0.1.5). Зимние вольеры, закрытия, дорожки, служебные объекты
   // 0.1.5: зимняя настройка — у летнего места (place.winter); зимний вольер — место с winterFor
   const PI = Object.fromEntries(D.places.map(p => [p.id, p]));
-  const badW = D.places.filter(p => p.winter && (!['moves', 'off'].includes(p.winter.mode) || !md.test(p.winter.from) || !md.test(p.winter.to) ||
-    (p.winter.mode === 'moves' && !((PI[p.winter.place] || {}).winterFor || []).includes(p.id)))).map(p => p.id);
-  check('D10a. Зимняя настройка мест: режим moves/off, даты ММ-ДД; у moves — зимний вольер, в чьём winterFor есть это место', badW.length === 0, badW);
+  // 0.1.8: свои даты у места необязательны (общие — settings.winterMove); у off — неэкспонируемый зимний вольер
+  const badW = D.places.filter(p => p.winter && (!['moves', 'off'].includes(p.winter.mode) || (p.winter.from && !md.test(p.winter.from)) || (p.winter.to && !md.test(p.winter.to)) ||
+    !((PI[p.winter.place] || {}).winterFor || []).includes(p.id) || (p.winter.mode === 'off') !== (PI[p.winter.place].exhibit === false))).map(p => p.id);
+  check('D10a. Зимняя настройка мест: режим moves/off, свои даты ММ-ДД (если есть); зимний вольер, в чьём winterFor есть это место; off — неэкспонируемый', badW.length === 0, badW);
+  check('D10a2. Общие даты перевода — ММ-ДД (15.10 в зимние, 15.04 в летние)', md.test(D.settings.winterMove.from) && md.test(D.settings.winterMove.to) && D.settings.winterMove.from === '10-15' && D.settings.winterMove.to === '04-14');
   // 0.1.7: зимние вольеры стоят на карте до того, как известны даты, — у мест переезд ещё не включён (winter нет)
   const badWo = D.places.filter(p => p.winterFor && (!p.winterFor.length || p.winterFor.some(id => !PI[id] || (PI[id].winter && PI[id].winter.mode === 'moves' && PI[id].winter.place !== p.id)))).map(p => p.id);
   check('D10b. Зимний вольер: каждое место в winterFor существует; если у места включён переезд — он сюда', badWo.length === 0, badWo);

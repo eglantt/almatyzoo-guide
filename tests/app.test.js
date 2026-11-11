@@ -31,8 +31,9 @@ module.exports = async function () {
     check(`A5. ${tag} Подписи меню на нужном языке`, A.$('[data-tab="rules"] span').textContent === D.ui.tabRules[lang]);
     check(`A6. ${tag} Атрибут lang документа`, A.w.document.documentElement.lang === (lang === 'kz' ? 'kk' : lang));
     // Карта: маркеры всех мест, подписи главных
-    // 0.1.7: пустой зимний вольер летом не показывается — маркер у каждого места, кроме зимних вольеров
-    check(`A7. ${tag} На карте маркер у каждого места (кроме пустых летом зимних вольеров)`, Object.keys(A.app.markers).length === D.places.filter(p => !p.winterFor).length && D.places.filter(p => !p.winterFor).every(p => !!A.app.markers[p.id]), Object.keys(A.app.markers).length);
+    // 0.1.8: летом экспонируемый зимний вольер виден (серый полупрозрачный); неэкспонируемый, ветчасть и тихая зона — нет
+    const vis = D.places.filter(p => !p.staffOnly && !(p.winterFor && p.exhibit === false));
+    check(`A7. ${tag} На карте маркер у каждого места (кроме неэкспонируемых зимних вольеров летом и служебных «только для персонала»)`, Object.keys(A.app.markers).length === vis.length && vis.every(p => !!A.app.markers[p.id]), Object.keys(A.app.markers).length);
     // Фильтры
     A.click('[data-filter="animal"]');
     check(`A8a. ${tag} Фильтр «Животные» убирает инфраструктуру`, A.app.map.hasLayer(A.app.layers.animal) && !A.app.map.hasLayer(A.app.layers.infra));

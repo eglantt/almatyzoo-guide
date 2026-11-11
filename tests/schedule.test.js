@@ -49,7 +49,7 @@ module.exports = async function () {
     check('Ш3a. 09:30 — зоопарк открыт, Экзотариум (с 10:00) ещё закрыт', A.app.fn.placeStatus(el, new A.w.Date()) === 'open' && A.app.fn.placeStatus(exo, new A.w.Date()) === 'closed');
     check('Ш3b. 09:30 — плашки «закрыто» нет', A.$('#banner').hidden);
     A.app.markers.exotarium.openPopup();
-    check('Ш3c. В попапе Экзотариума: сейчас закрыто, 10:00–18:00', /Сейчас закрыто · 10:00–18:00/.test(A.w.document.querySelector('.leaflet-popup').textContent));
+    check('Ш3c. В попапе Экзотариума: 10:00–18:00, сейчас закрыто', /10:00–18:00 · Сейчас закрыто/.test(A.w.document.querySelector('.leaflet-popup').textContent));
     A.close(); }
   { const A = await at(`${yr}-07-08T20:30:00`);
     check('Ш3d. 20:30 летом — плашка «Зоопарк сейчас закрыт»', !A.$('#banner').hidden && A.$('#banner').textContent.includes('Зоопарк сейчас закрыт'));
