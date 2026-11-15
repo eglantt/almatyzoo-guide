@@ -9,6 +9,8 @@
 data.json (дорожки, убранные линии basemapHide).
 Порядок слоёв: земля → вода → дорожки → тени → кроны (над дорожкой — полупрозрачные) → ограды и стенки → крыши.
 0.1.13: за внешней оградой картинки нет — чёткий край со сглаживанием (было растворение 4 → 12 м), дальше схема города.
+0.1.14: дорожки — tools/topview/src/topview-paths.json (вариант 2 заказчика: полосы OSM 2,8 м, сдвинутые в просветы между
+оградами и обрезанные по ограде, + мощёные площадки из топосъёмки; сборка — paths_from_topo.py).
 Все размеры заданы в метрах — рендер одинаково выглядит при любом шаге пикселя.
 """
 import json, math, os, sys, numpy as np
@@ -42,7 +44,7 @@ water = [[m(*c) for c in f['g'][0]] for f in TOPO['features'] if f['c'] == 'twat
 trees = np.array(SRC['trees']); SP = np.array(SRC['spots'])
 base_poly = lambda cls: [[m(*c) for c in f['g'][0]] for f in BASE['features'] if f['t'] == 'p' and f['c'] in cls]
 base_line = lambda pref: [(f['c'], [m(*c) for c in f['g']]) for f in BASE['features'] if f['t'] == 'l' and f['c'].startswith(pref)]
-paths = [[m(*c) for c in p['coords']] for p in D['paths']]
+PATH_AREAS = json.load(open(HERE + '/src/topview-paths.json'))['areas']      # [внешний контур, дыры…], метры от center
 
 # ---------- кадр: граница OSM ± 25 м (как у прежних слоёв) ----------
 bx = np.array(boundary); MARG = 25
@@ -152,8 +154,13 @@ img[wet] *= 0.9; del shore, wet
 print('вода', flush=True)
 
 # ---------- 3. дорожки внутри зоопарка (до теней — тени ложатся и на них) ----------
-M_path = mask(lines(paths, 2.8)) | mask(lines([p for c, p in base_line('foot')], 2.2)) | mask(lines([p for c, p in base_line('steps')], 2.5))
-M_PATHS = (M_path | M_road) & M_zoo; del M_path
+def area_mask():
+    im = Image.new('L', (Wd, Hd), 0); d = ImageDraw.Draw(im)
+    for a in PATH_AREAS:
+        d.polygon([P2(c) for c in a[0]], fill=255)
+        for h in a[1:]: d.polygon([P2(c) for c in h], fill=0)
+    return np.array(im) > 0
+M_PATHS = area_mask() & M_zoo
 outer = ndimage.binary_dilation(M_PATHS, iterations=it(1)) & ~M_PATHS
 img[outer] = (168, 150, 118)
 pn = noise(1.5, 2, 0.5, 21)

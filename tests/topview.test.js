@@ -40,6 +40,24 @@ module.exports = async function () {
     const sw = read('sw.js'), tv = (sw.match(/TOP_VERSION = '([^']+)'/) || [])[1];
     check('Т1i. TOP_VERSION в sw.js = папке settings.topView', tv && dir === 'map/top/' + tv, { sw: tv, dir });
     check('Т1j. Скрипты сборки и исходные данные в репозитории', ['tools/topview/render.py', 'tools/topview/tiles.py', 'tools/topview/src/topview-src.json'].every(f => fs.existsSync(path.join(ROOT, f))));
+    // 0.1.14 (вариант 2 заказчика): дорожки «Вида сверху» — не по оградам. Ограды, лежащие внутри дорожки глубже 0,4 м от её края, — не больше 300 м (было ≈ 1400 м)
+    { let PJ = null, SRC = null; try { PJ = JSON.parse(read('tools/topview/src/topview-paths.json')); SRC = JSON.parse(read('tools/topview/src/topview-src.json')); } catch (e) { /* нет */ }
+      check('Т1m. Дорожки «Вида сверху» — отдельным файлом (tools/topview/src/topview-paths.json)', !!PJ && Array.isArray(PJ.areas) && PJ.areas.length > 10, PJ && PJ.areas.length);
+      if (PJ && SRC) {
+        const rings = PJ.areas.map(a => ({ a, bb: a[0].reduce((b, [x, y]) => [Math.min(b[0], x), Math.min(b[1], y), Math.max(b[2], x), Math.max(b[3], y)], [1e9, 1e9, -1e9, -1e9]) }));
+        const inRing = (x, y, r) => { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const [xi, yi] = r[i], [xj, yj] = r[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; };
+        const segD = (x, y, [ax, ay], [bx, by]) => { const dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy || 1, t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / L)); return Math.hypot(x - ax - t * dx, y - ay - t * dy); };
+        const deep = (x, y) => rings.some(({ a, bb }) => {
+          if (x < bb[0] || x > bb[2] || y < bb[1] || y > bb[3]) return false;
+          if (!inRing(x, y, a[0]) || a.slice(1).some(h => inRing(x, y, h))) return false;
+          return a.every(r => r.every((p, i) => segD(x, y, p, r[(i + 1) % r.length]) > 0.4));
+        });
+        let inside = 0, total = 0;
+        SRC.fences.forEach(f => { for (let i = 1; i < f.length; i++) { const [ax, ay] = f[i - 1], [bx, by] = f[i], L = Math.hypot(bx - ax, by - ay), n = Math.max(1, Math.round(L / 0.5));
+          for (let k = 0; k < n; k++) { const t = (k + 0.5) / n; total += L / n; if (deep(ax + t * (bx - ax), ay + t * (by - ay))) inside += L / n; } } });
+        check('Т1n. Ограды внутри дорожек — не больше 300 м', inside <= 300, { inside: Math.round(inside), total: Math.round(total) });
+      }
+    }
     const ui = D.ui.baseTop;
     check('Т1k. «Вид сверху» — на трёх языках', !!ui && ui.kz && ui.ru === 'Вид сверху' && ui.en, ui);
     check('Т1l. В репозиторий не идёт рабочая папка рендера (tools/topview/out/)', /tools\/topview\/out\//.test(read('.gitignore')));
