@@ -8,7 +8,7 @@
 деревья, высотные отметки — из топосъёмки 2019), map/topo.json (водоёмы, подпорные стенки), map/base.json (город OSM),
 data.json (дорожки, убранные линии basemapHide).
 Порядок слоёв: земля → вода → дорожки → тени → кроны (над дорожкой — полупрозрачные) → ограды и стенки → крыши.
-За внешней оградой картинка плавно растворяется (4 → 12 м): дальше в приложении видна схема города.
+0.1.13: за внешней оградой картинки нет — чёткий край со сглаживанием (было растворение 4 → 12 м), дальше схема города.
 Все размеры заданы в метрах — рендер одинаково выглядит при любом шаге пикселя.
 """
 import json, math, os, sys, numpy as np
@@ -270,9 +270,10 @@ for (i0, i1, j0, j1, mm), mat, kind, poly, (e1, e2, L1, L2), h in roof_layers:
 del soft
 print('крыши', flush=True)
 
-# ---------- 9. прозрачность за внешней оградой ----------
-dout = ndimage.distance_transform_edt(~M_zoo) * R
-alpha = (np.clip(1 - (dout - 4) / 8, 0, 1) * 255).astype(np.uint8); del dout
+# ---------- 9. край по внешней ограде: чёткий, сглаженный на 1 пиксель ----------
+M_edge = mask(polys([list(Polygon(zoo_b).buffer(0.5, join_style=2).exterior.coords)]))
+sd = ndimage.distance_transform_edt(M_edge) - ndimage.distance_transform_edt(~M_edge)
+alpha = (np.clip(sd + 0.5, 0, 1) * 255).astype(np.uint8); del sd
 rgba = np.dstack([img.clip(0, 255).astype(np.uint8), alpha]); del img
 Image.fromarray(rgba, 'RGBA').save(OUT, compress_level=1)
 la0, lo0 = ll(RX0, RY0); la1, lo1 = ll(RX1, RY1)

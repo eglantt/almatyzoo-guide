@@ -89,6 +89,30 @@ const SCREENS = ['map', 'coll', 'rules', 'more'];
     check(`[${w} ${lang}] шрифт Nunito загружен`, font);
     await ctx.close();
   }
+  // 0.1.13: подпись карты — отдельной полосой; не заходит на «Найти рядом», «Где я?», переключатель подложки
+  // (замечание заказчика: Mi A1, спутник — длинная подпись Esri в две строки). Размеры: 360, 393, Mi A1 (412 × 732); шрифт 100 и 130 %.
+  for (const [w, h] of [[360, 740], [393, 800], [412, 732]]) for (const base of ['top', 'sat']) for (const fs of [100, 130]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, serviceWorkers: 'block' });
+    const page = await ctx.newPage();
+    await page.route(/tile\.openstreetmap|arcgisonline/, r => r.abort());
+    await page.addInitScript(bs => { try { localStorage.setItem('zoo_lang', 'ru'); localStorage.setItem('zoo_dev_now', '2026-07-08T12:00'); localStorage.setItem('zoo_base_v2', bs); } catch (e) { /* */ } }, base);
+    await page.goto(BASE + 'index.html');
+    await page.waitForFunction(() => window.ZooApp && window.ZooApp.data);
+    await page.evaluate(() => window.ZooApp.topViewReady);
+    await page.addStyleTag({ content: `html{font-size:${fs}%}` });
+    await page.waitForTimeout(600);
+    const r = await page.evaluate(() => {
+      const a = document.querySelector('.leaflet-control-attribution').getBoundingClientRect(), hit = [];
+      ['#btnNear', '.mapside', '#baseSwitch'].forEach(s => { const e = document.querySelector(s); if (!e || !e.offsetParent) return; const q = e.getBoundingClientRect();
+        if (q.bottom > a.top + 0.5 && q.right > a.left && q.left < a.right) hit.push(s); });
+      const t = document.querySelector('.tabbar').getBoundingClientRect();
+      return { hit, strip: Math.round(a.height), belowTabTop: Math.round(a.bottom - t.top) };
+    });
+    check(`[${w} ${base} ${fs}%] подпись карты не заходит на кнопки`, r.hit.length === 0, r);
+    check(`[${w} ${base} ${fs}%] подпись карты над нижним меню`, r.belowTabTop <= 2, r);
+    if (base === 'sat' && fs === 130) await page.screenshot({ path: path.join(OUT, `${w}-attr-sat-130.png`) });
+    await ctx.close();
+  }
   await browser.close();
   console.log(`[visual] ${ok} OK, ${fail} FAIL`);
   process.exit(fail ? 1 : 0);

@@ -151,6 +151,14 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; padding-bottom: ca
 #map.base-hyb .base-lbl span { color: #fff; text-shadow: 0 0 2px #000, 0 0 3px #000, 0 0 4px #000; }
 .leaflet-container { font-family: var(--font); font-size: .9rem; }
 .leaflet-control-attribution { font-size: .65rem; }
+/* 0.1.13: подпись карты — отдельной полосой во всю ширину внизу карты; кнопки карты стоят над ней
+   (--attr-h — высота полосы, её ставит app.js; длинная подпись переносится, кнопки поднимаются) */
+.mapwrap { --attr-h: 1.1rem; }
+.mapwrap .leaflet-bottom.leaflet-right { left: 0; }
+.mapwrap .leaflet-control-attribution {
+  float: none !important; margin: 0 !important; width: 100%; box-sizing: border-box; text-align: right;
+  line-height: 1.3; padding: 1px .5rem; background: rgba(255,255,255,.88) !important; white-space: normal;
+}
 .mapfilters {
   position: absolute; top: .6rem; left: .6rem; z-index: 600; display: flex; gap: 4px;
   background: #fff; padding: 4px; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.15); max-width: calc(100% - 1.2rem); flex-wrap: wrap;
@@ -165,7 +173,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; padding-bottom: ca
 @media (pointer: fine) { .mapfilters { max-width: calc(100% - 4.5rem); } }
 /* Переключатель подложки «Схема / Спутник» — над кнопкой «Где я?»; в полевом режиме остаётся */
 .basesw {
-  position: absolute; right: .6rem; bottom: 5.1rem; z-index: 600; display: flex; gap: 3px;
+  position: absolute; right: .6rem; bottom: calc(5.1rem + var(--attr-h)); z-index: 600; display: flex; gap: 3px;
   background: #fff; padding: 3px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.2);
 }
 .basesw button {
@@ -173,14 +181,14 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; padding-bottom: ca
   font-weight: 700; font-size: .8rem; color: var(--dark); cursor: pointer;
 }
 .basesw button[aria-pressed="true"] { background: var(--dark); color: #fff; }
-body.field-on .basesw { bottom: 1rem; }
-.mapside { position: absolute; right: .6rem; bottom: 1rem; z-index: 600; display: flex; flex-direction: column; gap: .5rem; }
+body.field-on .basesw { bottom: calc(1rem + var(--attr-h)); }
+.mapside { position: absolute; right: .6rem; bottom: calc(1rem + var(--attr-h)); z-index: 600; display: flex; flex-direction: column; gap: .5rem; }
 .fab {
   width: 3.4rem; height: 3.4rem; border-radius: 50%; border: 0; cursor: pointer;
   background: #fff; color: var(--gps); display: grid; place-items: center; box-shadow: 0 3px 10px rgba(0,0,0,.25);
 }
 .fab svg { width: 1.7rem; height: 1.7rem; }
-.near { position: absolute; left: .6rem; bottom: 1rem; z-index: 600; display: flex; flex-direction: column; gap: .4rem; align-items: flex-start; max-width: calc(100% - 5.5rem); }
+.near { position: absolute; left: .6rem; bottom: calc(1rem + var(--attr-h)); z-index: 600; display: flex; flex-direction: column; gap: .4rem; align-items: flex-start; max-width: calc(100% - 5.5rem); }
 .near__btn {
   display: flex; align-items: center; gap: .45rem; min-height: 3rem; padding: 0 1rem; border: 0; border-radius: 999px;
   background: var(--dark); color: #fff; font-weight: 700; cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,.25);
@@ -204,7 +212,7 @@ body.field-on .basesw { bottom: 1rem; }
 
 /* Нижняя карточка сообщений («Где я?», «Найти рядом», «К выходу») */
 .sheet {
-  position: absolute; left: .6rem; right: .6rem; bottom: 5rem; z-index: 650;
+  position: absolute; left: .6rem; right: .6rem; bottom: calc(5rem + var(--attr-h)); z-index: 650;
   background: #fff; border-radius: 16px; box-shadow: 0 6px 20px rgba(0,0,0,.22);
   padding: .9rem 3.2rem .9rem 1rem; max-width: 30rem; margin: 0 auto;
 }

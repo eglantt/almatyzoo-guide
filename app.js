@@ -21,7 +21,7 @@
   'use strict';
 
   /* ===================== 1. Константы и хранилище ===================== */
-  const APP_VERSION = '0.1.12-alpha';
+  const APP_VERSION = '0.1.13-alpha';
   const KEY = {
     lang: 'zoo_lang',
     devNow: 'zoo_dev_now',       // подмена даты (сервисная панель)
@@ -245,6 +245,7 @@
     L_.control.zoom({ position: 'topright' }).addTo(map);
     map.attributionControl.setPrefix(false);
     setOsmAttr();
+    watchAttrHeight();
 
     applyBase();
     // Контур и дорожки — из OpenStreetMap (data.json): видны и без сети. Пунктир — только у ориентировочного контура.
@@ -269,6 +270,16 @@
     applyApproxView();
     basemapReady = loadBasemap();
     topViewReady = loadTopView();
+  }
+  /** 0.1.13: подпись карты — полосой внизу; её высота (1–2 строки, зависит от подложки, языка и размера шрифта)
+      передаётся в CSS (--attr-h), и кнопки карты встают над ней — подпись никогда не заходит на кнопки. */
+  function watchAttrHeight() {
+    const el = map.attributionControl.getContainer(), wrap = map.getContainer().closest('.mapwrap');
+    if (!el || !wrap) return;
+    const set = () => { const h = el.offsetHeight; if (h > 0) wrap.style.setProperty('--attr-h', h + 'px'); };
+    if (typeof ResizeObserver === 'function') new ResizeObserver(set).observe(el);
+    map.on('baselayerchange layeradd layerremove', set); window.addEventListener('resize', set);
+    set();
   }
   /** Подпись данных OSM — на языке интерфейса (требование лицензии ODbL: «© участники OpenStreetMap»). */
   let osmAttrNow = null;
