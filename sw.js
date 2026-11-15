@@ -5,12 +5,18 @@
    (проверяется тестом version). ASSETS_VERSION — только при замене
    содержимого существующих шрифтов/картинок.
    ===================================================================== */
-const CACHE_VERSION = '0.1.11-alpha';
+const CACHE_VERSION = '0.1.12-alpha';
 const ASSETS_VERSION = 'v1';
 const TILES_VERSION = 'v2';          // 0.1.9: старый кэш tiles-v1 (с картинками OSM) удаляется
 const APP_CACHE = `app-${CACHE_VERSION}`;
 const ASSETS_CACHE = `assets-${ASSETS_VERSION}`;
 const TILES_CACHE = `tiles-${TILES_VERSION}`;
+// 0.1.12: «Вид сверху» — свои плитки map/top/<TOP_VERSION>/ (= settings.topView в data.json, проверяется тестом).
+// Отдельный кэш: новая сборка рендера — новая версия, старые плитки удаляются при активации.
+const TOP_VERSION = 'r1';
+const TOP_DIR = `./map/top/${TOP_VERSION}/`;
+const TOP_CACHE = `top-${TOP_VERSION}`;
+const TOP_PARALLEL = 6;
 const NAV_TIMEOUT_MS = 3500;
 const TILES_MAX = 1500;          // предел числа снимков спутника в кэше (≈ 30–40 МБ)
 
@@ -49,7 +55,7 @@ self.addEventListener('install', e => e.waitUntil(
 self.addEventListener('activate', e => e.waitUntil(
   caches.keys()
     .then(keys => Promise.all(keys
-      .filter(k => k !== APP_CACHE && k !== ASSETS_CACHE && k !== TILES_CACHE)
+      .filter(k => k !== APP_CACHE && k !== ASSETS_CACHE && k !== TILES_CACHE && k !== TOP_CACHE)
       .map(k => caches.delete(k))))
     .then(() => self.clients.claim())
 ));
@@ -121,7 +127,26 @@ function prefetchAssetsOnce() {
         if (isCacheable(response)) await cache.put(url, response);
       } catch (err) { /* следующий файл */ }
     }
+    await prefetchTopView();
   })();
+}
+/** «Вид сверху»: список плиток из index.json → все плитки в кэш (по TOP_PARALLEL одновременно), уже лежащие — пропускаются. */
+async function prefetchTopView() {
+  try {
+    const cache = await caches.open(TOP_CACHE);
+    const ixUrl = TOP_DIR + 'index.json';
+    let ix = await cache.match(ixUrl);
+    if (!ix) { const r = await fetch(ixUrl); if (!isCacheable(r)) return; await cache.put(ixUrl, r.clone()); ix = r; }
+    const list = ((await ix.json()).tiles || []).map(k => TOP_DIR + k + '.webp');
+    let i = 0;
+    const worker = async () => {
+      while (i < list.length) {
+        const url = list[i++];
+        try { if (await cache.match(url)) continue; const r = await fetch(url); if (isCacheable(r)) await cache.put(url, r); } catch (e) { /* следующая */ }
+      }
+    };
+    await Promise.all(Array.from({ length: TOP_PARALLEL }, worker));
+  } catch (err) { /* без сети — докачается при следующем открытии */ }
 }
 
 self.addEventListener('fetch', event => {
@@ -134,5 +159,6 @@ self.addEventListener('fetch', event => {
   }
   if (isExcluded(url.pathname)) return;
   if (req.mode === 'navigate') { handleNavigation(event); event.waitUntil(prefetchAssetsOnce()); return; }
-  event.respondWith(cacheFirst(req, isAssetPath(url.pathname) ? ASSETS_CACHE : APP_CACHE));
+  const cacheName = url.pathname.includes('/map/top/') ? TOP_CACHE : isAssetPath(url.pathname) ? ASSETS_CACHE : APP_CACHE;
+  event.respondWith(cacheFirst(req, cacheName));
 });

@@ -21,7 +21,7 @@
   'use strict';
 
   /* ===================== 1. Константы и хранилище ===================== */
-  const APP_VERSION = '0.1.11-alpha';
+  const APP_VERSION = '0.1.12-alpha';
   const KEY = {
     lang: 'zoo_lang',
     devNow: 'zoo_dev_now',       // подмена даты (сервисная панель)
@@ -30,7 +30,7 @@
     field: 'zoo_field',          // данные полевого режима
     errors: 'zoo_errors',        // журнал ошибок
     bannerClosed: 'zoo_banner_closed',  // плашка закрыта посетителем — до конца этого дня
-    base: 'zoo_base',                   // подложка у посетителя: osm | sat
+    base: 'zoo_base_v2',                // подложка у посетителя: top | osm | sat (0.1.12: новый ключ — у всех по умолчанию «Вид сверху»)
     baseField: 'zoo_base_field'         // подложка в полевом режиме — запоминается отдельно
   };
   const WALK_M_PER_MIN = 75;     // ~4,5 км/ч
@@ -224,31 +224,32 @@
 
   /* ===================== 6. Карта ===================== */
   let map = null, layers = {}, markers = {}, userMarker = null, userCircle = null, exitLine = null;
-  let osm = null, sat = null;
+  let osm = null, sat = null, top = null, topReady = false;
 
   function initMap() {
     if (map || typeof L_ === 'undefined') return;
     const b = D.meta.bounds;                   // 0.1.8: симметрично относительно центра зоопарка
     map = L_.map('map', {
-      zoomControl: false, minZoom: 16, maxZoom: 19,
+      zoomControl: false, minZoom: 16, maxZoom: 20,          // 0.1.12: 20 — «Вид сверху» чёткий до 0,1 м
       maxBounds: L_.latLngBounds(b[0], b[1]), maxBoundsViscosity: 1.0,
       attributionControl: true
     });
     // 0.1.9: «Схема» — своя карта-подложка (map/base.json + map/topo.json), работает без сети.
     // Картинки OSM (tile.openstreetmap.org) отключены настройкой settings.osmTiles: их нельзя хранить для офлайна.
-    if (D.settings && D.settings.osmTiles) osm = L_.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, crossOrigin: 'anonymous' });
+    if (D.settings && D.settings.osmTiles) osm = L_.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 20, maxNativeZoom: 19, crossOrigin: 'anonymous' });
     // Спутник: один адрес для посетителя и полевого режима, снимки сохраняются в телефоне (0.1.10 — как до 0.1.9, решение заказчика 15.11.2026;
     // к релизу источник спутника решается отдельно)
     const SAT_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
     const SAT_ATTR = 'Tiles © Esri — Esri, Maxar, Earthstar Geographics';
-    sat = L_.tileLayer(SAT_URL, { maxZoom: 19, crossOrigin: 'anonymous', attribution: SAT_ATTR });
+    sat = L_.tileLayer(SAT_URL, { maxZoom: 20, maxNativeZoom: 19, crossOrigin: 'anonymous', attribution: SAT_ATTR });
     L_.control.zoom({ position: 'topright' }).addTo(map);
     map.attributionControl.setPrefix(false);
     setOsmAttr();
 
     applyBase();
     // Контур и дорожки — из OpenStreetMap (data.json): видны и без сети. Пунктир — только у ориентировочного контура.
-    L_.polygon(D.meta.boundary, { color: '#4E8C12', weight: 3, dashArray: D.meta.boundaryApprox ? '8 6' : null, fillColor: '#95C12B', fillOpacity: 0.08, interactive: false }).addTo(map);
+    // 0.1.12: на «Виде сверху» у посетителя контур не рисуется — граница видна на самой картинке (внешняя ограда)
+    layers.boundary = L_.polygon(D.meta.boundary, { color: '#4E8C12', weight: 3, dashArray: D.meta.boundaryApprox ? '8 6' : null, fillColor: '#95C12B', fillOpacity: 0.08, interactive: false }).addTo(map);
     layers.contours = L_.layerGroup().addTo(map);     // 0.1.8: вольеры, здания, водоёмы — под дорожками
     buildContours();
     layers.paths = L_.layerGroup().addTo(map);
@@ -267,6 +268,7 @@
     updateZoomClass();
     applyApproxView();
     basemapReady = loadBasemap();
+    topViewReady = loadTopView();
   }
   /** Подпись данных OSM — на языке интерфейса (требование лицензии ODbL: «© участники OpenStreetMap»). */
   let osmAttrNow = null;
@@ -299,6 +301,29 @@
       drawBasemap(b, tp);
       return true;
     } catch (e) { logError('basemap: ' + e.message); return false; }
+  }
+  /* ---- 0.1.12. «Вид сверху» — 2.5D-рендер территории (tools/topview), плитки 256 px, масштабы 16–20 ----
+     Папка плиток — settings.topView (новая сборка — новая папка: r1, r2 …); index.json — список плиток.
+     Пустых плиток нет: вместо них — прозрачная картинка без запроса. Под плитками — схема (город за оградой
+     и запасной вид, если плитка не загрузилась). Нет index.json — «Вида сверху» нет, у посетителя — схема. */
+  const EMPTY_TILE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+  let topViewReady = Promise.resolve(false);
+  async function loadTopView() {
+    const dir = D.settings && D.settings.topView;
+    if (!dir || !map) return false;
+    try {
+      const r = await fetch(dir + '/index.json');
+      if (!r.ok) throw new Error(dir + '/index.json ' + r.status);
+      const ix = await r.json(), have = new Set(ix.tiles || []);
+      const TopLayer = L_.TileLayer.extend({
+        getTileUrl(c) { const k = c.z + '/' + c.x + '/' + c.y; return have.has(k) ? dir + '/' + k + '.webp' : EMPTY_TILE; }
+      });
+      top = new TopLayer('', { minZoom: 15, maxZoom: 20, minNativeZoom: ix.minZoom, maxNativeZoom: ix.maxZoom, bounds: L_.latLngBounds(ix.bounds), errorTileUrl: EMPTY_TILE, keepBuffer: 3 });
+      top._zooTiles = have;
+      topReady = true;
+    } catch (e) { logError('topview: ' + e.message); topReady = false; }
+    applyBase();
+    return topReady;
   }
   function drawBasemap(b, tp) {
     if (!map) return;
@@ -371,34 +396,41 @@
   }
   function updateBaseDetail() {
     if (!map || !layers.baseMain) return;
-    const z = map.getZoom(), b = currentBase(), scheme = b === 'osm', hyb = b === 'hyb';
+    const z = map.getZoom(), b = currentBase(), scheme = b === 'osm', hyb = b === 'hyb', topv = b === 'top';
     const show = (g, on) => { if (on && !map.hasLayer(g)) g.addTo(map); if (!on && map.hasLayer(g)) map.removeLayer(g); };
-    show(layers.baseMain, scheme); show(layers.baseLabels, scheme || hyb);
+    show(layers.baseMain, scheme || topv); show(layers.baseLabels, scheme || hyb || topv);   // «Вид сверху»: город за оградой — схемой
     show(layers.baseFence, scheme && z >= BASE_FENCE_Z); show(layers.baseWall, scheme && z >= BASE_WALL_Z);
     show(layers.baseHybrid, hyb);                           // в гибриде ограды и стенки — с любого масштаба
   }
-  /** Подложка «Схема / Спутник»: у посетителя и в полевом режиме — свой выбор (по умолчанию схема / спутник).
-      0.1.11: в полевом режиме ещё «Гибрид» (hyb) — у посетителя его нет. */
+  /** Подложка: у посетителя и в полевом режиме — свой выбор.
+      0.1.11: в полевом режиме ещё «Гибрид» (hyb) — у посетителя его нет.
+      0.1.12: «Вид сверху» (top) — основная карта посетителя (по умолчанию); в полевом режиме по умолчанию — спутник.
+      Пока плитки не готовы или их нет — вместо «Вида сверху» схема. */
   const baseKey = () => Field.isActive() ? KEY.baseField : KEY.base;
   function currentBase() {
     const v = store.get(baseKey()), field = Field.isActive();
-    return v === 'osm' || v === 'sat' || (v === 'hyb' && field) ? v : (field ? 'sat' : 'osm');
+    if (v === 'osm' || v === 'sat' || (v === 'hyb' && field) || (v === 'top' && topReady)) return v;
+    return field ? 'sat' : (topReady ? 'top' : 'osm');
   }
   function applyBase() {
     renderBaseSwitch();
     if (!map) return;
-    const b = currentBase(), scheme = b === 'osm';
-    const on = scheme ? osm : sat;      // osm — только если включён настройкой; гибрид — тоже снимок спутника
-    [osm, sat].forEach(l => { if (l && l !== on && map.hasLayer(l)) map.removeLayer(l); });
+    const b = currentBase(), scheme = b === 'osm', topv = b === 'top';
+    const on = scheme ? osm : topv ? top : sat;      // osm — только если включён настройкой; гибрид — тоже снимок спутника
+    [osm, sat, top].forEach(l => { if (l && l !== on && map.hasLayer(l)) map.removeLayer(l); });
     if (on && !map.hasLayer(on)) on.addTo(map);
     if (on) on.bringToBack();
     map.getContainer().classList.toggle('base-scheme', scheme);
+    map.getContainer().classList.toggle('base-top', topv);
     map.getContainer().classList.toggle('base-hyb', b === 'hyb');
+    if (layers.boundary) { const bon = !(topv && !Field.isActive()); if (bon && !map.hasLayer(layers.boundary)) layers.boundary.addTo(map); if (!bon && map.hasLayer(layers.boundary)) map.removeLayer(layers.boundary); }
+    if (layers.paths) buildPaths();      // «Вид сверху»: обычные дорожки уже на картинке — поверх только служебные
     updateBaseDetail();
   }
   function renderBaseSwitch() {
     const b = currentBase(), el = $('#baseSwitch'); if (!el) return;
-    el.innerHTML = `<button type="button" data-base="osm" aria-pressed="${b === 'osm'}">${esc(t('baseScheme'))}</button>` +
+    el.innerHTML = (topReady ? `<button type="button" data-base="top" aria-pressed="${b === 'top'}">${esc(t('baseTop'))}</button>` : '') +
+      `<button type="button" data-base="osm" aria-pressed="${b === 'osm'}">${esc(t('baseScheme'))}</button>` +
       `<button type="button" data-base="sat" aria-pressed="${b === 'sat'}">${esc(t('baseSat'))}</button>` +
       (Field.isActive() ? `<button type="button" data-base="hyb" aria-pressed="${b === 'hyb'}">Гибрид</button>` : '');   // полевой режим — только по-русски
   }
@@ -408,9 +440,10 @@
   function buildPaths() {
     if (!map) return;
     layers.paths.clearLayers();
-    const field = Field.isActive();
+    const field = Field.isActive(), baked = !field && currentBase() === 'top';
     (D.paths || []).forEach(p => {
       const svc = pathIsService(p);
+      if (baked && !svc) return;                       // 0.1.12: на «Виде сверху» обычная дорожка — на картинке
       const l = L_.polyline(p.coords, svc
         ? { color: '#8A8A8A', weight: 3.5, opacity: 0.95, dashArray: '5 7', lineCap: 'round', interactive: !field }
         : { color: '#B89B62', weight: 3.5, opacity: 0.85, lineCap: 'round', lineJoin: 'round', interactive: false });
@@ -1673,6 +1706,7 @@
     get map() { return map; }, get markers() { return Object.assign({}, markers); },
     get layers() { return layers; },
     get basemapReady() { return basemapReady; },
+    get topViewReady() { return topViewReady; }, get topLayer() { return top; },
     debugField: () => Field.debug(),
     fn: Object.freeze({ season, zooHours, placeStatus, isSanitary, dist, bearing, insideZoo, norm, doSearch, fileName: d => Field.fileName(d), now, fieldExport: () => Field.toGeoJSON() })
   });

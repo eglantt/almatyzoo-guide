@@ -33,9 +33,9 @@ module.exports = async function () {
     check('Б1j. Картинки OSM отключены настройкой (settings.osmTiles = false)', D.settings.osmTiles === false, D.settings.osmTiles);
   }
 
-  // Б2. Отрисовка в приложении
-  { const A = await launch({ lang: 'ru', now: SUMMER, basemap: true });
-    const ok = await A.app.basemapReady; await A.wait(10);
+  // Б2. Отрисовка в приложении (0.1.12: у посетителя по умолчанию «Вид сверху» — здесь выбрана «Схема»)
+  { const A = await launch({ lang: 'ru', now: SUMMER, basemap: true, storage: { zoo_base_v2: 'osm' } });
+    const ok = await A.app.basemapReady; await A.app.topViewReady; await A.wait(10);
     const map = A.app.map, Ly = A.app.layers;
     check('Б2a. Подложка загружена', ok === true, ok);
     const count = g => g ? g.getLayers().length : 0;
@@ -80,8 +80,8 @@ module.exports = async function () {
     A.close(); }
 
   // Б4. settings.osmTiles = true — картинки OSM снова показываются поверх своей схемы
-  { const A = await launch({ lang: 'ru', now: SUMMER, basemap: true, patch: d => { d.settings.osmTiles = true; } });
-    await A.app.basemapReady; await A.wait(5);
+  { const A = await launch({ lang: 'ru', now: SUMMER, basemap: true, storage: { zoo_base_v2: 'osm' }, patch: d => { d.settings.osmTiles = true; } });
+    await A.app.basemapReady; await A.app.topViewReady; await A.wait(5);
     const urls = []; A.app.map.eachLayer(l => { if (l._url) urls.push(l._url); });
     check('Б4. osmTiles: true — слой tile.openstreetmap.org на «Схеме»', urls.length === 1 && /tile\.openstreetmap\.org/.test(urls[0]), urls);
     A.close(); }
@@ -119,12 +119,12 @@ module.exports = async function () {
 
   // Б7. Гибрид — только в полевом режиме
   { const A = await launch({ lang: 'ru', now: SUMMER, basemap: true });
-    await A.app.basemapReady; await A.wait(5);
+    await A.app.basemapReady; await A.app.topViewReady; await A.wait(5);
     const map = A.app.map, Ly = A.app.layers;
     const btns = () => A.$$('#baseSwitch button').map(b => b.dataset.base);
-    check('Б7a. У посетителя «Схема / Спутник», без «Гибрида»', JSON.stringify(btns()) === '["osm","sat"]', btns());
+    check('Б7a. У посетителя «Вид сверху / Схема / Спутник», без «Гибрида» (0.1.12)', JSON.stringify(btns()) === '["top","osm","sat"]', btns());
     await enterField(A);
-    check('Б7b. В полевом режиме — «Схема / Спутник / Гибрид»', JSON.stringify(btns()) === '["osm","sat","hyb"]' && A.$('[data-base="hyb"]').textContent === 'Гибрид', btns());
+    check('Б7b. В полевом режиме — «Вид сверху / Схема / Спутник / Гибрид»', JSON.stringify(btns()) === '["top","osm","sat","hyb"]' && A.$('[data-base="hyb"]').textContent === 'Гибрид', btns());
     A.click('[data-base="hyb"]'); await A.wait(5);
     const urls = []; map.eachLayer(l => { if (l._url) urls.push(l._url); });
     map.setZoom(16, { animate: false });
@@ -132,14 +132,14 @@ module.exports = async function () {
     check('Б7d. В гибриде ограды и стенки видны и на масштабе 16', map.hasLayer(Ly.baseHybrid) && Ly.baseHybrid.getLayers().length > 500, Ly.baseHybrid && Ly.baseHybrid.getLayers().length);
     check('Б7e. Подписи улиц в гибриде — на месте, светлые (класс base-hyb)', map.hasLayer(Ly.baseLabels) && map.getContainer().classList.contains('base-hyb'));
     A.click('[data-f="exit"]'); await A.wait(5);
-    check('Б7f. После выхода — у посетителя схема, без гибрида и без кнопки «Гибрид»', map.hasLayer(Ly.baseMain) && !map.hasLayer(Ly.baseHybrid) && JSON.stringify(btns()) === '["osm","sat"]', btns());
+    check('Б7f. После выхода — у посетителя «Вид сверху», без гибрида и без кнопки «Гибрид»', map.hasLayer(A.app.topLayer) && !map.hasLayer(Ly.baseHybrid) && JSON.stringify(btns()) === '["top","osm","sat"]', btns());
     await enterField(A);
     check('Б7g. Снова в полевом режиме — гибрид запомнился', map.hasLayer(Ly.baseHybrid) && A.$('[data-base="hyb"]').getAttribute('aria-pressed') === 'true');
     check('Б7h. Без ошибок', A.errors.length === 0, A.errors);
     A.close(); }
-  { const A = await launch({ lang: 'ru', now: SUMMER, basemap: true, storage: { zoo_base: 'hyb' } });
-    await A.app.basemapReady; await A.wait(5);
-    check('Б7i. У посетителя «гибрид» из хранилища не включается — схема', A.app.map.hasLayer(A.app.layers.baseMain) && !A.app.map.hasLayer(A.app.layers.baseHybrid));
+  { const A = await launch({ lang: 'ru', now: SUMMER, basemap: true, storage: { zoo_base_v2: 'hyb' } });
+    await A.app.basemapReady; await A.app.topViewReady; await A.wait(5);
+    check('Б7i. У посетителя «гибрид» из хранилища не включается — «Вид сверху»', A.app.map.hasLayer(A.app.topLayer) && !A.app.map.hasLayer(A.app.layers.baseHybrid));
     A.close(); }
 
   // Б8. «Линии схемы»: убрать, «Вернуть», вернуть из списка, экспорт

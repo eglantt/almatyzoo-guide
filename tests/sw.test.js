@@ -24,7 +24,7 @@ function world(net = {}) {
     async keys() { return [...stores.keys()]; },
     async delete(n) { return stores.delete(n); }
   };
-  const mkRes = (url, status = 200) => ({ url, ok: status >= 200 && status < 300, status, clone() { return mkRes(url, status); } });
+  const mkRes = (url, status = 200, body) => ({ url, ok: status >= 200 && status < 300, status, clone() { return mkRes(url, status, body); }, async json() { if (body === undefined) throw new Error('not json'); return body; } });
   const listeners = {};
   const sb = {
     self: null, caches, URL, Promise, setTimeout, clearTimeout, console,
@@ -37,7 +37,7 @@ function world(net = {}) {
       const path = url.replace(ORIGIN, '');
       if (net.delay && net.delay[path] != null) await new Promise(res => setTimeout(res, net.delay[path]));
       if (net.status && net.status[path]) return mkRes(url, net.status[path]);
-      return mkRes(url, 200);
+      return mkRes(url, 200, net.json && net.json[path]);
     }
   };
   sb.self = {
@@ -161,6 +161,24 @@ module.exports = async function () {
     check('S15c. Повторный запрос карты — из кэша ресурсов, без сети', r2.responded && W.log.fetched.filter(u => u.includes('/map/base.json')).length === 1, W.log.fetched.filter(u => u.includes('/map/')));
     const t = await W.fire('fetch', W.req('./tools/basemap/build_base.py'));
     check('S15d. Папку tools/ воркер не обрабатывает', !t.responded); }
+
+  // S16. 0.1.12: «Вид сверху» — плитки в своём кэше top-<версия>, докачка всех плиток по index.json, повторно — без сети
+  { const tv = src.match(/TOP_VERSION = '([^']+)'/)[1], TOP = 'top-' + tv, dir = `map/top/${tv}/`;
+    const tiles = ['16/1/1', '17/2/2', '20/3/3'];
+    const W = world({ json: { [dir + 'index.json']: { version: tv, tiles } } });
+    const r1 = await W.fire('fetch', W.req('./', 'navigate')); await r1.settle();
+    const top = (await W.caches.open(TOP)).m;
+    check('S16a. После первого открытия все плитки из index.json — в кэше «Вида сверху»', tiles.every(k => top.has(abs('./' + dir + k + '.webp'))) && top.has(abs('./' + dir + 'index.json')), [...top.keys()]);
+    const n = W.log.fetched.length;
+    const r2 = await W.fire('fetch', W.req('./' + dir + '17/2/2.webp'));
+    check('S16b. Плитка — из кэша, без сети', r2.responded && W.log.fetched.length === n);
+    const r3 = await W.fire('fetch', W.req('./', 'navigate')); await r3.settle();
+    check('S16c. Повторно плитки не качаются', W.log.fetched.filter(u => u.includes('/map/top/') && u.endsWith('.webp')).length === tiles.length);
+    const W2 = world(); for (const k of [TOP, 'top-r0']) await W2.caches.open(k);
+    const ra = await W2.fire('activate'); await Promise.all(ra.waits); const keys = await W2.caches.keys();
+    check('S16d. Активация: кэш текущей сборки сохранён, старой — удалён', keys.includes(TOP) && !keys.includes('top-r0'), keys);
+    const W3 = world({ offline: true }); const r4 = await W3.fire('fetch', W3.req('./', 'navigate')); await r4.settle();
+    check('S16e. Без сети докачка плиток не падает', r4.responded); }
 
   // S13. POST не перехватывается
   { const W = world(); const r = await W.fire('fetch', { request: { url: abs('./data.json'), method: 'POST', mode: 'cors' } });
