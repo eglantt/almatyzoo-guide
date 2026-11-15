@@ -147,6 +147,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; padding-bottom: ca
 #map.base-scheme { background: #F4F3EF; }
 .base-lbl span { position: absolute; left: 0; top: 0; transform-origin: 50% 50%; white-space: nowrap; font: 700 0.6875rem/1 var(--font); letter-spacing: .02em; color: #4A4A44;
   text-shadow: 0 0 2px #fff, 0 0 2px #fff, 0 0 3px #fff, 0 0 4px #fff; }
+/* 0.1.11: гибрид (полевой режим) — подписи улиц светлые на снимке */
+#map.base-hyb .base-lbl span { color: #fff; text-shadow: 0 0 2px #000, 0 0 3px #000, 0 0 4px #000; }
 .leaflet-container { font-family: var(--font); font-size: .9rem; }
 .leaflet-control-attribution { font-size: .65rem; }
 .mapfilters {

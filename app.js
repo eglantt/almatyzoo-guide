@@ -21,7 +21,7 @@
   'use strict';
 
   /* ===================== 1. Константы и хранилище ===================== */
-  const APP_VERSION = '0.1.10-alpha';
+  const APP_VERSION = '0.1.11-alpha';
   const KEY = {
     lang: 'zoo_lang',
     devNow: 'zoo_dev_now',       // подмена даты (сервисная панель)
@@ -279,7 +279,9 @@
 
   /* ---- 0.1.9. Своя карта-подложка: город из OSM + топосъёмка внутри зоопарка ----
      Файлы map/base.json и map/topo.json собираются скриптами tools/basemap/. Рисуются одним холстом (canvas)
-     под всеми слоями приложения. Детали по масштабу: ограды — с 17, подпорные стенки — с 18. */
+     под всеми слоями приложения. Детали по масштабу: ограды — с 17, подпорные стенки — с 18.
+     0.1.11: «Гибрид» (только полевой режим) — снимок спутника + линии топосъёмки без заливок, с любого масштаба.
+     У каждой ограды и стенки — номер (id); убранные линии (data.json basemapHide + отметки полевого режима) не рисуются. */
   const BP = {      // палитра «Смесь»: город приглушённый, зелень и вода — «зоопарковые»
     land: '#f4f3ef', resid: '#ebeae6', grass: '#c9e6a6', wood: '#a9cf8a', park: '#cfe9b5', water: '#9fd0e6', waterL: '#6fb0cf',
     bld: '#e1dbd2', bldL: '#c3b8aa', pitch: '#cfe6d6', pitchL: '#88c9a8', play: '#e6f3dd', playL: '#a8d8a0', parking: '#efefed', parkingL: '#d0d0d0',
@@ -322,15 +324,40 @@
     lines(c => c === 'foot' || c === 'steps').forEach(f => L_.polyline(f.g, ln(BP.foot, f.c === 'steps' ? 3 : 1.4, { dashArray: f.c === 'steps' ? '1 3' : '4 3', lineCap: 'butt' })).addTo(main));
     lines(c => c === 'fence' || c === 'hedge').forEach(f => L_.polyline(f.g, f.c === 'hedge' ? ln(BP.wood, 2) : ln(BP.fence, 0.8)).addTo(main));
     T.filter(f => f.c === 'twater' || f.c === 'tbld').sort((a, z) => (a.c === 'tbld') - (z.c === 'tbld')).forEach(f => L_.polygon(f.g, AREA[f.c]).addTo(main));
-    T.filter(f => f.c === 'twall').forEach(f => L_.polyline(f.g, ln(BP.twall, 1.4, { lineCap: 'butt' })).addTo(wall));
-    T.filter(f => f.c === 'tfence').forEach(f => L_.polyline(f.g, ln(BP.tfence, 1.1)).addTo(fence));
+    T.filter(f => f.c === 'twall').forEach(f => addLine(f, L_.polyline(f.g, ln(BP.twall, 1.4, { lineCap: 'butt' })), wall));
+    T.filter(f => f.c === 'tfence').forEach(f => addLine(f, L_.polyline(f.g, ln(BP.tfence, 1.1)), fence));
+    // Гибрид: над снимком (тайлы — 200), под слоями приложения (400); без заливок, светлыми линиями
+    const hp = map.createPane('basemapHybrid'); hp.style.zIndex = 250; hp.style.pointerEvents = 'none';
+    const rh = hasCanvas() ? L_.canvas({ pane: 'basemapHybrid', padding: 0.5 }) : L_.svg({ pane: 'basemapHybrid', padding: 0.5 });
+    const hyb = L_.layerGroup();
+    T.filter(f => f.c === 'tbld').forEach(f => L_.polygon(f.g, { renderer: rh, color: HYB.bld, weight: 1.4, opacity: 0.95, fill: false, interactive: false }).addTo(hyb));
+    T.filter(f => f.c === 'twall').forEach(f => addLine(f, L_.polyline(f.g, { renderer: rh, color: HYB.wall, weight: 1.4, opacity: 0.9, lineCap: 'butt', interactive: false }), hyb));
+    T.filter(f => f.c === 'tfence').forEach(f => addLine(f, L_.polyline(f.g, { renderer: rh, color: HYB.fence, weight: 1.1, opacity: 0.8, lineCap: 'round', interactive: false }), hyb));
+    topoLines = T.filter(f => f.t === 'l' && f.id);
     main.addTo(map);
-    layers.baseMain = main; layers.baseFence = fence; layers.baseWall = wall;
+    layers.baseMain = main; layers.baseFence = fence; layers.baseWall = wall; layers.baseHybrid = hyb;
+    applyLineHide();
     layers.baseLabels = L_.layerGroup().addTo(map);
     baseLabelData = b.labels || [];
     renderBaseLabels();
     map.on('zoomend', updateBaseDetail);
     updateBaseDetail(); applyBase();
+  }
+  const HYB = { bld: '#ffffff', fence: '#f2f2e6', wall: '#ffd98a' };
+  let topoLines = [], lineLayers = {};
+  /** Линия топосъёмки с номером: запоминается, чтобы её можно было убрать и вернуть (0.1.11). */
+  function addLine(f, l, group) {
+    l.addTo(group); l._zooGroup = group;
+    if (f.id) (lineLayers[f.id] = lineLayers[f.id] || []).push(l);
+  }
+  /** Убранные линии: из data.json (у всех) + отметки полевого режима на этом устройстве. */
+  function hiddenLines() { return new Set((D.basemapHide || []).concat(Field.hiddenLineIds())); }
+  function applyLineHide() {
+    const h = hiddenLines();
+    Object.keys(lineLayers).forEach(id => lineLayers[id].forEach(l => {
+      const g = l._zooGroup, on = !h.has(id);
+      if (on && !g.hasLayer(l)) g.addLayer(l); if (!on && g.hasLayer(l)) g.removeLayer(l);
+    }));
   }
   let baseLabelData = [];
   /** Подписи трёх улиц вокруг зоопарка — на языке интерфейса, по направлению улицы. */
@@ -344,29 +371,36 @@
   }
   function updateBaseDetail() {
     if (!map || !layers.baseMain) return;
-    const z = map.getZoom(), scheme = currentBase() !== 'sat';
+    const z = map.getZoom(), b = currentBase(), scheme = b === 'osm', hyb = b === 'hyb';
     const show = (g, on) => { if (on && !map.hasLayer(g)) g.addTo(map); if (!on && map.hasLayer(g)) map.removeLayer(g); };
-    show(layers.baseMain, scheme); show(layers.baseLabels, scheme);
+    show(layers.baseMain, scheme); show(layers.baseLabels, scheme || hyb);
     show(layers.baseFence, scheme && z >= BASE_FENCE_Z); show(layers.baseWall, scheme && z >= BASE_WALL_Z);
+    show(layers.baseHybrid, hyb);                           // в гибриде ограды и стенки — с любого масштаба
   }
-  /** Подложка «Схема / Спутник»: у посетителя и в полевом режиме — свой выбор (по умолчанию схема / спутник). */
+  /** Подложка «Схема / Спутник»: у посетителя и в полевом режиме — свой выбор (по умолчанию схема / спутник).
+      0.1.11: в полевом режиме ещё «Гибрид» (hyb) — у посетителя его нет. */
   const baseKey = () => Field.isActive() ? KEY.baseField : KEY.base;
-  function currentBase() { const v = store.get(baseKey()); return v === 'osm' || v === 'sat' ? v : (Field.isActive() ? 'sat' : 'osm'); }
+  function currentBase() {
+    const v = store.get(baseKey()), field = Field.isActive();
+    return v === 'osm' || v === 'sat' || (v === 'hyb' && field) ? v : (field ? 'sat' : 'osm');
+  }
   function applyBase() {
     renderBaseSwitch();
     if (!map) return;
-    const scheme = currentBase() !== 'sat';
-    const on = scheme ? osm : sat;      // osm — только если включён настройкой
+    const b = currentBase(), scheme = b === 'osm';
+    const on = scheme ? osm : sat;      // osm — только если включён настройкой; гибрид — тоже снимок спутника
     [osm, sat].forEach(l => { if (l && l !== on && map.hasLayer(l)) map.removeLayer(l); });
     if (on && !map.hasLayer(on)) on.addTo(map);
     if (on) on.bringToBack();
     map.getContainer().classList.toggle('base-scheme', scheme);
+    map.getContainer().classList.toggle('base-hyb', b === 'hyb');
     updateBaseDetail();
   }
   function renderBaseSwitch() {
     const b = currentBase(), el = $('#baseSwitch'); if (!el) return;
     el.innerHTML = `<button type="button" data-base="osm" aria-pressed="${b === 'osm'}">${esc(t('baseScheme'))}</button>` +
-      `<button type="button" data-base="sat" aria-pressed="${b === 'sat'}">${esc(t('baseSat'))}</button>`;
+      `<button type="button" data-base="sat" aria-pressed="${b === 'sat'}">${esc(t('baseSat'))}</button>` +
+      (Field.isActive() ? `<button type="button" data-base="hyb" aria-pressed="${b === 'hyb'}">Гибрид</button>` : '');   // полевой режим — только по-русски
   }
   /** Дорожки: обычные — песочные; служебные — серый пунктир, у посетителя по нажатию «Проход запрещён».
       В полевом режиме — с учётом отметок, сделанных на этом устройстве. */
@@ -1021,6 +1055,7 @@
         `<button type="button" class="btn btn--sm" data-f="track">Трек</button>` +
         `<button type="button" class="btn btn--sm" data-f="paths">Дорожки</button>` +
         `<button type="button" class="btn btn--sm" data-f="line">Дорожка точками</button>` +
+        `<button type="button" class="btn btn--sm" data-f="blines">Линии схемы</button>` +
         `<button type="button" class="btn btn--sm btn--ghost" data-f="list">Список</button>` +
         `<button type="button" class="btn btn--sm btn--ghost" data-f="exit">Выйти</button>`);
     }
@@ -1032,7 +1067,7 @@
         if (it.id === editId) return;                              // правится — рисуется черновиком
         if (isStale(it)) return;                                   // места больше нет (0.1.8)
         if (it.type === 'point' && it.place && markers[it.place]) return;   // место показано самой пиктограммой
-        if (it.type === 'pathflag' || it.type === 'remove' || it.type === 'rename') return;   // показано стилем дорожки / иконки места
+        if (it.type === 'pathflag' || it.type === 'remove' || it.type === 'rename' || it.type === 'linehide') return;   // показано стилем дорожки / иконки места / убранной линией
         if (it.type === 'point') {
           const ic = recIcon(it);
           // новое место — сразу иконкой (полупрозрачная, розовая пунктирная кайма); без иконки — розовая точка. Перетаскиваются обе (0.1.8)
@@ -1062,7 +1097,7 @@
       applyBase(); buildMarkers(); buildPaths(); draw(); mainBar();          // все места, включая скрытые сейчас у посетителя
     }
     function stop() {
-      active = false; mode = null; cancelDraft();
+      active = false; mode = null; cancelDraft(); clearLineSel();
       document.body.classList.remove('field-on');
       applyBase();
       if (map) { layers.field.clearLayers(); buildMarkers(); buildPaths(); }   // пиктограммы — на свои места, скрытые — снова скрыты
@@ -1185,6 +1220,47 @@
         cat: 'path', coords: p.coords.map(c => c.slice()), acc: null, ts: new Date().toISOString() });
       save(list); buildPaths(); toast(svc ? 'Служебная дорожка' : 'Обычная дорожка');
     }
+    /* ---- 0.1.11. «Линии схемы»: убрать ограду или стенку топосъёмки (обрывки, лишние штрихи) ----
+       Отметка — запись linehide (одна на линию) с геометрией линии; на этом устройстве линия исчезает сразу,
+       у всех — после переноса номера в data.json (basemapHide). */
+    let lineSel = null, lineSelLayer = null;
+    const hiddenLineIds = () => items().filter(x => x.type === 'linehide').map(x => x.line);
+    function nearestLine(ll, maxM) {
+      const k = 111320 * Math.cos(rad(ll.lat)), xy = c => [c[1] * k, c[0] * 110540], P = xy([ll.lat, ll.lng]);
+      const hidden = hiddenLines();
+      let best = null, bd = Infinity;
+      topoLines.forEach(f => {
+        if (hidden.has(f.id)) return;
+        for (let i = 1; i < f.g.length; i++) {
+          const [ax, ay] = xy(f.g[i - 1]), [bx, by] = xy(f.g[i]), dx = bx - ax, dy = by - ay;
+          const u = Math.max(0, Math.min(1, ((P[0] - ax) * dx + (P[1] - ay) * dy) / ((dx * dx + dy * dy) || 1)));
+          const d = Math.hypot(P[0] - ax - u * dx, P[1] - ay - u * dy);
+          if (d < bd) { bd = d; best = f; }
+        }
+      });
+      return bd <= maxM ? best : null;
+    }
+    function clearLineSel() { lineSel = null; if (lineSelLayer && map) map.removeLayer(lineSelLayer); lineSelLayer = null; }
+    function linesBar() {
+      bar(lineSel
+        ? `<b>${lineSel.c === 'twall' ? 'Подпорная стенка' : 'Ограда'} ${esc(lineSel.id)}</b>` +
+          `<button type="button" class="btn btn--sm" data-f="lineHide">Убрать</button><button type="button" class="btn btn--sm btn--ghost" data-f="lineSelCancel">Отмена</button>`
+        : `<b>Линии схемы</b><span class="muted">Нажмите на ограду или стенку, которую нужно убрать</span><button type="button" class="btn btn--sm" data-f="back">Готово</button>`);
+    }
+    function selectLine(f) {
+      clearLineSel(); lineSel = f;
+      lineSelLayer = L_.polyline(f.g, { color: '#FF00FF', weight: 6, opacity: 0.85, interactive: false }).addTo(map);
+      linesBar();
+    }
+    function hideLine() {
+      const f = lineSel; if (!f) return;
+      const prev = items();
+      const name = `${f.c === 'twall' ? 'Подпорная стенка' : 'Ограда'} ${f.id} — убрана`;
+      save(prev.filter(x => !(x.type === 'linehide' && x.line === f.id)).concat([{ id: 'f' + Date.now(), type: 'linehide', line: f.id, name, cat: 'other',
+        coords: f.g.map(c => c.slice()), acc: null, ts: new Date().toISOString() }]));
+      clearLineSel(); applyLineHide(); linesBar();
+      toastUndo('Линия убрана', () => { save(prev); applyLineHide(); });
+    }
     function cancelDraft() {
       draft = []; editId = null; contourKind = null; hist = [];
       if (draftLayer && map) map.removeLayer(draftLayer); draftLayer = null;
@@ -1265,6 +1341,7 @@
       if (contourKind === 'boundary') return true;                 // границу правят кружками, тап по карте точку не добавляет
       if (mode === 'polygon' || mode === 'line') { snap(); draft.push(ll); redrawDraft(); return true; }
       if (mode === 'paths') { const p = nearestPath(e.latlng, 15); if (p) togglePath(p); else toast('Дорожка не найдена — нажмите ближе к линии'); return true; }
+      if (mode === 'blines') { const f = nearestLine(e.latlng, 6); if (f) selectLine(f); else { clearLineSel(); linesBar(); toast('Линия не найдена — нажмите ближе к линии'); } return true; }
       return false;
     }
     function gpsPoint() {
@@ -1438,6 +1515,9 @@
         `<div class="flist">${list.map(it => isStale(it)
           ? `<div class="stale" data-stale="${it.id}"><span>${esc(it.name)} <small><b>места больше нет</b></small></span>` +
             `<button type="button" class="btn btn--sm btn--ghost" data-f="del" data-id="${it.id}">Удалить запись</button></div>`
+          : it.type === 'linehide' ? `<div><span>${esc(it.name)} <small class="muted">линия схемы</small></span>` +
+            `<button type="button" class="btn btn--sm btn--ghost" data-f="show" data-id="${it.id}">Показать</button>` +
+            `<button type="button" class="btn btn--sm btn--ghost" data-f="del" data-id="${it.id}">Вернуть</button></div>`
           : `<div><span>${esc(it.name)} <small class="muted">${it.type}</small></span>` +
           `<button type="button" class="btn btn--sm btn--ghost" data-f="show" data-id="${it.id}">Показать</button>` +
           (it.type === 'polygon' || it.type === 'line' ? `<button type="button" class="btn btn--sm btn--ghost" data-f="edit" data-id="${it.id}">Изменить</button>` : '') +
@@ -1458,6 +1538,7 @@
           properties: Object.assign({ id: it.id, name: it.name, place: it.place || null, cat: it.cat, kind: it.type, accuracy: it.acc, time: it.ts },
             it.contour ? { contour: it.contour } : {},
             it.type === 'pathflag' ? { path: it.path, service: it.service } : {},
+            it.type === 'linehide' ? { basemapHide: it.line } : {},
             it.newZone ? { newZone: it.newZone } : {}, it.newWinter ? { newWinter: true, winterZones: it.winterZones || [], winterExhibit: it.winterExhibit !== false, winterFrom: it.winterFrom || null, winterTo: it.winterTo || null } : {},
             it.newSame ? { newSame: it.newSame } : {}, it.newZoneDef ? { newZoneDef: it.newZoneDef } : {}, it.type === 'line' ? { service: !!it.service } : {}),
           geometry: (it.type === 'point' || it.type === 'remove' || it.type === 'rename') ? { type: 'Point', coordinates: [it.coords[0][1], it.coords[0][0]] }
@@ -1524,9 +1605,12 @@
         case 'list': return showList();
         case 'back': case 'cancel':
           if (watchId != null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
-          mode = null; cancelDraft(); draw(); return mainBar();
+          mode = null; cancelDraft(); clearLineSel(); draw(); return mainBar();
         case 'show': { const it = items().find(x => x.id === b.dataset.id); if (it && map) map.fitBounds(it.coords.length > 1 ? it.coords : [it.coords[0], it.coords[0]], { maxZoom: 19, padding: [40, 40] }); return; }
-        case 'del': save(items().filter(x => x.id !== b.dataset.id)); draw(); return showList();
+        case 'del': save(items().filter(x => x.id !== b.dataset.id)); draw(); applyLineHide(); return showList();
+        case 'blines': clearLineSel(); mode = 'blines'; return linesBar();
+        case 'lineHide': return hideLine();
+        case 'lineSelCancel': clearLineSel(); return linesBar();
         case 'formCancel': $('#fieldForm').hidden = true; return mainBar();
         case 'formMove': return resolveConflict(true);
         case 'formSame': return resolveConflict(false);
@@ -1542,7 +1626,7 @@
         case 'exit': return stop();
       }
     }
-    return { start, stop, onMapClick, pathFlag, menu, isRemoved, onClick, items, exportFile, fileName, toGeoJSON, applyMarkers, onMarkerDrag,
+    return { start, stop, onMapClick, pathFlag, menu, isRemoved, onClick, items, exportFile, fileName, toGeoJSON, applyMarkers, onMarkerDrag, hiddenLineIds,
       isRecording: () => recording, isActive: () => active, debug: () => ({ handles: handles.filter(h => h._fMid == null), mids: handles.filter(h => h._fMid != null) }) };
   })();
   /* ZOO:SYS-TOOLS:END */
@@ -1590,6 +1674,6 @@
     get layers() { return layers; },
     get basemapReady() { return basemapReady; },
     debugField: () => Field.debug(),
-    fn: Object.freeze({ season, zooHours, placeStatus, isSanitary, dist, bearing, insideZoo, norm, doSearch, fileName: d => Field.fileName(d), now })
+    fn: Object.freeze({ season, zooHours, placeStatus, isSanitary, dist, bearing, insideZoo, norm, doSearch, fileName: d => Field.fileName(d), now, fieldExport: () => Field.toGeoJSON() })
   });
 })();

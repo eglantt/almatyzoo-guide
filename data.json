@@ -1,6 +1,6 @@
 {
  "meta": {
-  "dataVersion": "0.1.10-alpha.1",
+  "dataVersion": "0.1.11-alpha.1",
   "_note": "Координаты мест ориентировочные (approx), будут заменены данными полевого режима. Контур и дорожки — из OpenStreetMap.",
   "center": [
    43.26391,
@@ -1925,6 +1925,8 @@
  "_serviceNote": "Служебные объекты (0.1.8) — места kind service: вход, въезды, служебная парковка видны посетителю серым; staffOnly — только полевой режим.",
  "contours": [],
  "_contoursNote": "Контуры (0.1.8): {id, kind: enclosure | building | water, coords: [[lat, lng]…], place?} — из полевого режима.",
+ "basemapHide": [],
+ "_basemapHideNote": "0.1.11: номера линий топосъёмки (оград, стенок) из map/topo.json, которые не рисуются. Переносятся из выгрузок полевого режима («Линии схемы», признак basemapHide).",
  "paths": [
   {
    "id": "w1423865962",

@@ -86,5 +86,102 @@ module.exports = async function () {
     check('Б4. osmTiles: true — слой tile.openstreetmap.org на «Схеме»', urls.length === 1 && /tile\.openstreetmap\.org/.test(urls[0]), urls);
     A.close(); }
 
+  // ---- 0.1.11 ----
+  const topo = JSON.parse(read('map/topo.json')), base = JSON.parse(read('map/base.json'));
+  const inPoly = (pt, ring) => { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [yi, xi] = ring[i], [yj, xj] = ring[j];
+    if ((yi > pt[0]) !== (yj > pt[0]) && pt[1] < (xj - xi) * (pt[0] - yi) / (yj - yi) + xi) c = !c; } return c; };
+  const place = id => D.places.find(p => p.id === id);
+  const enterField = async A => {
+    A.click('[data-tab="more"]'); for (let i = 0; i < 7; i++) A.click('#versionTag'); await A.wait(5);
+    A.$('#authInput').value = '12345'; A.click('#authOk'); await A.wait(900); A.click('[data-p="field"]'); await A.wait(5);
+    A.click('[data-tab="map"]'); await A.wait(5);
+  };
+
+  // Б5. Здания: из исходных линий чертежа + OSM там, где топосъёмка их не перекрывает
+  { const bld = topo.features.filter(f => f.c === 'tbld');
+    check('Б5a. Зданий на схеме не меньше 170 (было 106)', bld.length >= 170, bld.length);
+    const pr = place('predators');
+    check('Б5b. Дом хищников (круглое здание) на схеме', bld.some(f => inPoly([pr.lat, pr.lng], f.g[0])));
+    const el = place('elephant'), hp = place('hippos');
+    const near = (p, m) => bld.some(f => f.g[0].some(([la, lo]) => Math.hypot((la - p.lat) * 111320, (lo - p.lng) * 81000) < m));
+    check('Б5c. Здания у слонов и бегемотов на месте (ближе 40 м)', near(el, 40) && near(hp, 40));
+    const lines = topo.features.filter(f => f.t === 'l');
+    check('Б5d. У каждой ограды и стенки свой номер', lines.every(f => typeof f.id === 'string' && f.id.length >= 6) && new Set(lines.map(f => f.id)).size === lines.length);
+    check('Б5e. data.json: basemapHide — список номеров, все есть в карте', Array.isArray(D.basemapHide) && D.basemapHide.every(id => lines.some(f => f.id === id)), D.basemapHide); }
+
+  // Б6. Зелень OSM: везде, кроме участка у слонов и бегемотов
+  { const green = base.features.filter(f => f.t === 'p' && /^(grass|park|wood)$/.test(f.c));
+    const el = place('elephant'), hp = place('hippos');
+    const covers = p => green.some(f => inPoly([p.lat, p.lng], f.g[0]) && !(f.g.slice(1).some(h => inPoly([p.lat, p.lng], h))));
+    check('Б6a. У слонов и бегемотов зелени OSM нет', !covers(el) && !covers(hp));
+    const zoo = D.meta.boundary;
+    check('Б6b. В остальной части зоопарка зелень OSM осталась', green.filter(f => f.g[0].some(pt => inPoly(pt, zoo))).length >= 2); }
+
+  // Б7. Гибрид — только в полевом режиме
+  { const A = await launch({ lang: 'ru', now: SUMMER, basemap: true });
+    await A.app.basemapReady; await A.wait(5);
+    const map = A.app.map, Ly = A.app.layers;
+    const btns = () => A.$$('#baseSwitch button').map(b => b.dataset.base);
+    check('Б7a. У посетителя «Схема / Спутник», без «Гибрида»', JSON.stringify(btns()) === '["osm","sat"]', btns());
+    await enterField(A);
+    check('Б7b. В полевом режиме — «Схема / Спутник / Гибрид»', JSON.stringify(btns()) === '["osm","sat","hyb"]' && A.$('[data-base="hyb"]').textContent === 'Гибрид', btns());
+    A.click('[data-base="hyb"]'); await A.wait(5);
+    const urls = []; map.eachLayer(l => { if (l._url) urls.push(l._url); });
+    map.setZoom(16, { animate: false });
+    check('Б7c. «Гибрид»: снимок спутника + линии, без заливок схемы', /arcgisonline/.test(urls.join()) && map.hasLayer(Ly.baseHybrid) && !map.hasLayer(Ly.baseMain) && !map.hasLayer(Ly.baseFence), urls);
+    check('Б7d. В гибриде ограды и стенки видны и на масштабе 16', map.hasLayer(Ly.baseHybrid) && Ly.baseHybrid.getLayers().length > 500, Ly.baseHybrid && Ly.baseHybrid.getLayers().length);
+    check('Б7e. Подписи улиц в гибриде — на месте, светлые (класс base-hyb)', map.hasLayer(Ly.baseLabels) && map.getContainer().classList.contains('base-hyb'));
+    A.click('[data-f="exit"]'); await A.wait(5);
+    check('Б7f. После выхода — у посетителя схема, без гибрида и без кнопки «Гибрид»', map.hasLayer(Ly.baseMain) && !map.hasLayer(Ly.baseHybrid) && JSON.stringify(btns()) === '["osm","sat"]', btns());
+    await enterField(A);
+    check('Б7g. Снова в полевом режиме — гибрид запомнился', map.hasLayer(Ly.baseHybrid) && A.$('[data-base="hyb"]').getAttribute('aria-pressed') === 'true');
+    check('Б7h. Без ошибок', A.errors.length === 0, A.errors);
+    A.close(); }
+  { const A = await launch({ lang: 'ru', now: SUMMER, basemap: true, storage: { zoo_base: 'hyb' } });
+    await A.app.basemapReady; await A.wait(5);
+    check('Б7i. У посетителя «гибрид» из хранилища не включается — схема', A.app.map.hasLayer(A.app.layers.baseMain) && !A.app.map.hasLayer(A.app.layers.baseHybrid));
+    A.close(); }
+
+  // Б8. «Линии схемы»: убрать, «Вернуть», вернуть из списка, экспорт
+  { const A = await launch({ lang: 'ru', now: SUMMER, basemap: true });
+    await A.app.basemapReady; await A.wait(5);
+    const map = A.app.map, Ly = A.app.layers;
+    await enterField(A);
+    A.click('[data-base="osm"]'); map.setZoom(18, { animate: false }); await A.wait(5);
+    const n0 = Ly.baseFence.getLayers().length, h0 = Ly.baseHybrid.getLayers().length;
+    A.click('[data-f="blines"]');
+    check('Б8a. «Линии схемы» — подсказка «нажмите на ограду или стенку»', /Линии схемы/.test(A.$('#fieldbar').textContent));
+    const f = topo.features.find(x => x.c === 'tfence' && x.g.length >= 2), m = [(f.g[0][0] + f.g[1][0]) / 2, (f.g[0][1] + f.g[1][1]) / 2];
+    map.fire('click', { latlng: { lat: m[0], lng: m[1] } }); await A.wait(5);
+    const bar = A.$('#fieldbar').textContent, sel = (bar.match(/(?:Ограда|Подпорная стенка) (\w+)/) || [])[1];
+    check('Б8b. Нажатие у линии — она выбрана, кнопки «Убрать» / «Отмена»', !!sel && !!A.$('[data-f="lineHide"]') && !!A.$('[data-f="lineSelCancel"]'), bar);
+    A.click('[data-f="lineHide"]'); await A.wait(5);
+    const recs = () => JSON.parse(A.w.localStorage.getItem('zoo_field') || '[]').filter(x => x.type === 'linehide');
+    check('Б8c. «Убрать» — линия исчезла со схемы и с гибрида', Ly.baseFence.getLayers().length === n0 - 1 && Ly.baseHybrid.getLayers().length === h0 - 1, [Ly.baseFence.getLayers().length, n0]);
+    check('Б8d. Запись «убрана» сохранена', recs().length === 1 && recs()[0].line === sel, recs());
+    check('Б8e. 5 секунд — «Вернуть»', !A.$('#toast').hidden && !!A.$('[data-f="undoDel"]'));
+    A.click('[data-f="undoDel"]'); await A.wait(5);
+    check('Б8f. «Вернуть» — линия снова на месте, записи нет', Ly.baseFence.getLayers().length === n0 && recs().length === 0);
+    map.fire('click', { latlng: { lat: m[0], lng: m[1] } }); await A.wait(5); A.click('[data-f="lineHide"]'); await A.wait(5);
+    A.click('[data-f="back"]'); A.click('[data-f="list"]'); await A.wait(5);
+    const ret = A.$$('#fieldbar [data-f="del"]').find(b => b.textContent === 'Вернуть');
+    check('Б8g. В «Списке» убранная линия — с кнопкой «Вернуть»', !!ret && /убрана/.test(A.$('#fieldbar').textContent));
+    if (ret) { A.click(ret); await A.wait(5); }
+    check('Б8h. «Вернуть» из списка — линия снова на схеме', Ly.baseFence.getLayers().length === n0 && recs().length === 0);
+    A.click('[data-f="back"]'); A.click('[data-f="blines"]'); map.fire('click', { latlng: { lat: m[0], lng: m[1] } }); await A.wait(5); A.click('[data-f="lineHide"]'); await A.wait(5);
+    const ex = A.app.fn.fieldExport().features.find(x => x.properties.kind === 'linehide');
+    check('Б8k. Экспорт: отметка с признаком basemapHide (номер линии) и геометрией линии', !!ex && ex.properties.basemapHide === sel && ex.geometry.type === 'LineString' && ex.geometry.coordinates.length >= 2, ex && ex.properties);
+    A.click('[data-f="back"]'); A.click('[data-f="exit"]'); await A.wait(5);
+    check('Б8i. Вне полевого режима на этом телефоне линия тоже убрана', Ly.baseFence.getLayers().length === n0 - 1, [Ly.baseFence.getLayers().length, n0]);
+    check('Б8j. Без ошибок', A.errors.length === 0, A.errors);
+    A.close(); }
+
+  // Б9. basemapHide в data.json — линии нет у посетителя; экспорт отметки
+  { const f = topo.features.find(x => x.c === 'tfence');
+    const A = await launch({ lang: 'ru', now: SUMMER, basemap: true, patch: d => { d.basemapHide = [f.id]; } });
+    await A.app.basemapReady; await A.wait(5);
+    const n = A.app.layers.baseFence.getLayers().length, total = topo.features.filter(x => x.c === 'tfence').length;
+    check('Б9a. Линия из basemapHide у посетителя не рисуется', n === total - 1, [n, total]);
+    A.close(); }
   return done();
 };

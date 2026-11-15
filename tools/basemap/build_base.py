@@ -6,7 +6,7 @@
 Каждый объект получает класс отрисовки (resid, grass, park, wood, pitch, play, parking, pool, water, bld,
 fenceArea, river, stream, road-<тип>, foot, steps, fence, hedge). Координаты — [широта, долгота], 5 знаков (~1 м),
 обрезка по рамке карты (meta.bounds из data.json) с запасом 5 %. Внутри зоопарка здания и вода из OSM не берутся:
-там они из топосъёмки (map/topo.json).
+там они из топосъёмки (map/topo.json). Зелень OSM не рисуется на участках из nogreen.json (0.1.11: слоны и бегемоты).
 
 Подписи улиц: точка улицы, ближайшая к центру зоопарка (отрезок не короче 40 м), и угол по направлению улицы.
 Названия — в data.json (ui.street_<id>) на трёх языках.
@@ -15,6 +15,7 @@ fenceArea, river, stream, road-<тип>, foot, steps, fence, hedge). Коорд�
 """
 import json, math, os, sys
 from shapely.geometry import shape, mapping, box, Point
+from shapely.ops import unary_union
 from shapely.validation import make_valid
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -27,6 +28,19 @@ osm = json.load(open(SRC, encoding='utf-8'))
 pad_y, pad_x = (n - s) * 0.05, (e - w) * 0.05
 CLIP = box(w - pad_x, s - pad_y, e + pad_x, n + pad_y)
 ZOO = shape({'type': 'Polygon', 'coordinates': [[[p[1], p[0]] for p in data['meta']['boundary']]]})
+
+# 0.1.11: участки внутри ограды, где зелень OSM не рисуется (nogreen.json)
+GREEN = {'grass', 'park', 'wood'}
+_lat0, _lng0 = data['meta']['center']; _kx = 111320 * math.cos(math.radians(_lat0))
+_ng = []
+for z in json.load(open(os.path.join(os.path.dirname(__file__), 'nogreen.json'), encoding='utf-8'))['zones']:
+    r = z['radius']
+    pts = [Point(p[1], p[0]).buffer(1, 32) for p in z['points']]
+    # круг радиусом r м в градусах: по долготе r/_kx, по широте r/111320
+    from shapely.affinity import scale
+    circles = [scale(c, xfact=r / _kx, yfact=r / 111320) for c in pts]
+    _ng.append(unary_union(circles).convex_hull)
+NOGREEN = unary_union(_ng) if _ng else None
 
 ROADS = {'primary', 'primary_link', 'secondary', 'secondary_link', 'tertiary', 'residential', 'living_street', 'unclassified', 'service', 'pedestrian'}
 
@@ -81,6 +95,7 @@ for f in osm['features']:
         g = make_valid(shape(f['geometry']))
         if c in ('bld', 'water') and ZOO.contains(g.representative_point()): continue
         g = g.intersection(CLIP)
+        if c in GREEN and NOGREEN is not None and g.intersects(NOGREEN): g = g.difference(NOGREEN)
         for q in parts(g):
             if q.geom_type == 'Polygon' and not q.is_empty and q.area > 0:
                 out.append({'c': c, 't': 'p', 'g': rnd(mapping(q))})
