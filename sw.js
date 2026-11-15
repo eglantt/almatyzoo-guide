@@ -5,14 +5,14 @@
    (проверяется тестом version). ASSETS_VERSION — только при замене
    содержимого существующих шрифтов/картинок.
    ===================================================================== */
-const CACHE_VERSION = '0.1.9-alpha';
+const CACHE_VERSION = '0.1.10-alpha';
 const ASSETS_VERSION = 'v1';
 const TILES_VERSION = 'v2';          // 0.1.9: старый кэш tiles-v1 (с картинками OSM) удаляется
 const APP_CACHE = `app-${CACHE_VERSION}`;
 const ASSETS_CACHE = `assets-${ASSETS_VERSION}`;
 const TILES_CACHE = `tiles-${TILES_VERSION}`;
 const NAV_TIMEOUT_MS = 3500;
-const TILES_MAX = 1500;          // предел числа снимков спутника в кэше полевого режима (≈ 30–40 МБ)
+const TILES_MAX = 1500;          // предел числа снимков спутника в кэше (≈ 30–40 МБ)
 
 // Каркас: маленький и обязательный. Без него установка не проходит.
 const CORE_FILES = [
@@ -30,10 +30,10 @@ const ASSET_FILES = [
   './logo-white.svg',
   './map/base.json', './map/topo.json'          // 0.1.9: своя карта-подложка
 ];
-// 0.1.9: в телефоне сохраняются только снимки спутника полевого режима (метка ?zoo=field).
-// Картинки OSM и спутник у посетителя идут мимо воркера: их условия не разрешают хранение для офлайна.
+// Снимки спутника сохраняются в телефоне — и у посетителя, и в полевом режиме (0.1.10, как до 0.1.9; к релизу — отдельное решение).
+// Картинки OSM идут мимо воркера: правила OSM не разрешают хранение для офлайна.
 const SAT_HOST = 'server.arcgisonline.com';
-const isFieldTile = url => url.hostname === SAT_HOST && url.searchParams.get('zoo') === 'field';
+const isSatTile = url => url.hostname === SAT_HOST;
 
 const isAssetPath = p => p.includes('/fonts/') || p.includes('/map/') || p.endsWith('/logo-white.svg');
 const isCacheable = r => r && r.ok;
@@ -129,7 +129,7 @@ self.addEventListener('fetch', event => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) {
-    if (isFieldTile(url)) event.respondWith(tileFirst(req));
+    if (isSatTile(url)) event.respondWith(tileFirst(req));
     return;                                              // прочие чужие сайты — мимо воркера
   }
   if (isExcluded(url.pathname)) return;

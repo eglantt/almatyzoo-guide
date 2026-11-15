@@ -67,7 +67,7 @@ module.exports = async function () {
     A.click('[data-p="field"]');
     check('П5a. Полевой режим: панель инструментов на карте', !A.$('#fieldbar').hidden && !A.$('#screen-map').hidden);
     const tileUrls = () => { const u = []; A.app.map.eachLayer(l => { if (l._url) u.push(l._url); }); return u.join(' '); };
-    check('П5b. В полевом режиме — спутниковый слой с меткой полевого режима (кэшируется), без OSM', /arcgisonline.*\?zoo=field/.test(tileUrls()) && !/openstreetmap/.test(tileUrls()), tileUrls());
+    check('П5b. В полевом режиме — спутниковый слой по обычному адресу (0.1.10), без OSM', /arcgisonline/.test(tileUrls()) && !/\?/.test(tileUrls()) && !/openstreetmap/.test(tileUrls()), tileUrls());
     A.click('[data-f="tapPoint"]');
     A.app.map.fire('click', { latlng: { lat: 43.26401234, lng: 76.97512345 } });
     check('П5c. Тап по карте — форма названия', !A.$('#fieldForm').hidden);

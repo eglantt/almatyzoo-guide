@@ -84,7 +84,7 @@ module.exports = async function () {
     const r = await W.fire('activate'); await Promise.all(r.waits);
     const keys = await W.caches.keys();
     check('S3a. Старые кэши удалены', !keys.includes('app-0.0.9') && !keys.includes('zoo-old'), keys);
-    check('S3b. Кэши ресурсов и спутника полевого режима сохранены', keys.includes('assets-v1') && keys.includes('tiles-v2'), keys);
+    check('S3b. Кэши ресурсов и спутника сохранены', keys.includes('assets-v1') && keys.includes('tiles-v2'), keys);
     check('S3d. Старый кэш тайлов tiles-v1 (картинки OSM) удалён', !keys.includes('tiles-v1'), keys);
     check('S3c. clients.claim вызван', W.log.claim === 1); }
 
@@ -118,15 +118,15 @@ module.exports = async function () {
     const r = await W.fire('fetch', W.req('./app.js'));
     check('S8. Файл из кэша без обращения к сети', r.response.cached === true && !W.log.fetched.includes(abs('./app.js'))); }
 
-  // S9. Снимки спутника полевого режима (?zoo=field): кэшируются, повторно берутся из кэша
-  { const W = world(); const url = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/17/1/2?zoo=field';
+  // S9. Снимки спутника: кэшируются, повторно берутся из кэша (0.1.10 — и у посетителя, и в полевом режиме)
+  { const W = world(); const url = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/17/1/2';
     const r1 = await W.fire('fetch', { request: { url, method: 'GET', mode: 'cors' } });
     const r2 = await W.fire('fetch', { request: { url, method: 'GET', mode: 'cors' } });
-    check('S9a. Снимок спутника полевого режима обработан воркером', r1.responded && r1.response.ok);
+    check('S9a. Снимок спутника обработан воркером', r1.responded && r1.response.ok);
     check('S9b. Второй раз тайл взят из кэша, сеть не трогается', r2.responded && W.log.fetched.filter(u => u === url).length === 1); }
 
   // S10. Тайл без сети и без кэша — ошибка, но не падение
-  { const W = world({ offline: true }); const r = await W.fire('fetch', { request: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/17/9/9?zoo=field', method: 'GET', mode: 'cors' } });
+  { const W = world({ offline: true }); const r = await W.fire('fetch', { request: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/17/9/9', method: 'GET', mode: 'cors' } });
     check('S10. Тайл офлайн — пустой ответ без исключения', r.responded && r.response.error === true); }
 
   // S11. Прочие чужие сайты и служебные папки — мимо воркера
@@ -138,18 +138,18 @@ module.exports = async function () {
 
   // S12. Ограничение размера кэша тайлов
   { const W = world(); const max = +src.match(/TILES_MAX = (\d+)/)[1];
-    const c = await W.caches.open('tiles-v2'); for (let i = 0; i < max + 120; i++) await c.put(`https://server.arcgisonline.com/t/${i}?zoo=field`, { ok: true });
-    for (let i = 0; i < 50; i++) await W.fire('fetch', { request: { url: `https://server.arcgisonline.com/new/${i}?zoo=field`, method: 'GET', mode: 'cors' } });
+    const c = await W.caches.open('tiles-v2'); for (let i = 0; i < max + 120; i++) await c.put(`https://server.arcgisonline.com/t/${i}`, { ok: true });
+    for (let i = 0; i < 50; i++) await W.fire('fetch', { request: { url: `https://server.arcgisonline.com/new/${i}`, method: 'GET', mode: 'cors' } });
     await new Promise(r => setTimeout(r, 50));
     check('S12. Кэш тайлов обрезается до предела', c.m.size <= max, c.m.size + ' > ' + max); }
 
-  // S14. 0.1.9: картинки OSM и спутник у посетителя (без метки) — мимо воркера, в телефоне не сохраняются
+  // S14. Картинки OSM — мимо воркера (0.1.9); спутник по обычному адресу — сохраняется (0.1.10)
   { const W = world();
     const a = await W.fire('fetch', { request: { url: 'https://tile.openstreetmap.org/17/1/2.png', method: 'GET', mode: 'cors' } });
     const b = await W.fire('fetch', { request: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/17/1/2', method: 'GET', mode: 'cors' } });
     const names = await W.caches.keys();
     check('S14a. Картинки OSM воркер не обрабатывает и не сохраняет', !a.responded, names);
-    check('S14b. Спутник посетителя воркер не обрабатывает и не сохраняет', !b.responded && !names.some(n => n.startsWith('tiles-')), names); }
+    check('S14b. Спутник (обычный адрес) воркер обрабатывает и сохраняет (0.1.10)', b.responded && b.response.ok && names.includes('tiles-v2'), names); }
 
   // S15. 0.1.9: файлы карты-подложки — в кэше ресурсов (докачка в фоне), не в каркасе; tools/ мимо воркера
   { const W = world(); const r0 = await W.fire('install'); await Promise.all(r0.waits);

@@ -65,7 +65,7 @@ module.exports = async function () {
     A.click('[data-base="sat"]'); await A.wait(5);
     const u2 = []; map.eachLayer(l => { if (l._url) u2.push(l._url); });
     check('Б2n. «Спутник»: своя схема и подписи скрыты', !map.hasLayer(Ly.baseMain) && !map.hasLayer(Ly.baseFence) && !map.hasLayer(Ly.baseLabels));
-    check('Б2o. Спутник посетителя — без метки ?zoo=field', u2.length === 1 && /arcgisonline/.test(u2[0]) && !/zoo=field/.test(u2[0]), u2);
+    check('Б2o. Спутник посетителя — обычный адрес снимков, без меток (0.1.10)', u2.length === 1 && /arcgisonline/.test(u2[0]) && !/\?/.test(u2[0]), u2);
     A.click('[data-base="osm"]'); await A.wait(5);
     check('Б2p. Обратно «Схема» — подложка и подписи на месте', map.hasLayer(Ly.baseMain) && map.hasLayer(Ly.baseLabels) && map.getContainer().classList.contains('base-scheme'));
     check('Б2q. Без ошибок', A.errors.length === 0, A.errors);

@@ -21,7 +21,7 @@
   'use strict';
 
   /* ===================== 1. Константы и хранилище ===================== */
-  const APP_VERSION = '0.1.9-alpha';
+  const APP_VERSION = '0.1.10-alpha';
   const KEY = {
     lang: 'zoo_lang',
     devNow: 'zoo_dev_now',       // подмена даты (сервисная панель)
@@ -224,7 +224,7 @@
 
   /* ===================== 6. Карта ===================== */
   let map = null, layers = {}, markers = {}, userMarker = null, userCircle = null, exitLine = null;
-  let osm = null, sat = null, satField = null;
+  let osm = null, sat = null;
 
   function initMap() {
     if (map || typeof L_ === 'undefined') return;
@@ -237,11 +237,11 @@
     // 0.1.9: «Схема» — своя карта-подложка (map/base.json + map/topo.json), работает без сети.
     // Картинки OSM (tile.openstreetmap.org) отключены настройкой settings.osmTiles: их нельзя хранить для офлайна.
     if (D.settings && D.settings.osmTiles) osm = L_.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, crossOrigin: 'anonymous' });
-    // Спутник: у посетителя — только при сети, не сохраняется; в полевом режиме — с меткой ?zoo=field, такие снимки Service Worker кэширует
+    // Спутник: один адрес для посетителя и полевого режима, снимки сохраняются в телефоне (0.1.10 — как до 0.1.9, решение заказчика 15.11.2026;
+    // к релизу источник спутника решается отдельно)
     const SAT_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
     const SAT_ATTR = 'Tiles © Esri — Esri, Maxar, Earthstar Geographics';
     sat = L_.tileLayer(SAT_URL, { maxZoom: 19, crossOrigin: 'anonymous', attribution: SAT_ATTR });
-    satField = L_.tileLayer(SAT_URL + '?zoo=field', { maxZoom: 19, crossOrigin: 'anonymous', attribution: SAT_ATTR });
     L_.control.zoom({ position: 'topright' }).addTo(map);
     map.attributionControl.setPrefix(false);
     setOsmAttr();
@@ -356,8 +356,8 @@
     renderBaseSwitch();
     if (!map) return;
     const scheme = currentBase() !== 'sat';
-    const on = scheme ? osm : (Field.isActive() ? satField : sat);      // osm — только если включён настройкой
-    [osm, sat, satField].forEach(l => { if (l && l !== on && map.hasLayer(l)) map.removeLayer(l); });
+    const on = scheme ? osm : sat;      // osm — только если включён настройкой
+    [osm, sat].forEach(l => { if (l && l !== on && map.hasLayer(l)) map.removeLayer(l); });
     if (on && !map.hasLayer(on)) on.addTo(map);
     if (on) on.bringToBack();
     map.getContainer().classList.toggle('base-scheme', scheme);
