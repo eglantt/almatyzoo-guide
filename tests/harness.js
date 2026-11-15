@@ -36,6 +36,7 @@ function fakeDateClass(RealDate, startIso) {
  * opts.gps — {lat,lng,acc} | 'deny' | не задан (в браузере нет геолокации)
  * opts.storage — дополнительные ключи localStorage
  * opts.deviceLang — язык устройства
+ * opts.basemap — отдавать файлы карты-подложки map/*.json
  */
 async function launch(opts = {}) {
   const html = read('index.html').replace(/<script src="[^"]+"><\/script>/g, '');
@@ -68,6 +69,8 @@ async function launch(opts = {}) {
   // opts.patch(D) — правка data.json только для этого запуска (сценарии, которых ещё нет в настоящих данных: зимние вольеры и т. п.)
   w.fetch = async (url) => {
     const f = String(url).replace(/^https:\/\/zoo\.test\//, '');
+    // 0.1.9: карта-подложка (map/*.json, ~0,9 МБ) отдаётся только по opts.basemap — остальным наборам она не нужна
+    if (f.startsWith('map/') && !opts.basemap) return { ok: false, status: 404, text: async () => '', json: async () => { throw new Error('404'); } };
     try { let body = read(f); if (f === 'data.json' && opts.patch) { const D = JSON.parse(body); opts.patch(D); body = JSON.stringify(D); } return { ok: true, status: 200, text: async () => body, json: async () => JSON.parse(body) }; }
     catch (e) { return { ok: false, status: 404, text: async () => '', json: async () => { throw new Error('404'); } }; }
   };
@@ -75,6 +78,8 @@ async function launch(opts = {}) {
   Object.defineProperty(w, 'crypto', { value: require('crypto').webcrypto, configurable: true });
   w.TextEncoder = util.TextEncoder;
   w.HTMLElement.prototype.scrollIntoView = function () {};
+  // В jsdom нет холста (canvas): приложение тогда рисует подложку через SVG
+  w.HTMLCanvasElement.prototype.getContext = () => null;
   w.SVGElement.prototype.getBBox = () => ({ x: 0, y: 0, width: 0, height: 0 });
   // Leaflet определяет поддержку SVG по createSVGRect — в jsdom его нет
   w.SVGSVGElement.prototype.createSVGRect = () => ({});

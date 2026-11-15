@@ -1,6 +1,6 @@
 {
  "meta": {
-  "dataVersion": "0.1.8-alpha.1",
+  "dataVersion": "0.1.9-alpha.1",
   "_note": "Координаты мест ориентировочные (approx), будут заменены данными полевого режима. Контур и дорожки — из OpenStreetMap.",
   "center": [
    43.26391,
@@ -338,7 +338,9 @@
      "17:00"
     ]
    }
-  }
+  },
+  "osmTiles": false,
+  "_osmTilesNote": "0.1.9: картинки tile.openstreetmap.org отключены — «Схема» рисуется своей картой (map/base.json, map/topo.json). true — снова показывать их поверх своей схемы при сети (в телефоне не сохраняются)."
  },
  "zones": [
   {
@@ -4979,6 +4981,26 @@
     "Saturday",
     "Sunday"
    ]
+  },
+  "osmAttr": {
+   "kz": "© OpenStreetMap қатысушылары",
+   "ru": "© участники OpenStreetMap",
+   "en": "© OpenStreetMap contributors"
+  },
+  "street_yesenberlin": {
+   "kz": "Есенберлин көшесі",
+   "ru": "улица Есенберлина",
+   "en": "Yesenberlin Street"
+  },
+  "street_ormanov": {
+   "kz": "Ғали Орманов көшесі",
+   "ru": "улица Гали Орманова",
+   "en": "Gali Ormanov Street"
+  },
+  "street_aport": {
+   "kz": "Апорт көшесі",
+   "ru": "улица Апорт",
+   "en": "Aport Street"
   }
  }
 }

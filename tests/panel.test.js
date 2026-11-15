@@ -67,7 +67,7 @@ module.exports = async function () {
     A.click('[data-p="field"]');
     check('П5a. Полевой режим: панель инструментов на карте', !A.$('#fieldbar').hidden && !A.$('#screen-map').hidden);
     const tileUrls = () => { const u = []; A.app.map.eachLayer(l => { if (l._url) u.push(l._url); }); return u.join(' '); };
-    check('П5b. В полевом режиме — спутниковый слой вместо OSM', /arcgisonline/.test(tileUrls()) && !/openstreetmap/.test(tileUrls()), tileUrls());
+    check('П5b. В полевом режиме — спутниковый слой с меткой полевого режима (кэшируется), без OSM', /arcgisonline.*\?zoo=field/.test(tileUrls()) && !/openstreetmap/.test(tileUrls()), tileUrls());
     A.click('[data-f="tapPoint"]');
     A.app.map.fire('click', { latlng: { lat: 43.26401234, lng: 76.97512345 } });
     check('П5c. Тап по карте — форма названия', !A.$('#fieldForm').hidden);
@@ -99,7 +99,7 @@ module.exports = async function () {
     check('П5g. Удаление записи', JSON.parse(A.w.localStorage.getItem('zoo_field')).length === 1);
     check('П5h. Имя файла экспорта с датой и временем', A.app.fn.fileName(new A.w.Date(2026, 10, 6, 14, 30)) === 'zoo-points_2026-11-06_14-30.geojson');
     A.click('[data-f="back"]'); A.click('[data-f="exit"]');
-    check('П5i. Выход из полевого режима: панель скрыта, снова OSM', A.$('#fieldbar').hidden && /openstreetmap/.test(tileUrls()) && !/arcgisonline/.test(tileUrls()), tileUrls());
+    check('П5i. Выход из полевого режима: панель скрыта, снова схема (своя карта, без тайлов)', A.$('#fieldbar').hidden && !tileUrls() && A.app.map.getContainer().classList.contains('base-scheme'), tileUrls());
     A.close(); }
 
   // П6. Без авторизации полевой режим и экспорт недоступны

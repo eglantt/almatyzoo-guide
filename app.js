@@ -21,7 +21,7 @@
   'use strict';
 
   /* ===================== 1. Константы и хранилище ===================== */
-  const APP_VERSION = '0.1.8-alpha';
+  const APP_VERSION = '0.1.9-alpha';
   const KEY = {
     lang: 'zoo_lang',
     devNow: 'zoo_dev_now',       // подмена даты (сервисная панель)
@@ -224,7 +224,7 @@
 
   /* ===================== 6. Карта ===================== */
   let map = null, layers = {}, markers = {}, userMarker = null, userCircle = null, exitLine = null;
-  let osm = null, sat = null;
+  let osm = null, sat = null, satField = null;
 
   function initMap() {
     if (map || typeof L_ === 'undefined') return;
@@ -234,19 +234,21 @@
       maxBounds: L_.latLngBounds(b[0], b[1]), maxBoundsViscosity: 1.0,
       attributionControl: true
     });
-    osm = L_.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19, crossOrigin: 'anonymous',
-      attribution: OSM_ATTR
-    });
-    sat = L_.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 19, crossOrigin: 'anonymous', attribution: 'Tiles © Esri — Esri, Maxar, Earthstar Geographics'
-    });
+    // 0.1.9: «Схема» — своя карта-подложка (map/base.json + map/topo.json), работает без сети.
+    // Картинки OSM (tile.openstreetmap.org) отключены настройкой settings.osmTiles: их нельзя хранить для офлайна.
+    if (D.settings && D.settings.osmTiles) osm = L_.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, crossOrigin: 'anonymous' });
+    // Спутник: у посетителя — только при сети, не сохраняется; в полевом режиме — с меткой ?zoo=field, такие снимки Service Worker кэширует
+    const SAT_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+    const SAT_ATTR = 'Tiles © Esri — Esri, Maxar, Earthstar Geographics';
+    sat = L_.tileLayer(SAT_URL, { maxZoom: 19, crossOrigin: 'anonymous', attribution: SAT_ATTR });
+    satField = L_.tileLayer(SAT_URL + '?zoo=field', { maxZoom: 19, crossOrigin: 'anonymous', attribution: SAT_ATTR });
     L_.control.zoom({ position: 'topright' }).addTo(map);
     map.attributionControl.setPrefix(false);
+    setOsmAttr();
 
     applyBase();
     // Контур и дорожки — из OpenStreetMap (data.json): видны и без сети. Пунктир — только у ориентировочного контура.
-    L_.polygon(D.meta.boundary, { color: '#4E8C12', weight: 3, dashArray: D.meta.boundaryApprox ? '8 6' : null, fillColor: '#95C12B', fillOpacity: 0.08, interactive: false, attribution: OSM_ATTR }).addTo(map);
+    L_.polygon(D.meta.boundary, { color: '#4E8C12', weight: 3, dashArray: D.meta.boundaryApprox ? '8 6' : null, fillColor: '#95C12B', fillOpacity: 0.08, interactive: false }).addTo(map);
     layers.contours = L_.layerGroup().addTo(map);     // 0.1.8: вольеры, здания, водоёмы — под дорожками
     buildContours();
     layers.paths = L_.layerGroup().addTo(map);
@@ -264,18 +266,102 @@
     buildMarkers();
     updateZoomClass();
     applyApproxView();
+    basemapReady = loadBasemap();
   }
-  const OSM_ATTR = '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
+  /** Подпись данных OSM — на языке интерфейса (требование лицензии ODbL: «© участники OpenStreetMap»). */
+  let osmAttrNow = null;
+  function setOsmAttr() {
+    if (!map) return;
+    if (osmAttrNow) map.attributionControl.removeAttribution(osmAttrNow);
+    osmAttrNow = `<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">${esc(t('osmAttr'))}</a>`;
+    map.attributionControl.addAttribution(osmAttrNow);
+  }
+
+  /* ---- 0.1.9. Своя карта-подложка: город из OSM + топосъёмка внутри зоопарка ----
+     Файлы map/base.json и map/topo.json собираются скриптами tools/basemap/. Рисуются одним холстом (canvas)
+     под всеми слоями приложения. Детали по масштабу: ограды — с 17, подпорные стенки — с 18. */
+  const BP = {      // палитра «Смесь»: город приглушённый, зелень и вода — «зоопарковые»
+    land: '#f4f3ef', resid: '#ebeae6', grass: '#c9e6a6', wood: '#a9cf8a', park: '#cfe9b5', water: '#9fd0e6', waterL: '#6fb0cf',
+    bld: '#e1dbd2', bldL: '#c3b8aa', pitch: '#cfe6d6', pitchL: '#88c9a8', play: '#e6f3dd', playL: '#a8d8a0', parking: '#efefed', parkingL: '#d0d0d0',
+    foot: '#c98c5a', road: '#ffffff', casing: '#cfcac0', sec: '#fbf6dc', prim: '#f6dfbd', fence: '#9a9286', twall: '#6b6157', tfence: '#3d4a33'
+  };
+  const ROAD_W = { primary: 9, primary_link: 6, secondary: 8, secondary_link: 5, tertiary: 7, residential: 5, living_street: 4.5, unclassified: 5, service: 3, pedestrian: 5 };
+  const ROAD_C = { primary: BP.prim, primary_link: BP.prim, secondary: BP.sec, secondary_link: BP.sec };
+  const BASE_FENCE_Z = 17, BASE_WALL_Z = 18;
+  let basemapReady = Promise.resolve(false);
+  function hasCanvas() { try { const c = document.createElement('canvas'); return !!(c.getContext && c.getContext('2d')); } catch (e) { return false; } }
+  async function loadBasemap() {
+    try {
+      const get = u => fetch(u).then(r => { if (!r.ok) throw new Error(u + ' ' + r.status); return r.json(); });
+      const [b, tp] = await Promise.all([get('map/base.json'), get('map/topo.json')]);
+      drawBasemap(b, tp);
+      return true;
+    } catch (e) { logError('basemap: ' + e.message); return false; }
+  }
+  function drawBasemap(b, tp) {
+    if (!map) return;
+    const pane = map.createPane('basemap'); pane.style.zIndex = 150;            // под тайлами (200) и всеми слоями приложения
+    const lp = map.createPane('basemapLabels'); lp.style.zIndex = 450; lp.style.pointerEvents = 'none';
+    const r = hasCanvas() ? L_.canvas({ pane: 'basemap', padding: 0.5 }) : L_.svg({ pane: 'basemap', padding: 0.5 });
+    const fill = (c, line) => ({ renderer: r, stroke: !!line, color: line || c, weight: line ? 0.6 : 0, fillColor: c, fillOpacity: 1, interactive: false });
+    const ln = (c, w, extra) => Object.assign({ renderer: r, color: c, weight: w, opacity: 1, interactive: false, lineCap: 'round', lineJoin: 'round', fill: false }, extra || {});
+    const AREA = {
+      resid: fill(BP.resid), grass: fill(BP.grass), park: fill(BP.park), wood: fill(BP.wood), pitch: fill(BP.pitch, BP.pitchL), play: fill(BP.play, BP.playL),
+      parking: fill(BP.parking, BP.parkingL), pool: fill(BP.water, '#7fb8cf'), water: fill(BP.water), bld: fill(BP.bld, BP.bldL),
+      fenceArea: { renderer: r, color: BP.fence, weight: 0.8, fillColor: BP.fence, fillOpacity: 0.2, interactive: false },
+      twater: fill(BP.water, BP.waterL), tbld: fill(BP.bld, BP.bldL)
+    };
+    const main = L_.layerGroup(), fence = L_.layerGroup(), wall = L_.layerGroup();
+    const F = b.features, T = tp.features;
+    const lines = cls => F.filter(f => f.t === 'l' && cls(f.c));
+    F.filter(f => f.t === 'p' && AREA[f.c]).forEach(f => L_.polygon(f.g, AREA[f.c]).addTo(main));
+    lines(c => c === 'river' || c === 'stream').forEach(f => L_.polyline(f.g, ln(BP.water, f.c === 'river' ? 4 : 1.5)).addTo(main));
+    const roads = lines(c => c.startsWith('road-')), rt = f => f.c.slice(5);
+    roads.forEach(f => L_.polyline(f.g, ln(BP.casing, ROAD_W[rt(f)] + 1.6)).addTo(main));
+    roads.forEach(f => L_.polyline(f.g, ln(ROAD_C[rt(f)] || BP.road, ROAD_W[rt(f)])).addTo(main));
+    lines(c => c === 'foot' || c === 'steps').forEach(f => L_.polyline(f.g, ln(BP.foot, f.c === 'steps' ? 3 : 1.4, { dashArray: f.c === 'steps' ? '1 3' : '4 3', lineCap: 'butt' })).addTo(main));
+    lines(c => c === 'fence' || c === 'hedge').forEach(f => L_.polyline(f.g, f.c === 'hedge' ? ln(BP.wood, 2) : ln(BP.fence, 0.8)).addTo(main));
+    T.filter(f => f.c === 'twater' || f.c === 'tbld').sort((a, z) => (a.c === 'tbld') - (z.c === 'tbld')).forEach(f => L_.polygon(f.g, AREA[f.c]).addTo(main));
+    T.filter(f => f.c === 'twall').forEach(f => L_.polyline(f.g, ln(BP.twall, 1.4, { lineCap: 'butt' })).addTo(wall));
+    T.filter(f => f.c === 'tfence').forEach(f => L_.polyline(f.g, ln(BP.tfence, 1.1)).addTo(fence));
+    main.addTo(map);
+    layers.baseMain = main; layers.baseFence = fence; layers.baseWall = wall;
+    layers.baseLabels = L_.layerGroup().addTo(map);
+    baseLabelData = b.labels || [];
+    renderBaseLabels();
+    map.on('zoomend', updateBaseDetail);
+    updateBaseDetail(); applyBase();
+  }
+  let baseLabelData = [];
+  /** Подписи трёх улиц вокруг зоопарка — на языке интерфейса, по направлению улицы. */
+  function renderBaseLabels() {
+    if (!map || !layers.baseLabels) return;
+    layers.baseLabels.clearLayers();
+    baseLabelData.forEach(s => L_.marker([s.lat, s.lng], {
+      interactive: false, keyboard: false, pane: 'basemapLabels',
+      icon: L_.divIcon({ className: 'base-lbl', iconSize: [0, 0], html: `<span data-street="${esc(s.id)}" style="transform:translate(-50%,-50%) rotate(${+s.a}deg)">${esc(t('street_' + s.id))}</span>` })
+    }).addTo(layers.baseLabels));
+  }
+  function updateBaseDetail() {
+    if (!map || !layers.baseMain) return;
+    const z = map.getZoom(), scheme = currentBase() !== 'sat';
+    const show = (g, on) => { if (on && !map.hasLayer(g)) g.addTo(map); if (!on && map.hasLayer(g)) map.removeLayer(g); };
+    show(layers.baseMain, scheme); show(layers.baseLabels, scheme);
+    show(layers.baseFence, scheme && z >= BASE_FENCE_Z); show(layers.baseWall, scheme && z >= BASE_WALL_Z);
+  }
   /** Подложка «Схема / Спутник»: у посетителя и в полевом режиме — свой выбор (по умолчанию схема / спутник). */
   const baseKey = () => Field.isActive() ? KEY.baseField : KEY.base;
   function currentBase() { const v = store.get(baseKey()); return v === 'osm' || v === 'sat' ? v : (Field.isActive() ? 'sat' : 'osm'); }
   function applyBase() {
     renderBaseSwitch();
     if (!map) return;
-    const on = currentBase() === 'sat' ? sat : osm, off = on === sat ? osm : sat;
-    if (map.hasLayer(off)) map.removeLayer(off);
-    if (!map.hasLayer(on)) on.addTo(map);
-    on.bringToBack();
+    const scheme = currentBase() !== 'sat';
+    const on = scheme ? osm : (Field.isActive() ? satField : sat);      // osm — только если включён настройкой
+    [osm, sat, satField].forEach(l => { if (l && l !== on && map.hasLayer(l)) map.removeLayer(l); });
+    if (on && !map.hasLayer(on)) on.addTo(map);
+    if (on) on.bringToBack();
+    map.getContainer().classList.toggle('base-scheme', scheme);
+    updateBaseDetail();
   }
   function renderBaseSwitch() {
     const b = currentBase(), el = $('#baseSwitch'); if (!el) return;
@@ -713,7 +799,7 @@
     renderNearList(); renderBanner(); renderRules(); renderMore(); renderBaseSwitch();
     if (S.tab === 'coll') renderCollection();
     if (!$('#searchOverlay').hidden) renderSearch();
-    if (map) { map.closePopup(); buildMarkers(); }
+    if (map) { map.closePopup(); buildMarkers(); renderBaseLabels(); setOsmAttr(); }
     if (!opts || !opts.keepSheet) sheet(null);
   }
   const dayKey = d => d.getFullYear() + '-' + mmdd(d);
@@ -1502,6 +1588,7 @@
     get data() { return D; }, get state() { return Object.assign({}, S); },
     get map() { return map; }, get markers() { return Object.assign({}, markers); },
     get layers() { return layers; },
+    get basemapReady() { return basemapReady; },
     debugField: () => Field.debug(),
     fn: Object.freeze({ season, zooHours, placeStatus, isSanitary, dist, bearing, insideZoo, norm, doSearch, fileName: d => Field.fileName(d), now })
   });

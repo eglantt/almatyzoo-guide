@@ -10,7 +10,9 @@ module.exports = async function () {
   const SUMMER = '2026-07-08T12:00:00';       // среда, лето
   const WINTER = '2026-12-09T12:00:00';       // среда, зима
   const visible = (A, sel) => { let el = typeof sel === 'string' ? A.$(sel) : sel; if (!el) return false; for (; el && el.nodeType === 1; el = el.parentElement) { if (el.hidden || A.w.getComputedStyle(el).display === 'none') return false; } return true; };
-  const tiles = A => { const u = []; A.app.map.eachLayer(l => { if (l._url) u.push(/arcgisonline/.test(l._url) ? 'sat' : 'osm'); }); return u.sort().join(','); };
+  // 0.1.9: «Схема» — своя карта без тайлов (у контейнера класс base-scheme); 'osm' — только если включены картинки OSM
+  const tiles = A => { const u = []; A.app.map.eachLayer(l => { if (l._url) u.push(/arcgisonline/.test(l._url) ? 'sat' : 'osm'); });
+    if (!u.length && A.app.map.getContainer().classList.contains('base-scheme')) u.push('scheme'); return u.sort().join(','); };
   const enterField = async A => {
     A.click('[data-tab="more"]'); for (let i = 0; i < 7; i++) A.click('#versionTag'); await A.wait(5);
     A.$('#authInput').value = '12345'; A.click('#authOk'); await A.wait(900); A.click('[data-p="field"]');
@@ -123,7 +125,7 @@ module.exports = async function () {
 
   // М8. Переключатель «Схема / Спутник»: обычный и полевой режим, выбор помнится отдельно
   { const A = await launch({ lang: 'ru', now: SUMMER });
-    check('М8a. По умолчанию у посетителя — схема', tiles(A) === 'osm', tiles(A));
+    check('М8a. По умолчанию у посетителя — схема', tiles(A) === 'scheme', tiles(A));
     const sw = A.$('[data-base="sat"]');
     check('М8b. Переключатель виден посетителю', !!sw && visible(A, sw));
     if (sw) A.click(sw);
@@ -138,13 +140,13 @@ module.exports = async function () {
     const sw = A.$('[data-base="osm"]');
     check('М8f. Переключатель виден и в полевом режиме', !!sw && visible(A, sw));
     if (sw) A.click(sw);
-    check('М8g. В полевом режиме можно включить схему', tiles(A) === 'osm', tiles(A));
+    check('М8g. В полевом режиме можно включить схему', tiles(A) === 'scheme', tiles(A));
     A.click('[data-base="sat"]');  A.click('[data-base="osm"]');
     A.click('[data-f="exit"]');
-    check('М8h. После выхода — выбор посетителя (схема)', tiles(A) === 'osm', tiles(A));
+    check('М8h. После выхода — выбор посетителя (схема)', tiles(A) === 'scheme', tiles(A));
     A.click('[data-base="sat"]');
     A.click('[data-tab="more"]'); for (let i = 0; i < 7; i++) A.click('#versionTag'); await A.wait(5); A.click('[data-p="field"]');
-    check('М8i. Снова в полевом режиме — его собственный выбор (схема), посетительский не мешает', tiles(A) === 'osm', tiles(A));
+    check('М8i. Снова в полевом режиме — его собственный выбор (схема), посетительский не мешает', tiles(A) === 'scheme', tiles(A));
     A.click('[data-f="exit"]');
     check('М8j. И обратно — посетительский выбор (спутник)', tiles(A) === 'sat', tiles(A));
     A.close(); }

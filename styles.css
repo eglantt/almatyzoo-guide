@@ -143,6 +143,10 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; padding-bottom: ca
 /* ---------- Карта ---------- */
 .mapwrap { position: relative; flex: 1; min-height: 0; }
 #map { position: absolute; inset: 0; background: #E7ECDD; font-family: var(--font); }
+/* 0.1.9: своя схема — фон «земли» под картой; подписи улиц по направлению улицы */
+#map.base-scheme { background: #F4F3EF; }
+.base-lbl span { position: absolute; left: 0; top: 0; transform-origin: 50% 50%; white-space: nowrap; font: 700 0.6875rem/1 var(--font); letter-spacing: .02em; color: #4A4A44;
+  text-shadow: 0 0 2px #fff, 0 0 2px #fff, 0 0 3px #fff, 0 0 4px #fff; }
 .leaflet-container { font-family: var(--font); font-size: .9rem; }
 .leaflet-control-attribution { font-size: .65rem; }
 .mapfilters {

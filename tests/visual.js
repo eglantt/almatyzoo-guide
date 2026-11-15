@@ -1,7 +1,7 @@
 /* Слой 2: настоящий Chromium (Playwright). Снимки 360 / 393 / ПК × kz / ru / en и проверка переполнения текста.
    Запуск: сервер в корне проекта (python3 -m http.server 8765), затем
    node visual.js <папка-для-снимков> [базовый URL]
-   Часы зафиксированы (среда, лето, 12:00), геолокация задана, анимации выключены, тайлы карты не грузятся. */
+   Часы зафиксированы (среда, лето, 12:00), геолокация задана, анимации выключены, тайлы карты не грузятся (с 0.1.9 «Схема» — своя карта-подложка, видна на снимках). */
 'use strict';
 const { chromium } = require('playwright');
 const path = require('path');
@@ -30,6 +30,8 @@ const SCREENS = ['map', 'coll', 'rules', 'more'];
     }, lang);
     await page.goto(BASE + 'index.html');
     await page.waitForFunction(() => window.ZooApp && window.ZooApp.data);
+    const baseOk = await page.evaluate(() => window.ZooApp.basemapReady);          // 0.1.9: своя карта-подложка
+    check(`[${w} ${lang}] карта-подложка загружена`, baseOk === true, baseOk);
     await page.addStyleTag({ content: '*,*::before,*::after{animation:none!important;transition:none!important}' });
     await page.evaluate(() => document.fonts.ready);
     check(`[${w} ${lang}] без ошибок`, errors.length === 0, errors);
