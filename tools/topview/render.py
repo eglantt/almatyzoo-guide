@@ -9,6 +9,8 @@
 data.json (дорожки, убранные линии basemapHide).
 Порядок слоёв: земля → вода → дорожки → тени → кроны (над дорожкой — полупрозрачные) → ограды и стенки → крыши.
 0.1.13: за внешней оградой картинки нет — чёткий край со сглаживанием (было растворение 4 → 12 м), дальше схема города.
+0.1.15: кроны у ограды — целиком (не обрезаются краем); деревья чертежа до 5 м за оградой — тоже; их тени за территорией —
+мягкие полупрозрачные (вдвое светлее, чем внутри). Деревья дальше 5 м за оградой не рисуются.
 0.1.14: дорожки — tools/topview/src/topview-paths.json (вариант 2 заказчика: полосы OSM 2,8 м, сдвинутые в просветы между
 оградами и обрезанные по ограде, + мощёные площадки из топосъёмки; сборка — paths_from_topo.py).
 Все размеры заданы в метрах — рендер одинаково выглядит при любом шаге пикселя.
@@ -192,8 +194,10 @@ for i, p in enumerate(bld):
     roof_layers.append((cm, bmat[i], kind, poly, (e1, e2, L1, L2), h))
 TREE_G = [np.array(c, np.float32) for c in ((46, 96, 42), (60, 112, 48), (38, 86, 46), (74, 118, 52))]
 tree_list = []
+ZOO_P = Polygon(zoo_b); TREE_OUT = 5.0                 # деревья за оградой — не дальше 5 м
 for k_, (x, y) in enumerate(trees):
     r_m = rng.uniform(2.0, 3.6); th = rng.uniform(6.0, 10.0); col = TREE_G[rng.integers(0, 4)] * rng.uniform(0.92, 1.08)
+    if not ZOO_P.contains(Point(x, y)) and ZOO_P.exterior.distance(Point(x, y)) > TREE_OUT: continue
     cx, cy = P2((x, y)); r = r_m / R
     i0, i1 = int(max(0, cy - r * 1.2 - 1)), int(min(Hd, cy + r * 1.2 + 2)); j0, j1 = int(max(0, cx - r * 1.2 - 1)), int(min(Wd, cx + r * 1.2 + 2))
     if i0 >= i1 or j0 >= j1: continue
@@ -227,7 +231,9 @@ print('тени', flush=True)
 
 # ---------- 6. кроны (над дорожкой — полупрозрачные, дорожка читается) ----------
 leaf = noise(0.8, 2, 0.6, 11)
+M_crown = np.zeros((Hd, Wd), bool)                     # все кроны — за оградой они остаются видны целиком
 for i0, i1, j0, j1, cx, cy, rr, inn, col in sorted(tree_list, key=lambda t: t[5]):
+    M_crown[i0:i1, j0:j1] |= inn
     yy, xx = np.mgrid[i0:i1, j0:j1]
     dx, dy = (xx - cx) / rr, (yy - cy) / rr
     nz = np.sqrt(np.clip(1 - dx ** 2 - dy ** 2, 0, 1))
@@ -270,18 +276,25 @@ for (i0, i1, j0, j1, mm), mat, kind, poly, (e1, e2, L1, L2), h in roof_layers:
         col = base[None, :] * tex[:, None]
     sub = img[i0:i1, j0:j1]
     sub[ys, xs] = col * (1 - 0.45 * soft[i0:i1, j0:j1][ys, xs])[:, None]
+    M_crown[i0:i1, j0:j1][mm] = False                  # крыша поверх кроны — край по ограде решает сам
     edge = mm & ~ndimage.binary_erosion(mm, iterations=it(2))
     sub[edge] *= 0.72
     hi = mm & ~ndimage.binary_erosion(mm, iterations=it(3)) & ~edge & ndimage.shift(~mm, (it(2), it(2)), order=0, cval=True)
     sub[hi] = np.minimum(sub[hi] * 1.15, 255)
-del soft
 print('крыши', flush=True)
 
 # ---------- 9. край по внешней ограде: чёткий, сглаженный на 1 пиксель ----------
 M_edge = mask(polys([list(Polygon(zoo_b).buffer(0.5, join_style=2).exterior.coords)]))
 sd = ndimage.distance_transform_edt(M_edge) - ndimage.distance_transform_edt(~M_edge)
-alpha = (np.clip(sd + 0.5, 0, 1) * 255).astype(np.uint8); del sd
-rgba = np.dstack([img.clip(0, 255).astype(np.uint8), alpha]); del img
+a_in = np.clip(sd + 0.5, 0, 1).astype(np.float32); del sd
+# кроны целиком (сглаженный край кроны) и мягкая полупрозрачная тень за территорией
+a_cr = ndimage.gaussian_filter(M_crown.astype(np.float32), 0.6 * PX); del M_crown
+w = np.maximum(a_in, a_cr); del a_in, a_cr
+a_sh = 0.22 * soft; del soft                          # внутри тень 0,45 — снаружи вдвое светлее
+SH = np.array((24, 34, 24), np.float32)
+alpha = w + a_sh * (1 - w)                             # рендер (кроны и территория) поверх слоя тени
+img = (img * w[..., None] + SH * (a_sh * (1 - w))[..., None]) / np.maximum(alpha, 1e-6)[..., None]
+rgba = np.dstack([img.clip(0, 255).astype(np.uint8), (alpha * 255).round().astype(np.uint8)]); del img, w, a_sh, alpha
 Image.fromarray(rgba, 'RGBA').save(OUT, compress_level=1)
 la0, lo0 = ll(RX0, RY0); la1, lo1 = ll(RX1, RY1)
 json.dump({'width': Wd, 'height': Hd, 'metersPerPixel': R, 'center': SRC['center'],

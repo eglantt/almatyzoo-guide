@@ -5,7 +5,7 @@
    (проверяется тестом version). ASSETS_VERSION — только при замене
    содержимого существующих шрифтов/картинок.
    ===================================================================== */
-const CACHE_VERSION = '0.1.14-alpha';
+const CACHE_VERSION = '0.1.15-alpha';
 const ASSETS_VERSION = 'v1';
 const TILES_VERSION = 'v2';          // 0.1.9: старый кэш tiles-v1 (с картинками OSM) удаляется
 const APP_CACHE = `app-${CACHE_VERSION}`;
@@ -13,7 +13,7 @@ const ASSETS_CACHE = `assets-${ASSETS_VERSION}`;
 const TILES_CACHE = `tiles-${TILES_VERSION}`;
 // 0.1.12: «Вид сверху» — свои плитки map/top/<TOP_VERSION>/ (= settings.topView в data.json, проверяется тестом).
 // Отдельный кэш: новая сборка рендера — новая версия, старые плитки удаляются при активации.
-const TOP_VERSION = 'r3';
+const TOP_VERSION = 'r4';
 const TOP_DIR = `./map/top/${TOP_VERSION}/`;
 const TOP_CACHE = `top-${TOP_VERSION}`;
 const TOP_PARALLEL = 6;

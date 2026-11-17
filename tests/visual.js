@@ -113,6 +113,31 @@ const SCREENS = ['map', 'coll', 'rules', 'more'];
     if (base === 'sat' && fs === 130) await page.screenshot({ path: path.join(OUT, `${w}-attr-sat-130.png`) });
     await ctx.close();
   }
+  // 0.1.15: кроны у ограды не обрезаются краем «Вида сверху». Деревья чертежа, стоящие за оградой на 0,5–4 м, —
+  // в центре кроны плитка масштаба 20 непрозрачна (альфа > 200). На 0.1.13–0.1.14 там прозрачно (край по ограде).
+  { const ctx = await browser.newContext({ serviceWorkers: 'block' }); const page = await ctx.newPage();
+    await page.goto(BASE + 'manifest.json');
+    const r = await page.evaluate(async () => {
+      const D = await (await fetch('data.json')).json(), S = await (await fetch('tools/topview/src/topview-src.json')).json();
+      const dir = D.settings.topView, ix = await (await fetch(dir + '/index.json')).json(), have = new Set(ix.tiles);
+      const [lat0, lng0] = S.center, KX = 111320 * Math.cos(lat0 * Math.PI / 180), KY = 111320, B = S.zooBoundary;
+      const inPoly = (x, y) => { let c = false; for (let i = 0, j = B.length - 1; i < B.length; j = i++) { const [xi, yi] = B[i], [xj, yj] = B[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; };
+      const dEdge = (x, y) => Math.min(...B.map((p, i) => { const q = B[(i + 1) % B.length], dx = q[0] - p[0], dy = q[1] - p[1], L = dx * dx + dy * dy || 1, t = Math.max(0, Math.min(1, ((x - p[0]) * dx + (y - p[1]) * dy) / L)); return Math.hypot(x - p[0] - t * dx, y - p[1] - t * dy); }));
+      const pts = S.trees.filter(([x, y]) => !inPoly(x, y) && dEdge(x, y) >= 0.5 && dEdge(x, y) <= 4);
+      const Z = 20, N = 256 * 2 ** Z, cache = {}; let opaque = 0, n = 0;
+      for (const [x, y] of pts) {
+        const lat = lat0 + y / KY, lng = lng0 + x / KX, s = Math.sin(lat * Math.PI / 180);
+        const px = (lng + 180) / 360 * N, py = (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * N;
+        const key = `${Z}/${Math.floor(px / 256)}/${Math.floor(py / 256)}`; n++;
+        if (!have.has(key)) continue;
+        if (!cache[key]) { const img = new Image(); img.src = `${dir}/${key}.webp`; await img.decode(); const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'); g.drawImage(img, 0, 0); cache[key] = g.getImageData(0, 0, 256, 256).data; }
+        const a = cache[key][((Math.floor(py) % 256) * 256 + (Math.floor(px) % 256)) * 4 + 3];
+        if (a > 200) opaque++;
+      }
+      return { n, opaque };
+    });
+    check('[вид сверху] кроны деревьев сразу за оградой видны целиком (≥ 95 %)', r.n > 50 && r.opaque >= 0.95 * r.n, r);
+    await ctx.close(); }
   await browser.close();
   console.log(`[visual] ${ok} OK, ${fail} FAIL`);
   process.exit(fail ? 1 : 0);
